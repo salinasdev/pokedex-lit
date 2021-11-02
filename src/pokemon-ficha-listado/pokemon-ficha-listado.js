@@ -31,8 +31,7 @@ class PokemonFichaListado extends LitElement {
                 </ul>
             </div>
             <div class="card-footer">
-                <button @click="${this.deletePerson}" class="btn btn-danger col-5"><strong>X</strong></button>
-                <button @click="${this.moreInfo}" class="btn btn-info col-5 offset-1"><strong>Info</strong></button>
+                <button @click="${this.moreInfo}" class="btn btn-info col-12"><strong>Info</strong></button>
             </div>
         </div>
         `;
