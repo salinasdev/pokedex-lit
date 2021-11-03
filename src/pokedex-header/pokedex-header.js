@@ -4,6 +4,7 @@ class PokedexHeader extends LitElement {
 
     static get properties(){
         return {
+          inputDisabled: {type: Boolean}
 
         };
 
@@ -11,6 +12,8 @@ class PokedexHeader extends LitElement {
 
     constructor(){
         super();
+
+        this.inputDisabled = true;
     }
 
     render(){
@@ -20,7 +23,7 @@ class PokedexHeader extends LitElement {
     <div class="container">
       <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
         <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
-          <img src="../img/pokeapi_logo.png" alt="mdo" width="105" height="42">
+          <img src="../img/logo.png" alt="mdo" width="124" height="42">
         </a>
 
         <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
@@ -28,14 +31,27 @@ class PokedexHeader extends LitElement {
           <li><a href="#" class="nav-link px-2 link-dark">About</a></li>
         </ul>
 
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-          <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
+
       </div>
     </div>
   </header>
 
         `;
+    }
+
+    updated(changedProperties){
+      console.log("updated pokedex-header");
+
+      if(changedProperties.has("inputDisabled")){
+        if (this.inputDisabled){
+          console.log("Desactivamos el boton buscar");
+          this.shadowRoot.getElementById("botonBuscar").setAttribute("disabled","disabled");
+        }else{
+          console.log("Activamos el boton buscar");
+          this.shadowRoot.getElementById("botonBuscar").removeAttribute("disabled");
+        }
+
+      }
     }
 }
 
