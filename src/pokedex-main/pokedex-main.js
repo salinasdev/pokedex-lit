@@ -49,13 +49,18 @@ class PokedexMain extends LitElement {
                                     src: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + (parseInt(pokemon.url.match(/\d+/g)[1])) +".png",
                                     alt: "pokemon.name"
                                 }}"
+                                @consulta-pokemon="${this.consultaPokemon}"
                                 ></pokemon-ficha-listado>`
                     )}
                     </div>
                 </div>
             </div>
+            <div id="fichaPokemon" class="d-none">
+                                Aqui va la ficha
+            </div>
             <pokemon-data @pokemons-data-updated="${this.pokemonsDataUpdated}" 
-                          @generations-data-updated="${this.generationsDataUpdated}" 
+                          @generations-data-updated="${this.generationsDataUpdated}"
+                          @mipokemon-data-updated="${this.mipokemonDataUpdate}"
                           id="pokeData"></pokemon-data>
         `;
     }
@@ -72,11 +77,19 @@ class PokedexMain extends LitElement {
                         console.log("entro en listGens updated");
                         this.shadowRoot.getElementById("listGens").classList.remove("d-none");
                         this.shadowRoot.getElementById("listPokemon").classList.add("d-none");
+                        this.shadowRoot.getElementById("fichaPokemon").classList.add("d-none");
                     break;
                 case "listPokemon":
                         console.log("entro en listPokemon updated");
                         this.shadowRoot.getElementById("listGens").classList.add("d-none");
                         this.shadowRoot.getElementById("listPokemon").classList.remove("d-none");
+                        this.shadowRoot.getElementById("fichaPokemon").classList.add("d-none");
+                    break;
+                case "fichaPokemon":
+                        console.log("entro en listPokemon updated");
+                        this.shadowRoot.getElementById("listGens").classList.add("d-none");
+                        this.shadowRoot.getElementById("listPokemon").classList.add("d-none");
+                        this.shadowRoot.getElementById("fichaPokemon").classList.remove("d-none");
                     break;
             }
 
@@ -126,6 +139,17 @@ class PokedexMain extends LitElement {
         console.log("pokedex-main "+ e.detail.url);
         this.shadowRoot.getElementById("pokeData").urlGeneration = e.detail.url;
         this.muestra = "listPokemon";
+    }
+
+    consultaPokemon(e){
+        console.log("consultaPokemon en pokedex-main " + e.detail.idp);
+        this.muestra = "fichaPokemon";
+        this.shadowRoot.getElementById("pokeData").idPokemon = e.detail.idp;
+    }
+
+    mipokemonDataUpdate(e){
+        console.log("mipokemonDataUpdate");
+        console.log(e.detail);
     }
 }
 

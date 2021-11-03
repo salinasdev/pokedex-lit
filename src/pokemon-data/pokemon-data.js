@@ -12,7 +12,9 @@ class PokemonData extends LitElement {
             gen: {type: String},
             atras: {type: Boolean},
             adelante: {type: Boolean},
-            urlGeneration: {type: String}
+            urlGeneration: {type: String},
+            idPokemon: {type: String},
+            miPokemon: {type: Object}
         };
 
     }
@@ -24,6 +26,8 @@ class PokemonData extends LitElement {
         this.back = "";
         this.atras = false;
         this.adelante = false;
+        this.idPokemon = "";
+        this.miPokemon = {};
         
         this.gen = "https://pokeapi.co/api/v2/generation/"
         this.url = "https://pokeapi.co/api/v2/pokemon/";
@@ -83,6 +87,28 @@ class PokemonData extends LitElement {
                 console.log(this.urlGeneration);
 
                 this.getPokemons(this.urlGeneration);
+            }
+            if(changedProperties.has("idPokemon")){
+                console.log("vamos a buscar el pokemon con id " + this.idPokemon);
+                this.getPokemon(this.idPokemon);
+
+            }
+            if(changedProperties.has("miPokemon")){
+                console.log("Ha cambiado el valor de la propiedad miPokemon");
+    
+                this.dispatchEvent(
+                    new CustomEvent(
+                        "mipokemon-data-updated",
+                        {
+                            detail : {
+                                name : this.miPokemon.name,
+                                height : this.miPokemon.height,
+                                weight: this.miPokemon.weight,
+                                types: this.miPokemon.types
+                            }
+                        }
+                    )
+                );
             }
         }
 
@@ -159,6 +185,45 @@ class PokemonData extends LitElement {
         
         
         console.log("FIN getGenerations");
+    }
+
+    getPokemon(idp){
+        console.log("getPokemon");
+        console.log(idp);
+        this.miPokemon = {};
+
+        let xhr = new XMLHttpRequest();
+
+        //Propiedad de XHR que se lanza cuando obtiene un resultado de la petición
+        xhr.onload = () => {
+            if (xhr.status === 200){
+                console.log("Petición completada correctamente");
+                
+                //Parseamos el JSON que nos llega para visualizarlo en la consola
+                console.log(JSON.parse(xhr.responseText));
+
+                //Metemos en APIResponde el JSON
+                let APIResponse = JSON.parse(xhr.responseText);
+
+                //Asignamos a movies el array que viene en results
+                this.miPokemon = APIResponse;
+
+                //Guardamos la URL de siguiente y atras:
+                //this.next = APIResponse.next;
+                //this.back = APIResponse.previous;
+                console.log(this.miPokemon);
+            }
+        }
+
+        //Creamos la petición
+        xhr.open("GET","https://pokeapi.co/api/v2/pokemon/" + idp);
+        //Enviamos la petición
+        xhr.send();
+
+        //console.log(this.pokemons);
+
+
+        console.log("FIN getPokemons");
     }
 
     

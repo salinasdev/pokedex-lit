@@ -1,6 +1,6 @@
 import { html, LitElement } from "lit";
 
-class PokemonFichaListado extends LitElement {
+class PokemonFichaDetalle extends LitElement {
 
     static get properties(){
         return {
@@ -36,39 +36,6 @@ class PokemonFichaListado extends LitElement {
         </div>
         `;
     }
-
-    deletePerson(e){
-        console.log("deletePerson en persona-ficha-listado");
-        console.log("Se va a borrar la persona de nombre " + this.fname);
-
-        this.dispatchEvent(
-            new CustomEvent(
-                "delete-person",
-                {
-                    "detail" : {
-                        name : this.fname
-                    }
-                }
-            )
-        );
-    }
-
-    moreInfo(e){
-        console.log("moreInfo en pokemon-ficha-listado");
-        console.log("Consultando a " + this.fname + "con numero " + this.numPokedex);
-
-        this.dispatchEvent(
-            new CustomEvent(
-                "consulta-pokemon",
-                {
-                    "detail" : {
-                        name : this.fname,
-                        idp  : this.numPokedex
-                    }
-                }
-            )
-        );
-    }
 }
 
-customElements.define('pokemon-ficha-listado', PokemonFichaListado);
+customElements.define('pokemon-ficha-detalle', PokemonFichaDetalle);
