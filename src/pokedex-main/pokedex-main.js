@@ -10,7 +10,9 @@ class PokedexMain extends LitElement {
         return {
             pokemons: {type: Array},
             generations: {type: Array},
-            muestra: {type: String}
+            muestra: {type: String},
+            fichaPokemon: {type: Object},
+            types: {type: Array}
         };
 
     }
@@ -21,6 +23,9 @@ class PokedexMain extends LitElement {
         this.pokemons = [];
         this.generations = [];
         this.muestra = "listGens";
+        this.fichaPokemon = {};
+        this.types = [];
+        
     }
 
     render(){
@@ -56,12 +61,57 @@ class PokedexMain extends LitElement {
                 </div>
             </div>
             <div id="fichaPokemon" class="d-none">
-                                Aqui va la ficha
+                <div class="row mb-2">
+                    <div class="col-3 themed-grid-col-cab bg-light">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${this.fichaPokemon.idp}.png" alt="${this.capitalizeFirstLetter(this.fichaPokemon.name)}"   class="card-img-top">
+                    </div>
+                    <div class="col-8 themed-grid-col-cab bg-light">
+                        <div class="row ">
+                            <div class="col themed-grid-col-cab bg-light"><strong>Datos de ${this.capitalizeFirstLetter(this.fichaPokemon.name)}</strong>
+                        </div>
+                        <div class="row ">
+                            <div class="col-4 themed-grid-col-cab bg-light"><strong>Número de Pókemon:</strong></div>
+                            <div class="col themed-grid-col-cab bg-light">${this.fichaPokemon.idp}</div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-4 themed-grid-col-cab bg-light"><strong>Nombre:</strong></div>
+                            <div class="col themed-grid-col-cab bg-light">${this.capitalizeFirstLetter(this.fichaPokemon.name)}</div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-4 themed-grid-col-cab bg-light"><strong>Peso:</strong></div>
+                            <div class="col themed-grid-col-cab bg-light">${this.mascaraNum(this.fichaPokemon.weight)} kg.</div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-4 themed-grid-col-cab bg-light"><strong>Altura:</strong></div>
+                            <div class="col themed-grid-col-cab bg-light">${this.mascaraNum(this.fichaPokemon.height)} m.</div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-4 themed-grid-col-cab bg-light"><strong>Tipos:</strong></div>
+                            <div class="col themed-grid-col-cab bg-light">
+                            
+                            ${this.types.map(
+                                (type, index) => html`<img src="../img/${type.type.name}.png">`
+                            )}
+                            
+                            </div>
+                        </div>
+                    </div>
+                
+                </div>
+            </div>
             </div>
             <pokemon-data @pokemons-data-updated="${this.pokemonsDataUpdated}" 
                           @generations-data-updated="${this.generationsDataUpdated}"
                           @mipokemon-data-updated="${this.mipokemonDataUpdate}"
                           id="pokeData"></pokemon-data>
+            <style>
+                .themed-grid-col-cab {
+                    padding-top: .75rem;
+                    padding-bottom: .75rem;
+                    background-color: rgba(86, 61, 124, .15);
+                    border: 1px solid rgba(86, 61, 124, .2);
+                }
+            </style>
         `;
     }
 
@@ -114,7 +164,8 @@ class PokedexMain extends LitElement {
 
     //Función para poner la primera letra en mayúscula
     capitalizeFirstLetter(s) {
-        return s.charAt(0).toUpperCase() + s.slice(1);
+        if (s != null)
+            return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
     nextPokes(e){
@@ -150,6 +201,13 @@ class PokedexMain extends LitElement {
     mipokemonDataUpdate(e){
         console.log("mipokemonDataUpdate");
         console.log(e.detail);
+        this.fichaPokemon = e.detail;
+        this.types = this.fichaPokemon.types;
+        console.log("AQUIII");
+    }
+    mascaraNum(n){
+        if(n != null)
+            return n/10;
     }
 }
 

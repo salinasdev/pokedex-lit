@@ -96,19 +96,7 @@ class PokemonData extends LitElement {
             if(changedProperties.has("miPokemon")){
                 console.log("Ha cambiado el valor de la propiedad miPokemon");
     
-                this.dispatchEvent(
-                    new CustomEvent(
-                        "mipokemon-data-updated",
-                        {
-                            detail : {
-                                name : this.miPokemon.name,
-                                height : this.miPokemon.height,
-                                weight: this.miPokemon.weight,
-                                types: this.miPokemon.types
-                            }
-                        }
-                    )
-                );
+
             }
         }
 
@@ -212,6 +200,7 @@ class PokemonData extends LitElement {
                 //this.next = APIResponse.next;
                 //this.back = APIResponse.previous;
                 console.log(this.miPokemon);
+                this.getEncounters(idp);
             }
         }
 
@@ -224,6 +213,59 @@ class PokemonData extends LitElement {
 
 
         console.log("FIN getPokemons");
+    }
+
+    getEncounters(idp){
+        console.log("getEncounters");
+        console.log(idp);
+
+        let xhr = new XMLHttpRequest();
+
+        //Propiedad de XHR que se lanza cuando obtiene un resultado de la petición
+        xhr.onload = () => {
+            if (xhr.status === 200){
+                console.log("Petición completada correctamente getEncounters");
+                
+                //Parseamos el JSON que nos llega para visualizarlo en la consola
+                console.log(JSON.parse(xhr.responseText));
+
+                //Metemos en APIResponde el JSON
+                let APIResponse = JSON.parse(xhr.responseText);
+
+                //Asignamos a movies el array que viene en results
+                this.miPokemon.encounters = APIResponse;
+
+                //Guardamos la URL de siguiente y atras:
+                //this.next = APIResponse.next;
+                //this.back = APIResponse.previous;
+                console.log(this.miPokemon);
+                this.dispatchEvent(
+                    new CustomEvent(
+                        "mipokemon-data-updated",
+                        {
+                            detail : {
+                                idp : this.miPokemon.id,
+                                name : this.miPokemon.name,
+                                height : this.miPokemon.height,
+                                weight: this.miPokemon.weight,
+                                types: this.miPokemon.types,
+                                encounters: this.miPokemon.encounters
+                            }
+                        }
+                    )
+                );
+            }
+        }
+
+        //Creamos la petición
+        xhr.open("GET","https://pokeapi.co/api/v2/pokemon/" + idp + "/encounters");
+        //Enviamos la petición
+        xhr.send();
+
+        //console.log(this.pokemons);
+
+
+        console.log("FIN getEncounters");
     }
 
     
