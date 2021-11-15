@@ -12,7 +12,8 @@ class PokedexMain extends LitElement {
             generations: {type: Array},
             muestra: {type: String},
             fichaPokemon: {type: Object},
-            types: {type: Array}
+            types: {type: Array},
+            encounters: {type: Array}
         };
 
     }
@@ -25,6 +26,7 @@ class PokedexMain extends LitElement {
         this.muestra = "listGens";
         this.fichaPokemon = {};
         this.types = [];
+        this.encounters = [];
         
     }
 
@@ -90,7 +92,7 @@ class PokedexMain extends LitElement {
                             <div class="col themed-grid-col-cab bg-light">
                             
                             ${this.types.map(
-                                (type, index) => html`<img src="../img/${type.type.name}.png">`
+                                (type, index) => html`<img src="../img/types/${type.type.name}.png">`
                             )}
                             
                             </div>
@@ -98,7 +100,20 @@ class PokedexMain extends LitElement {
                     </div>
                 
                 </div>
-            </div>
+                </div>
+                <div class="row mb-2">
+                    ${this.encounters.map(
+                        (encounter, index) => html`<img src="../img/areas/${encounter.location_area.name}.png" class="col-3 themed-grid-col-cab bg-light">
+                        <div class="col-8 themed-grid-col-cab bg-light">
+                        <div class="row ">
+                            <div class="col themed-grid-col-cab bg-light"><strong>${this.getLugar(encounter.location_area.name)}</strong>
+                        </div>
+                        </div>
+                        
+                        
+                        `
+                    )}
+                </div>
             </div>
             <pokemon-data @pokemons-data-updated="${this.pokemonsDataUpdated}" 
                           @generations-data-updated="${this.generationsDataUpdated}"
@@ -203,11 +218,64 @@ class PokedexMain extends LitElement {
         console.log(e.detail);
         this.fichaPokemon = e.detail;
         this.types = this.fichaPokemon.types;
+        this.encounters = this.fichaPokemon.encounters;
         console.log("AQUIII");
     }
     mascaraNum(n){
         if(n != null)
             return n/10;
+    }
+
+
+
+    getLugar(string){
+
+        switch (string){
+            case "pallet-town-area":
+                return "Pueblo Paleta";
+            case "cerulean-city-area":
+                return "Ciudad Celeste";
+            case "sinnoh-route-221-area":
+                return "Ruta 221 - Sinnoh";
+            case "lumiose-city-area":
+                return "Ciudad Luminalia";
+            case "eterna-forest-area":
+                return "Bosque Vetusto";
+            case "sinnoh-route-204-south-towards-jubilife-city":
+                return "Ruta 204 sur hacia Ciudad Jubileo - Sinnoh";
+            case "sinnoh-route-204-north-towards-floaroma-town":
+                return "Ruta 204 norte hacia Pueblo Aromaflor";
+            case "johto-route-30-area":
+                return "Ruta 30 - Johto";
+            case "johto-route-31-area":
+                return "Ruta 31 - Johto";
+            case "ilex-forest-area":
+                return "El Encinar";
+            case "johto-route-34-area":
+                return "Ruta 34 - Johto";
+            case "johto-route-35-area":
+                return "Ruta 35 - Johto";
+            case "national-park-area":
+                return "Parque Nacional";
+            case "unknown-all-bugs-area":
+                return "Zona Desconocida, Bugs";
+            case "johto-route-36-area":
+                return "Ruta 36 - Johto";
+            case "johto-route-37-area":
+                return "Ruta 37 - Johto";
+            case "johto-route-38-area":
+                return "Ruta 38 - Johto";
+            case "johto-route-39-area":
+                return "Ruta 39 - Johto";
+            case "lake-of-rage-area":
+                return "Lago de la Furia";
+            case "kanto-route-26-area":
+                return "Ruta 26 - Kanto"
+            case "kanto-route-27-area":
+                return "Ruta 27 - Kanto";
+        }
+
+        return string;
     }
 }
 
