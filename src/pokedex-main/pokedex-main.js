@@ -106,7 +106,20 @@ class PokedexMain extends LitElement {
                         (encounter, index) => html`<img src="../img/areas/${encounter.location_area.name}.png" class="col-3 themed-grid-col-cab bg-light">
                         <div class="col-8 themed-grid-col-cab bg-light">
                         <div class="row ">
-                            <div class="col themed-grid-col-cab bg-light"><strong>${this.getLugar(encounter.location_area.name)}</strong>
+                            <div class="col themed-grid-col-cab bg-light"><strong>${this.getLugar(encounter.location_area.name)}</strong></div>
+                        </div>
+                        <div class="row ">
+                            <div class="col themed-grid-col-cab bg-light"><strong>Juegos: </strong></div>
+                            ${encounter.version_details.map(
+                                (vdetail, index) => html`
+                                <div class="col themed-grid-col-cab bg-light"><img src="../img/versions/${vdetail.version.name}.png">${this.capitalizeFirstLetter(vdetail.version.name)}</div>
+                                
+                                `
+                            )
+                            
+                            
+                            }
+                            
                         </div>
                         </div>
                         
