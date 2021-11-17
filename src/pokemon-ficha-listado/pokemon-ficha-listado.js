@@ -25,9 +25,9 @@ class PokemonFichaListado extends LitElement {
             <img src="${this.photo.src}" alt="${this.fname}"   class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">${this.fname}</h5>
-                <p class="card-text">${this.profile}</p>
+                
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Pokemón numero: ${this.numPokedex}.</li>
+                    <li class="list-group-item">#: ${this.numPokedex}.</li>
                 </ul>
             </div>
             <div class="card-footer">

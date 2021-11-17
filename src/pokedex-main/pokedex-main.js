@@ -230,53 +230,66 @@ class PokedexMain extends LitElement {
 
     getLugar(string){
 
+        let arrayDeCadenas = this.dividirCadena(string,"-");
+        
+        //Rutas
+        switch(arrayDeCadenas[0]){
+            case "johto":
+            case "sinnoh":
+            case "kalos":
+                return "Ruta " + arrayDeCadenas[2] + " - " + this.capitalizeFirstLetter(arrayDeCadenas[0]);
+            case "unova":
+                    return "Ruta " + arrayDeCadenas[2] + " - " + "Teselia";
+            case "kanto":
+                if (arrayDeCadenas[1] === "sea"){
+                    return "Ruta " + arrayDeCadenas[3] + " - " + this.capitalizeFirstLetter(arrayDeCadenas[0]);
+                }else{
+                    return "Ruta " + arrayDeCadenas[2] + " - " + this.capitalizeFirstLetter(arrayDeCadenas[0]);
+                }
+        }
+
+        //Lugares
         switch (string){
             case "pallet-town-area":
                 return "Pueblo Paleta";
             case "cerulean-city-area":
                 return "Ciudad Celeste";
-            case "sinnoh-route-221-area":
-                return "Ruta 221 - Sinnoh";
             case "lumiose-city-area":
                 return "Ciudad Luminalia";
             case "eterna-forest-area":
                 return "Bosque Vetusto";
-            case "sinnoh-route-204-south-towards-jubilife-city":
-                return "Ruta 204 sur hacia Ciudad Jubileo - Sinnoh";
-            case "sinnoh-route-204-north-towards-floaroma-town":
-                return "Ruta 204 norte hacia Pueblo Aromaflor";
-            case "johto-route-30-area":
-                return "Ruta 30 - Johto";
-            case "johto-route-31-area":
-                return "Ruta 31 - Johto";
             case "ilex-forest-area":
                 return "El Encinar";
-            case "johto-route-34-area":
-                return "Ruta 34 - Johto";
-            case "johto-route-35-area":
-                return "Ruta 35 - Johto";
             case "national-park-area":
                 return "Parque Nacional";
             case "unknown-all-bugs-area":
                 return "Zona Desconocida, Bugs";
-            case "johto-route-36-area":
-                return "Ruta 36 - Johto";
-            case "johto-route-37-area":
-                return "Ruta 37 - Johto";
-            case "johto-route-38-area":
-                return "Ruta 38 - Johto";
-            case "johto-route-39-area":
-                return "Ruta 39 - Johto";
             case "lake-of-rage-area":
                 return "Lago de la Furia";
-            case "kanto-route-26-area":
-                return "Ruta 26 - Kanto"
-            case "kanto-route-27-area":
-                return "Ruta 27 - Kanto";
+            case "viridian-forest-area":
+                return "Bosque Verde";
+            case "pattern-bush-area":
+                return "Bosquejo - Isla Extra";
+            case "santalune-forest-area":
+                return "Bosque de Novarte";
+            case "azalea-town-area":
+                return "Pueblo Azalea";
+            case "berry-forest-area":
+                return "Bosque Baya";
+            case "bond-bridge-area":
+                return "Puente Unión";
+            case "five-isle-meadow-area":
+                return "Prado Isla Inta";
         }
 
         return string;
     }
+
+    dividirCadena(cadenaADividir,separador) {
+        var arrayDeCadenas = cadenaADividir.split(separador);
+     
+        return arrayDeCadenas;
+     }
 }
 
 customElements.define('pokedex-main', PokedexMain);
