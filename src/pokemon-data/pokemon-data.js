@@ -272,3 +272,11 @@ class PokemonData extends LitElement {
 }
 
 customElements.define('pokemon-data', PokemonData);
+
+
+
+
+
+
+
+

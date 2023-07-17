@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { html, LitElement ,css} from "lit";
 import '../pokemon-data/pokemon-data.js';
 import '../pokemon-ficha-listado/pokemon-ficha-listado.js';
 import '../pokemon-sidebar/pokemon-sidebar.js';
@@ -34,7 +34,7 @@ class PokedexMain extends LitElement {
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
             <div id="listGens">
-                <div class="row row-cols-1 row-cols-sm-4">
+                <div class="listado">
                     ${this.generations.map(
                         (generation, index) => html`<pokedex-generation-card
                                                     fname="${this.capitalizeFirstLetter(generation.name)}"
@@ -142,6 +142,18 @@ class PokedexMain extends LitElement {
             </style>
         `;
     }
+
+    static styles = css`
+    .listado {
+        text-align: center;
+        max-width: 540px;
+        margin: -50px auto 0;
+        color: white;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 55px;
+      }
+    `;
 
     updated(changedProperties){
         console.log("updated de tienda-main");
