@@ -37,9 +37,9 @@ class PokedexFooter extends LitElement {
     </div>
 
     <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
-      <li class="ms-3"><a class="text-muted" href="#"><img src="../img/twitter.svg" alt="Bootstrap" width="32" height="32"><use xlink:href="#twitter"></use></img></a></li>
-      <li class="ms-3"><a class="text-muted" href="#"><img src="../img/linkedin.svg" alt="Bootstrap" width="32" height="32"><use xlink:href="#instagram"></use></img></a></li>
-      <li class="ms-3"><a class="text-muted" href="#"><img src="../img/github.svg" alt="salinasdev" width="32" height="32"><use xlink:href="https://github.com/salinasdev"></use></img</a></li>
+      <li class="ms-3"><a class="text-muted" target="_blank" href="#"><img src="../img/twitter.svg" alt="Bootstrap" width="32" height="32"><use xlink:href="#twitter"></use></img></a></li>
+      <li class="ms-3"><a class="text-muted" target="_blank" href="https://es.linkedin.com/in/v%C3%ADctor-salinas-villarrubia-b8a0b1132"><img src="../img/linkedin.svg" alt="Bootstrap" width="32" height="32"><use xlink:href="#instagram"></use></img></a></li>
+      <li class="ms-3"><a class="text-muted" target="_blank" href="https://github.com/salinasdev"><img src="../img/github.svg" alt="salinasdev" width="32" height="32"><use xlink:href="https://github.com/salinasdev"></use></img</a></li>
       
     </ul>
   </footer>

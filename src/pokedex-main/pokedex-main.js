@@ -45,8 +45,8 @@ class PokedexMain extends LitElement {
                 </div>
             </div>
             <div id="listPokemon" class="d-none">
-                <div class="row" id="peopleList">
-                    <div class="row row-cols-1 row-cols-sm-4">
+                <div id="peopleList">
+                    <div class="listado">
                     ${this.pokemons.map(
                         (pokemon, index) => html`<pokemon-ficha-listado 
                                 fname="${this.capitalizeFirstLetter(pokemon.name)}" 
@@ -152,6 +152,7 @@ class PokedexMain extends LitElement {
         padding-left: 10px;
         padding-right: 10px;
         padding-top: 55px;
+        width: 600px;
       }
     `;
 
