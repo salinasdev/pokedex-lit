@@ -29,3 +29,11 @@ npm init @open-wc
 For most of the tools, the configuration is in the `package.json` to reduce the amount of files in your project.
 
 If you customize the configuration a lot, you can consider moving them to individual files.
+
+## Imágenes:
+<table border="0" cellpadding="0" cellspacing="0" width="100">
+<tr>
+<td><img src="https://github.com/salinasdev/pokedex-lit/blob/master/images/1.png" width="220" height="356"></td>
+  <td><img src="https://github.com/salinasdev/pokedex-lit/blob/master/images/2.png"  width="220" height="356"></td>
+</tr>
+</table>
