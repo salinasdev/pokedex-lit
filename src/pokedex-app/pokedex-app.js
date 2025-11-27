@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { html, LitElement, css } from "lit";
 import '../pokedex-header/pokedex-header.js';
 import '../pokedex-footer/pokedex-footer.js';
 import '../pokedex-main/pokedex-main.js';
@@ -15,6 +15,16 @@ class PokedexApp extends LitElement {
     constructor(){
         super();
     }
+
+    static styles = css`
+        :host {
+            display: block;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding-bottom: 180px; /* Espacio para el footer fijo */
+        }
+    `;
 
     render(){
         return html`

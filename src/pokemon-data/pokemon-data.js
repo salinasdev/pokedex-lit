@@ -28,6 +28,12 @@ class PokemonData extends LitElement {
         this.adelante = false;
         this.idPokemon = "";
         this.miPokemon = {};
+        this.dataLoadStatus = {
+            pokemon: false,
+            species: false,
+            evolutionChain: false,
+            encounters: false
+        };
         
         this.gen = "https://pokeapi.co/api/v2/generation/"
         this.url = "https://pokeapi.co/api/v2/pokemon/";
@@ -175,10 +181,66 @@ class PokemonData extends LitElement {
         console.log("FIN getGenerations");
     }
 
+    // Método para verificar si todos los datos están cargados y disparar el evento
+    checkAndDispatchPokemonData() {
+        console.log("Verificando estado de carga:", this.dataLoadStatus);
+        
+        // Verificar si todos los datos necesarios están cargados
+        if (this.dataLoadStatus.pokemon && 
+            this.dataLoadStatus.species && 
+            this.dataLoadStatus.evolutionChain &&
+            this.dataLoadStatus.encounters) {
+            
+            console.log("✅ Todos los datos del Pokémon están cargados, disparando evento");
+            console.log("Evolution chain disponible:", this.miPokemon.evolution_chain);
+            
+            this.dispatchEvent(
+                new CustomEvent(
+                    "mipokemon-data-updated",
+                    {
+                        detail : {
+                            idp : this.miPokemon.id,
+                            name : this.miPokemon.name,
+                            height : this.miPokemon.height,
+                            weight: this.miPokemon.weight,
+                            types: this.miPokemon.types,
+                            encounters: this.miPokemon.encounters,
+                            species_info: this.miPokemon.species_info || null,
+                            evolution_chain: this.miPokemon.evolution_chain || null
+                        }
+                    }
+                )
+            );
+            
+            // Resetear el estado para la próxima carga
+            this.dataLoadStatus = {
+                pokemon: false,
+                species: false,
+                evolutionChain: false,
+                encounters: false
+            };
+        } else {
+            console.log("⏳ Esperando más datos...", {
+                pokemon: this.dataLoadStatus.pokemon,
+                species: this.dataLoadStatus.species,
+                evolutionChain: this.dataLoadStatus.evolutionChain,
+                encounters: this.dataLoadStatus.encounters
+            });
+        }
+    }
+
     getPokemon(idp){
         console.log("getPokemon");
         console.log(idp);
         this.miPokemon = {};
+        
+        // Resetear el estado de carga
+        this.dataLoadStatus = {
+            pokemon: false,
+            species: false,
+            evolutionChain: false,
+            encounters: false
+        };
 
         let xhr = new XMLHttpRequest();
 
@@ -200,6 +262,12 @@ class PokemonData extends LitElement {
                 //this.next = APIResponse.next;
                 //this.back = APIResponse.previous;
                 console.log(this.miPokemon);
+                
+                // Marcar como cargado
+                this.dataLoadStatus.pokemon = true;
+                
+                // Obtener información de la especie (incluye datos de crianza)
+                this.getPokemonSpecies(idp);
                 this.getEncounters(idp);
             }
         }
@@ -213,6 +281,88 @@ class PokemonData extends LitElement {
 
 
         console.log("FIN getPokemons");
+    }
+
+    getPokemonSpecies(idp){
+        console.log("getPokemonSpecies");
+        console.log(idp);
+
+        let xhr = new XMLHttpRequest();
+
+        //Propiedad de XHR que se lanza cuando obtiene un resultado de la petición
+        xhr.onload = () => {
+            if (xhr.status === 200){
+                console.log("Petición completada correctamente getPokemonSpecies");
+                
+                //Parseamos el JSON que nos llega para visualizarlo en la consola
+                console.log(JSON.parse(xhr.responseText));
+
+                //Metemos en APIResponde el JSON
+                let APIResponse = JSON.parse(xhr.responseText);
+
+                //Asignamos la información de la especie
+                this.miPokemon.species_info = APIResponse;
+
+                console.log("Species info:", this.miPokemon.species_info);
+                
+                // Marcar como cargado
+                this.dataLoadStatus.species = true;
+                
+                // Obtener la cadena evolutiva si existe
+                if (APIResponse.evolution_chain && APIResponse.evolution_chain.url) {
+                    this.getEvolutionChain(APIResponse.evolution_chain.url);
+                } else {
+                    // Si no hay cadena evolutiva, marcarla como cargada
+                    this.dataLoadStatus.evolutionChain = true;
+                    this.checkAndDispatchPokemonData();
+                }
+            }
+        }
+
+        //Creamos la petición
+        xhr.open("GET","https://pokeapi.co/api/v2/pokemon-species/" + idp);
+        //Enviamos la petición
+        xhr.send();
+
+        console.log("FIN getPokemonSpecies");
+    }
+
+    getEvolutionChain(url){
+        console.log("getEvolutionChain");
+        console.log(url);
+
+        let xhr = new XMLHttpRequest();
+
+        //Propiedad de XHR que se lanza cuando obtiene un resultado de la petición
+        xhr.onload = () => {
+            if (xhr.status === 200){
+                console.log("Petición completada correctamente getEvolutionChain");
+                
+                //Parseamos el JSON que nos llega para visualizarlo en la consola
+                console.log(JSON.parse(xhr.responseText));
+
+                //Metemos en APIResponde el JSON
+                let APIResponse = JSON.parse(xhr.responseText);
+
+                //Asignamos la cadena evolutiva
+                this.miPokemon.evolution_chain = APIResponse.chain;
+
+                console.log("Evolution chain:", this.miPokemon.evolution_chain);
+                
+                // Marcar como cargado
+                this.dataLoadStatus.evolutionChain = true;
+                
+                // Verificar si ya podemos disparar el evento
+                this.checkAndDispatchPokemonData();
+            }
+        }
+
+        //Creamos la petición
+        xhr.open("GET", url);
+        //Enviamos la petición
+        xhr.send();
+
+        console.log("FIN getEvolutionChain");
     }
 
     getEncounters(idp){
@@ -239,21 +389,12 @@ class PokemonData extends LitElement {
                 //this.next = APIResponse.next;
                 //this.back = APIResponse.previous;
                 console.log(this.miPokemon);
-                this.dispatchEvent(
-                    new CustomEvent(
-                        "mipokemon-data-updated",
-                        {
-                            detail : {
-                                idp : this.miPokemon.id,
-                                name : this.miPokemon.name,
-                                height : this.miPokemon.height,
-                                weight: this.miPokemon.weight,
-                                types: this.miPokemon.types,
-                                encounters: this.miPokemon.encounters
-                            }
-                        }
-                    )
-                );
+                
+                // Marcar como cargado
+                this.dataLoadStatus.encounters = true;
+                
+                // Verificar si ya podemos disparar el evento
+                this.checkAndDispatchPokemonData();
             }
         }
 
