@@ -4,6 +4,10 @@
   "license": "MIT",
   "author": "base-litelement",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "analyze": "cem analyze --litelement",
     "start": "web-dev-server"
