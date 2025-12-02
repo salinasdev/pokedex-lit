@@ -20,7 +20,12 @@ class PokedexMain extends LitElement {
             searchQuery: {type: String},
             showScrollButton: {type: Boolean},
             capturedPokemon: {attribute: false},
-            showProgressBar: {type: Boolean}
+            showProgressBar: {type: Boolean},
+            moves: {type: Array},
+            showLocations: {type: Boolean},
+            showMoves: {type: Boolean},
+            varieties: {type: Array},
+            showVarieties: {type: Boolean}
         };
 
     }
@@ -41,6 +46,11 @@ class PokedexMain extends LitElement {
         this.showScrollButton = false;
         this.capturedPokemon = new Set();
         this.showProgressBar = true;
+        this.moves = [];
+        this.showLocations = false;
+        this.showMoves = false;
+        this.varieties = [];
+        this.showVarieties = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -296,68 +306,98 @@ class PokedexMain extends LitElement {
                         ` : ''}
 
                         ${this.encounters.length > 0 ? html`
-                            <div class="encounters-section">
-                                <h3 class="encounters-title">Ubicaciones por Versión</h3>
-                                <div class="versions-container">
-                                    ${(() => {
-                                        const sortedVersions = Array.from(this.groupEncountersByVersion(this.encounters))
-                                            .sort((a, b) => {
-                                                const genA = this.getVersionGeneration(a[0]);
-                                                const genB = this.getVersionGeneration(b[0]);
-                                                if (genA !== genB) return genA - genB;
-                                                
-                                                const orderA = this.getVersionOrder(a[0]);
-                                                const orderB = this.getVersionOrder(b[0]);
-                                                return orderA - orderB;
-                                            });
-                                        
-                                        let currentGen = null;
-                                        const result = [];
-                                        
-                                        sortedVersions.forEach(([versionName, locations]) => {
-                                            const gen = this.getVersionGeneration(versionName);
+                            <div class="encounters-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleLocations()}">
+                                    <h3 class="encounters-title">📍 Ubicaciones por Versión</h3>
+                                    <span class="toggle-icon">${this.showLocations ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showLocations ? 'show' : ''}">
+                                    <div class="versions-container">
+                                        ${(() => {
+                                            const sortedVersions = Array.from(this.groupEncountersByVersion(this.encounters))
+                                                .sort((a, b) => {
+                                                    const genA = this.getVersionGeneration(a[0]);
+                                                    const genB = this.getVersionGeneration(b[0]);
+                                                    if (genA !== genB) return genA - genB;
+                                                    
+                                                    const orderA = this.getVersionOrder(a[0]);
+                                                    const orderB = this.getVersionOrder(b[0]);
+                                                    return orderA - orderB;
+                                                });
                                             
-                                            // Añadir encabezado de generación si es diferente
-                                            if (gen !== currentGen) {
-                                                currentGen = gen;
+                                            let currentGen = null;
+                                            const result = [];
+                                            
+                                            sortedVersions.forEach(([versionName, locations]) => {
+                                                const gen = this.getVersionGeneration(versionName);
+                                                
+                                                // Añadir encabezado de generación si es diferente
+                                                if (gen !== currentGen) {
+                                                    currentGen = gen;
+                                                    result.push(html`
+                                                        <div class="generation-header">
+                                                            <h3 class="generation-title">Generación ${this.getGenerationRoman(gen)}</h3>
+                                                        </div>
+                                                    `);
+                                                }
+                                                
+                                                // Añadir el grupo de versión
                                                 result.push(html`
-                                                    <div class="generation-header">
-                                                        <h3 class="generation-title">Generación ${this.getGenerationRoman(gen)}</h3>
+                                                    <div class="version-group ${this.expandedVersions.has(versionName) ? 'expanded' : ''}">
+                                                        <div class="version-header" @click="${() => this.toggleVersion(versionName)}">
+                                                            <img src="${this.getVersionIcon(versionName)}" 
+                                                                 class="version-header-icon"
+                                                                 alt="${versionName}">
+                                                            <h4 class="version-title">${this.getVersionNameInSpanish(versionName)}</h4>
+                                                            <span class="version-count">(${locations.length} ubicaciones)</span>
+                                                            <span class="toggle-icon">${this.expandedVersions.has(versionName) ? '▼' : '▶'}</span>
+                                                        </div>
+                                                        <div class="locations-grid ${this.expandedVersions.has(versionName) ? 'show' : ''}">
+                                                            ${locations.map(
+                                                                (loc) => html`
+                                                                <div class="location-card">
+                                                                    <img src="${this.getLocationImageUrl(loc.location)}" 
+                                                                         class="location-image" 
+                                                                         alt="${loc.locationDisplay}"
+                                                                         @error="${(e) => this.handleImageError(e)}"
+                                                                         data-location="${loc.locationDisplay}"
+                                                                         data-location-slug="${loc.location}">
+                                                                    <div class="location-name">${loc.locationDisplay}</div>
+                                                                </div>
+                                                                `
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 `);
-                                            }
+                                            });
                                             
-                                            // Añadir el grupo de versión
-                                            result.push(html`
-                                                <div class="version-group ${this.expandedVersions.has(versionName) ? 'expanded' : ''}">
-                                                    <div class="version-header" @click="${() => this.toggleVersion(versionName)}">
-                                                        <img src="${this.getVersionIcon(versionName)}" 
-                                                             class="version-header-icon"
-                                                             alt="${versionName}">
-                                                        <h4 class="version-title">${this.getVersionNameInSpanish(versionName)}</h4>
-                                                        <span class="version-count">(${locations.length} ubicaciones)</span>
-                                                        <span class="toggle-icon">${this.expandedVersions.has(versionName) ? '▼' : '▶'}</span>
-                                                    </div>
-                                                    <div class="locations-grid ${this.expandedVersions.has(versionName) ? 'show' : ''}">
-                                                        ${locations.map(
-                                                            (loc) => html`
-                                                            <div class="location-card">
-                                                                <img src="../img/areas/${loc.location}.png" 
-                                                                     class="location-image" 
-                                                                     alt="${loc.locationDisplay}"
-                                                                     @error="${(e) => this.handleImageError(e)}"
-                                                                     data-location="${loc.locationDisplay}">
-                                                                <div class="location-name">${loc.locationDisplay}</div>
-                                                            </div>
-                                                            `
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            `);
-                                        });
-                                        
-                                        return result;
-                                    })()}
+                                            return result;
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.moves.length > 0 ? html`
+                            <div class="moves-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleMoves()}">
+                                    <h3 class="moves-title">⚔️ Movimientos</h3>
+                                    <span class="toggle-icon">${this.showMoves ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showMoves ? 'show' : ''}">
+                                    ${this.renderMoves()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.varieties.length > 1 ? html`
+                            <div class="varieties-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleVarieties()}">
+                                    <h3 class="varieties-title">🌍 Variantes y Formas</h3>
+                                    <span class="toggle-icon">${this.showVarieties ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showVarieties ? 'show' : ''}">
+                                    ${this.renderVarieties()}
                                 </div>
                             </div>
                         ` : ''}
@@ -1257,8 +1297,10 @@ class PokedexMain extends LitElement {
 
         .location-image {
             width: 100%;
-            height: 140px;
-            object-fit: cover;
+            height: 180px;
+            object-fit: contain;
+            background: #f8fafc;
+            border-radius: 8px 8px 0 0;
         }
 
         .location-image.placeholder-image {
@@ -1273,6 +1315,251 @@ class PokedexMain extends LitElement {
             color: #2d3748;
             text-align: center;
             background: white;
+        }
+
+        /* Estilos para secciones desplegables */
+        .collapsible-section {
+            padding: 2rem;
+            background: #f8f9fa;
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header:hover {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header h3 {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .section-header .toggle-icon {
+            color: white;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+
+        .section-content.show {
+            max-height: 10000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        /* Estilos para la sección de movimientos */
+        .moves-section {
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        .moves-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .moves-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .move-category {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .move-category-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .moves-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .move-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid #4a5568;
+        }
+
+        .move-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .move-item.machine {
+            border-left-color: #3182ce;
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+        }
+
+        .move-item.tutor {
+            border-left-color: #38a169;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+        }
+
+        .move-item.egg {
+            border-left-color: #d69e2e;
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+        }
+
+        .move-level {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #4a5568;
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .move-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3748;
+            flex: 1;
+        }
+
+        /* Estilos para la sección de variantes */
+        .varieties-section {
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        .varieties-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .varieties-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .varieties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .variety-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .variety-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-color: #4a5568;
+        }
+
+        .variety-card.default {
+            border-color: #f6ad55;
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+        }
+
+        .variety-card.default:hover {
+            border-color: #dd6b20;
+        }
+
+        .variety-image-container {
+            position: relative;
+            background: white;
+            padding: 1rem;
+            text-align: center;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .variety-image {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            transition: transform 0.3s ease;
+        }
+
+        .variety-card:hover .variety-image {
+            transform: scale(1.1);
+        }
+
+        .default-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(237, 137, 54, 0.4);
+        }
+
+        .variety-info {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .variety-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .variety-id {
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 600;
         }
 
         @media (max-width: 968px) {
@@ -1292,6 +1579,19 @@ class PokedexMain extends LitElement {
 
             .locations-grid {
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .moves-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .varieties-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .section-header h3 {
+                font-size: 1.4rem;
             }
 
             .pokemon-detail-container {
@@ -1835,6 +2135,190 @@ class PokedexMain extends LitElement {
         this.showProgressBar = !this.showProgressBar;
     }
 
+    // Método para obtener la URL de la imagen de una ubicación
+    getLocationImageUrl(locationSlug) {
+        // Mapeo especial para ubicaciones que comparten el mismo mapa
+        
+        // Mt. Moon - todas las áreas usan la misma imagen local
+        if (locationSlug && locationSlug.startsWith('mt-moon')) {
+            return '../img/areas/mt-moon.png';
+        }
+        
+        // Mt. Coronet (Monte Corona) - todas las áreas usan la misma imagen
+        if (locationSlug && locationSlug.startsWith('mt-coronet')) {
+            return '../img/areas/mt-coronet.png';
+        }
+        
+        // Safari Zone Johto - todas las áreas usan la misma imagen
+        if (locationSlug && (locationSlug.includes('johto-safari') || locationSlug.includes('safari-zone-johto'))) {
+            return '../img/areas/johto-safari-zone.png';
+        }
+        
+        // Sprout Tower (Torre Bellsprout) - Johto
+        if (locationSlug && locationSlug.includes('sprout-tower')) {
+            return '../img/areas/johto-sprout-tower.png';
+        }
+        
+        // Union Cave (Cueva Unión) - Johto
+        if (locationSlug && locationSlug.includes('union-cave')) {
+            return '../img/areas/johto-union-cave.png';
+        }
+        
+        // Burned Tower (Torre Quemada) - Johto
+        if (locationSlug && locationSlug.includes('burned-tower')) {
+            return '../img/areas/johto-burned-tower.png';
+        }
+        
+        // Bell Tower (Torre Campana) - Johto
+        if (locationSlug && locationSlug.includes('bell-tower')) {
+            return '../img/areas/johto-bell-tower.png';
+        }
+        
+        // Mt. Mortar (Monte Mortero) - Johto
+        if (locationSlug && locationSlug.includes('mt-mortar')) {
+            return '../img/areas/johto-mt-mortar.png';
+        }
+        
+        // Tohjo Falls (Cataratas Tohjo) - Kanto/Johto
+        if (locationSlug && locationSlug.includes('tohjo-falls')) {
+            return '../img/areas/kanto-tohjo-falls.png';
+        }
+        
+        // Rutas de Johto - usar imágenes específicas con formato johto-route-numero-area.png
+        if (locationSlug && locationSlug.startsWith('johto-route-')) {
+            // Extraer el número de la ruta
+            const match = locationSlug.match(/johto-route-(\d+)/);
+            if (match) {
+                const routeNumber = match[1];
+                return `../img/areas/johto-route-${routeNumber}-area.png`;
+            }
+        }
+        
+        // Rutas de Sinnoh - usar imágenes específicas con formato sinnoh-route-numero-area.png
+        if (locationSlug && locationSlug.startsWith('sinnoh-route-')) {
+            // Extraer el número de la ruta
+            const match = locationSlug.match(/sinnoh-route-(\d+)/);
+            if (match) {
+                const routeNumber = match[1];
+                return `../img/areas/sinnoh-route-${routeNumber}-area.png`;
+            }
+        }
+        
+        // Giant Chasm - todas las áreas usan la misma imagen (nota: archivo usa guion bajo)
+        if (locationSlug && locationSlug.startsWith('giant-chasm')) {
+            return '../img/areas/giant_chasm.png';
+        }
+        
+        // Mount Hokulani - todas las áreas usan la misma imagen
+        if (locationSlug && locationSlug.startsWith('mount-hokulani')) {
+            return '../img/areas/alola-Mount-Hokulani.png';
+        }
+        
+        // Rutas de Alola - usar imágenes específicas con formato alola-route-numero.png
+        if (locationSlug && locationSlug.startsWith('alola-route-')) {
+            // Extraer el número de la ruta
+            const match = locationSlug.match(/alola-route-(\d+)/);
+            if (match) {
+                const routeNumber = match[1];
+                return `../img/areas/alola-route-${routeNumber}.png`;
+            }
+        }
+        
+        // Rutas de Unova (Teselia) - usar imágenes específicas con formato unova-route-numero.png
+        if (locationSlug && locationSlug.startsWith('unova-route-')) {
+            // Extraer el número de la ruta
+            const match = locationSlug.match(/unova-route-(\d+)/);
+            if (match) {
+                const routeNumber = match[1];
+                return `../img/areas/unova-route-${routeNumber}.png`;
+            }
+        }
+        
+        // Seaward Cave (Gruta Unemar) - Alola
+        if (locationSlug && locationSlug.includes('seaward-cave')) {
+            return '../img/areas/alola-seaward-cave.png';
+        }
+        
+        // Lush Jungle (Jungla Umbría) - Alola
+        if (locationSlug && locationSlug.includes('lush-jungle')) {
+            return '../img/areas/alola-lush-jungle.png';
+        }
+        
+        // Melemele Meadow (Jardines de Melemele) - Alola
+        if (locationSlug && locationSlug.includes('melemele-meadow')) {
+            return '../img/areas/alola-melemele-meadow.png';
+        }
+        
+        // Usar las imágenes locales si existen, o generar un SVG placeholder atractivo
+        return `../img/areas/${locationSlug}.png`;
+    }
+
+    // Generar URL de ubicación basada en patrones
+    generateLocationUrl(locationSlug) {
+        // Generar un SVG placeholder atractivo con el nombre de la ubicación
+        const locationName = locationSlug
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+            .replace(' Area', '');
+        
+        // Colores basados en el tipo de ubicación
+        let gradient1 = '#4CAF50';
+        let gradient2 = '#2196F3';
+        let icon = '📍';
+        
+        if (locationSlug.includes('route')) {
+            gradient1 = '#81C784';
+            gradient2 = '#4CAF50';
+            icon = '🛤️';
+        } else if (locationSlug.includes('city') || locationSlug.includes('town')) {
+            gradient1 = '#64B5F6';
+            gradient2 = '#1976D2';
+            icon = '🏙️';
+        } else if (locationSlug.includes('cave') || locationSlug.includes('tunnel')) {
+            gradient1 = '#757575';
+            gradient2 = '#424242';
+            icon = '⛰️';
+        } else if (locationSlug.includes('forest') || locationSlug.includes('woods')) {
+            gradient1 = '#66BB6A';
+            gradient2 = '#2E7D32';
+            icon = '🌲';
+        } else if (locationSlug.includes('tower') || locationSlug.includes('building')) {
+            gradient1 = '#9575CD';
+            gradient2 = '#512DA8';
+            icon = '🗼';
+        } else if (locationSlug.includes('island')) {
+            gradient1 = '#4DD0E1';
+            gradient2 = '#0097A7';
+            icon = '🏝️';
+        }
+        
+        return 'data:image/svg+xml;base64,' + btoa(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+                <defs>
+                    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:${gradient1};stop-opacity:0.8" />
+                        <stop offset="100%" style="stop-color:${gradient2};stop-opacity:0.9" />
+                    </linearGradient>
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" stroke-opacity="0.1" stroke-width="0.5"/>
+                    </pattern>
+                </defs>
+                <rect width="400" height="240" fill="url(#grad)"/>
+                <rect width="400" height="240" fill="url(#grid)"/>
+                <text x="200" y="100" font-family="Arial, sans-serif" font-size="48" fill="white" text-anchor="middle" opacity="0.9">
+                    ${icon}
+                </text>
+                <text x="200" y="140" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">
+                    ${locationName}
+                </text>
+                <text x="200" y="165" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle" opacity="0.7">
+                    Pokémon Location
+                </text>
+            </svg>
+        `);
+    }
+
     toggleVersion(versionName) {
         const newExpanded = new Set(this.expandedVersions);
         if (newExpanded.has(versionName)) {
@@ -1846,10 +2330,803 @@ class PokedexMain extends LitElement {
         this.requestUpdate();
     }
 
+    toggleLocations() {
+        this.showLocations = !this.showLocations;
+        this.requestUpdate();
+    }
+
+    toggleMoves() {
+        this.showMoves = !this.showMoves;
+        this.requestUpdate();
+    }
+
+    toggleVarieties() {
+        this.showVarieties = !this.showVarieties;
+        this.requestUpdate();
+    }
+
+    renderVarieties() {
+        console.log("renderVarieties llamado, varieties:", this.varieties);
+        if (!this.varieties || this.varieties.length <= 1) {
+            console.log("No hay variantes para mostrar");
+            return html``;
+        }
+
+        return html`
+            <div class="varieties-container">
+                <div class="varieties-grid">
+                    ${this.varieties.map(variety => {
+                        const varietyName = variety.pokemon.name;
+                        const isDefault = variety.is_default;
+                        const formattedName = this.formatVarietyName(varietyName);
+                        const pokemonId = this.extractPokemonId(variety.pokemon.url);
+                        
+                        return html`
+                            <div class="variety-card ${isDefault ? 'default' : ''}" 
+                                 @click="${() => this.loadVariety(pokemonId)}">
+                                <div class="variety-image-container">
+                                    <img 
+                                        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png"
+                                        alt="${formattedName}"
+                                        class="variety-image"
+                                        @error="${(e) => this.handleVarietyImageError(e, pokemonId)}"
+                                    />
+                                    ${isDefault ? html`
+                                        <span class="default-badge">Forma Base</span>
+                                    ` : ''}
+                                </div>
+                                <div class="variety-info">
+                                    <h4 class="variety-name">${formattedName}</h4>
+                                    <span class="variety-id">#${String(pokemonId).padStart(3, '0')}</span>
+                                </div>
+                            </div>
+                        `;
+                    })}
+                </div>
+            </div>
+        `;
+    }
+
+    formatVarietyName(name) {
+        // Diccionario de traducciones de formas especiales
+        const formTranslations = {
+            'alola': 'Alola',
+            'galar': 'Galar',
+            'hisui': 'Hisui',
+            'paldea': 'Paldea',
+            'mega': 'Mega',
+            'gmax': 'Gigamax',
+            'primal': 'Primigenio',
+            'origin': 'Origen',
+            'sky': 'Cielo',
+            'therian': 'Tótem',
+            'black': 'Negro',
+            'white': 'Blanco',
+            'altered': 'Modificado',
+            'attack': 'Ataque',
+            'defense': 'Defensa',
+            'speed': 'Velocidad',
+            'plant': 'Planta',
+            'sandy': 'Arena',
+            'trash': 'Basura',
+            'wash': 'Lavado',
+            'frost': 'Hielo',
+            'heat': 'Calor',
+            'mow': 'Corte',
+            'fan': 'Ventilador',
+            'male': 'Macho',
+            'female': 'Hembra',
+            'midnight': 'Nocturno',
+            'midday': 'Diurno',
+            'dusk': 'Crepúsculo',
+            'school': 'Banco',
+            'solo': 'Solitario',
+            'red-striped': 'Raya Roja',
+            'blue-striped': 'Raya Azul',
+            'orange': 'Naranja',
+            'red': 'Rojo',
+            'yellow': 'Amarillo',
+            'green': 'Verde',
+            'blue': 'Azul',
+            'indigo': 'Índigo',
+            'violet': 'Violeta',
+            'small': 'Pequeño',
+            'large': 'Grande',
+            'super': 'Super',
+            'ruby': 'Rubí',
+            'sapphire': 'Zafiro',
+            'emerald': 'Esmeralda',
+            'meteor': 'Meteoro',
+            'sunshine': 'Sol',
+            'east': 'Este',
+            'west': 'Oeste',
+            'pom-pom': 'Pom Pom',
+            'pau': 'Pau',
+            'sensu': 'Sensu',
+            'original': 'Original',
+            'hoopa-unbound': 'Hoopa Desatado',
+            'confined': 'Contenido',
+            'unbound': 'Desatado',
+            'baile': 'Baile',
+            'zen': 'Zen',
+            'standard': 'Estándar',
+            'incarnate': 'Incarnado',
+            'starter': 'Inicial'
+        };
+
+        // Separar el nombre por guiones
+        const parts = name.split('-');
+        
+        // Traducir cada parte
+        const translatedParts = parts.map(part => {
+            if (formTranslations[part]) {
+                return formTranslations[part];
+            }
+            // Capitalizar primera letra si no hay traducción
+            return part.charAt(0).toUpperCase() + part.slice(1);
+        });
+
+        return translatedParts.join(' ');
+    }
+
+    extractPokemonId(url) {
+        // Extraer el ID del Pokémon de la URL
+        const matches = url.match(/\/pokemon\/(\d+)\//);
+        return matches ? matches[1] : '0';
+    }
+
+    handleVarietyImageError(event, pokemonId) {
+        // Fallback a sprite normal si falla la imagen oficial
+        event.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+    }
+
+    loadVariety(pokemonId) {
+        // Cargar la variante seleccionada
+        console.log("Cargando variante con ID:", pokemonId);
+        this.shadowRoot.querySelector('pokemon-data').setAttribute('id-pokemon', pokemonId);
+        // Scroll al inicio de la ficha
+        this.scrollToTop();
+    }
+
+    renderMoves() {
+        console.log("renderMoves llamado, moves:", this.moves);
+        if (!this.moves || this.moves.length === 0) {
+            console.log("No hay movimientos para mostrar");
+            return html``;
+        }
+
+        // Agrupar movimientos por método de aprendizaje
+        const levelUpMoves = [];
+        const machineMoves = [];
+        const tutorMoves = [];
+        const eggMoves = [];
+        const otherMoves = [];
+
+        this.moves.forEach(moveData => {
+            moveData.version_group_details.forEach(versionDetail => {
+                const method = versionDetail.move_learn_method.name;
+                const moveInfo = {
+                    name: moveData.move.name,
+                    level: versionDetail.level_learned_at,
+                    method: method
+                };
+
+                if (method === 'level-up') {
+                    levelUpMoves.push(moveInfo);
+                } else if (method === 'machine') {
+                    machineMoves.push(moveInfo);
+                } else if (method === 'tutor') {
+                    tutorMoves.push(moveInfo);
+                } else if (method === 'egg') {
+                    eggMoves.push(moveInfo);
+                } else {
+                    otherMoves.push(moveInfo);
+                }
+            });
+        });
+
+        // Eliminar duplicados y ordenar
+        const uniqueLevelUp = [...new Map(levelUpMoves.map(m => [m.name, m])).values()]
+            .sort((a, b) => a.level - b.level);
+        const uniqueMachine = [...new Set(machineMoves.map(m => m.name))].sort();
+        const uniqueTutor = [...new Set(tutorMoves.map(m => m.name))].sort();
+        const uniqueEgg = [...new Set(eggMoves.map(m => m.name))].sort();
+
+        return html`
+            <div class="moves-container">
+                ${uniqueLevelUp.length > 0 ? html`
+                    <div class="move-category">
+                        <h4 class="move-category-title">📊 Por Nivel</h4>
+                        <div class="moves-grid">
+                            ${uniqueLevelUp.map(move => html`
+                                <div class="move-item">
+                                    <span class="move-level">Nv. ${move.level}</span>
+                                    <span class="move-name">${this.formatMoveName(move.name)}</span>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${uniqueMachine.length > 0 ? html`
+                    <div class="move-category">
+                        <h4 class="move-category-title">💿 Por MT/MO</h4>
+                        <div class="moves-grid">
+                            ${uniqueMachine.map(moveName => html`
+                                <div class="move-item machine">
+                                    <span class="move-name">${this.formatMoveName(moveName)}</span>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${uniqueTutor.length > 0 ? html`
+                    <div class="move-category">
+                        <h4 class="move-category-title">👨‍🏫 Por Tutor</h4>
+                        <div class="moves-grid">
+                            ${uniqueTutor.map(moveName => html`
+                                <div class="move-item tutor">
+                                    <span class="move-name">${this.formatMoveName(moveName)}</span>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${uniqueEgg.length > 0 ? html`
+                    <div class="move-category">
+                        <h4 class="move-category-title">🥚 Por Huevo</h4>
+                        <div class="moves-grid">
+                            ${uniqueEgg.map(moveName => html`
+                                <div class="move-item egg">
+                                    <span class="move-name">${this.formatMoveName(moveName)}</span>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    formatMoveName(name) {
+        // Diccionario de traducciones de movimientos al español
+        const moveTranslations = {
+            // Movimientos Gen I
+            'pound': 'Destructor',
+            'karate-chop': 'Golpe Karate',
+            'double-slap': 'Doble Bofetón',
+            'comet-punch': 'Puño Cometa',
+            'mega-punch': 'Mega Puño',
+            'pay-day': 'Día de Pago',
+            'fire-punch': 'Puño Fuego',
+            'ice-punch': 'Puño Hielo',
+            'thunder-punch': 'Puño Trueno',
+            'scratch': 'Arañazo',
+            'vice-grip': 'Agarre',
+            'guillotine': 'Guillotina',
+            'razor-wind': 'Viento Cortante',
+            'swords-dance': 'Danza Espada',
+            'cut': 'Corte',
+            'gust': 'Tornado',
+            'wing-attack': 'Ataque Ala',
+            'whirlwind': 'Remolino',
+            'fly': 'Vuelo',
+            'bind': 'Atadura',
+            'slam': 'Portazo',
+            'vine-whip': 'Látigo Cepa',
+            'stomp': 'Pisotón',
+            'double-kick': 'Doble Patada',
+            'mega-kick': 'Mega Patada',
+            'jump-kick': 'Patada Salto',
+            'rolling-kick': 'Patada Giro',
+            'sand-attack': 'Ataque Arena',
+            'headbutt': 'Golpe Cabeza',
+            'horn-attack': 'Cornada',
+            'fury-attack': 'Ataque Furia',
+            'horn-drill': 'Perforador',
+            'tackle': 'Placaje',
+            'body-slam': 'Golpe Cuerpo',
+            'wrap': 'Constricción',
+            'take-down': 'Derribo',
+            'thrash': 'Enfado',
+            'double-edge': 'Doble Filo',
+            'tail-whip': 'Látigo',
+            'poison-sting': 'Picotazo Veneno',
+            'twineedle': 'Doble Ataque',
+            'pin-missile': 'Pin Misil',
+            'leer': 'Malicioso',
+            'bite': 'Mordisco',
+            'growl': 'Gruñido',
+            'roar': 'Rugido',
+            'sing': 'Canto',
+            'supersonic': 'Supersónico',
+            'sonic-boom': 'Bomba Sónica',
+            'disable': 'Anulación',
+            'acid': 'Ácido',
+            'ember': 'Ascuas',
+            'flamethrower': 'Lanzallamas',
+            'mist': 'Neblina',
+            'water-gun': 'Pistola Agua',
+            'hydro-pump': 'Hidrobomba',
+            'surf': 'Surf',
+            'ice-beam': 'Rayo Hielo',
+            'blizzard': 'Ventisca',
+            'psybeam': 'Psicorrayo',
+            'bubble-beam': 'Rayo Burbuja',
+            'aurora-beam': 'Rayo Aurora',
+            'hyper-beam': 'Hiperrayo',
+            'peck': 'Picotazo',
+            'drill-peck': 'Pico Taladro',
+            'submission': 'Sumisión',
+            'low-kick': 'Patada Baja',
+            'counter': 'Contraataque',
+            'seismic-toss': 'Sísmico',
+            'strength': 'Fuerza',
+            'absorb': 'Absorber',
+            'mega-drain': 'Mega Agotar',
+            'leech-seed': 'Drenadoras',
+            'growth': 'Desarrollo',
+            'razor-leaf': 'Hoja Afilada',
+            'solar-beam': 'Rayo Solar',
+            'poison-powder': 'Polvo Veneno',
+            'stun-spore': 'Paralizador',
+            'sleep-powder': 'Somnífero',
+            'petal-dance': 'Danza Pétalo',
+            'string-shot': 'Disparo Demora',
+            'dragon-rage': 'Furia Dragón',
+            'fire-spin': 'Giro Fuego',
+            'thunder-shock': 'Impactrueno',
+            'thunderbolt': 'Rayo',
+            'thunder-wave': 'Onda Trueno',
+            'thunder': 'Trueno',
+            'rock-throw': 'Lanzarrocas',
+            'earthquake': 'Terremoto',
+            'fissure': 'Fisura',
+            'dig': 'Excavar',
+            'toxic': 'Tóxico',
+            'confusion': 'Confusión',
+            'psychic': 'Psíquico',
+            'hypnosis': 'Hipnosis',
+            'meditate': 'Meditación',
+            'agility': 'Agilidad',
+            'quick-attack': 'Ataque Rápido',
+            'rage': 'Furia',
+            'teleport': 'Teletransporte',
+            'night-shade': 'Tinieblas',
+            'mimic': 'Mimético',
+            'screech': 'Chirrido',
+            'double-team': 'Doble Equipo',
+            'recover': 'Recuperación',
+            'harden': 'Fortaleza',
+            'minimize': 'Reducción',
+            'smokescreen': 'Pantalla Humo',
+            'confuse-ray': 'Rayo Confuso',
+            'withdraw': 'Refugio',
+            'defense-curl': 'Rizo Defensa',
+            'barrier': 'Barrera',
+            'light-screen': 'Pantalla Luz',
+            'haze': 'Niebla',
+            'reflect': 'Reflejo',
+            'focus-energy': 'Foco Energía',
+            'bide': 'Venganza',
+            'metronome': 'Metrónomo',
+            'mirror-move': 'Mov. Espejo',
+            'self-destruct': 'Autodestrucción',
+            'egg-bomb': 'Bomba Huevo',
+            'lick': 'Lengüetazo',
+            'smog': 'Polución',
+            'sludge': 'Residuos',
+            'bone-club': 'Hueso Palo',
+            'fire-blast': 'Llamarada',
+            'waterfall': 'Cascada',
+            'clamp': 'Tenaza',
+            'swift': 'Rapidez',
+            'skull-bash': 'Cabezazo',
+            'spike-cannon': 'Clavo Cañón',
+            'constrict': 'Restricción',
+            'amnesia': 'Amnesia',
+            'kinesis': 'Kinético',
+            'soft-boiled': 'Amortiguador',
+            'high-jump-kick': 'Pat. S. Alta',
+            'glare': 'Deslumbrar',
+            'dream-eater': 'Come Sueños',
+            'poison-gas': 'Gas Venenoso',
+            'barrage': 'Presa',
+            'leech-life': 'Chupavidas',
+            'lovely-kiss': 'Beso Amoroso',
+            'sky-attack': 'Ataque Aéreo',
+            'transform': 'Transformación',
+            'bubble': 'Burbuja',
+            'dizzy-punch': 'Puño Mareo',
+            'spore': 'Espora',
+            'flash': 'Destello',
+            'psywave': 'Psicoonda',
+            'splash': 'Salpicadura',
+            'acid-armor': 'Armadura Ácida',
+            'crabhammer': 'Martillo',
+            'explosion': 'Explosión',
+            'fury-swipes': 'Golpes Furia',
+            'bonemerang': 'Huesomerang',
+            'rest': 'Descanso',
+            'rock-slide': 'Avalancha',
+            'hyper-fang': 'Hiper Colmillo',
+            'sharpen': 'Afilar',
+            'conversion': 'Conversión',
+            'tri-attack': 'Triataque',
+            'super-fang': 'Super Colmillo',
+            'slash': 'Cuchillada',
+            'substitute': 'Sustituto',
+            'struggle': 'Forcejeo',
+            
+            // Movimientos Gen II (algunos comunes)
+            'sketch': 'Esquema',
+            'triple-kick': 'Triple Patada',
+            'thief': 'Ladrón',
+            'spider-web': 'Telaraña',
+            'mind-reader': 'Lectura Mente',
+            'nightmare': 'Pesadilla',
+            'flame-wheel': 'Rueda Fuego',
+            'snore': 'Ronquido',
+            'curse': 'Maldición',
+            'flail': 'Azote',
+            'conversion-2': 'Conversión 2',
+            'aeroblast': 'Aerochorro',
+            'cotton-spore': 'Espora Algodón',
+            'reversal': 'Inversión',
+            'spite': 'Rencor',
+            'powder-snow': 'Nieve Polvo',
+            'protect': 'Protección',
+            'mach-punch': 'Ultrapuño',
+            'scary-face': 'Cara Susto',
+            'feint-attack': 'Finta',
+            'sweet-kiss': 'Beso Dulce',
+            'belly-drum': 'Tambor',
+            'sludge-bomb': 'Bomba Lodo',
+            'mud-slap': 'Bofetón Lodo',
+            'octazooka': 'Octazooka',
+            'spikes': 'Púas',
+            'zap-cannon': 'Electrocañón',
+            'foresight': 'Profecía',
+            'destiny-bond': 'Mismo Destino',
+            'perish-song': 'Canto Mortal',
+            'icy-wind': 'Viento Hielo',
+            'detect': 'Detección',
+            'bone-rush': 'Ataque Óseo',
+            'lock-on': 'Fijar Blanco',
+            'outrage': 'Enfado',
+            'sandstorm': 'Tormenta Arena',
+            'giga-drain': 'Gigadrenado',
+            'endure': 'Aguante',
+            'charm': 'Encanto',
+            'rollout': 'Rodar',
+            'false-swipe': 'Falsotortazo',
+            'swagger': 'Contoneo',
+            'milk-drink': 'Batido',
+            'spark': 'Chispa',
+            'fury-cutter': 'Corte Furia',
+            'steel-wing': 'Ala de Acero',
+            'mean-look': 'Mal de Ojo',
+            'attract': 'Atracción',
+            'sleep-talk': 'Sonámbulo',
+            'heal-bell': 'Campana Cura',
+            'return': 'Retribución',
+            'present': 'Presente',
+            'frustration': 'Frustración',
+            'safeguard': 'Velo Sagrado',
+            'pain-split': 'Divide Dolor',
+            'sacred-fire': 'Fuego Sagrado',
+            'magnitude': 'Magnitud',
+            'dynamic-punch': 'Puño Dinámico',
+            'megahorn': 'Megacuerno',
+            'dragon-breath': 'Dragoaliento',
+            'baton-pass': 'Relevo',
+            'encore': 'Otra Vez',
+            'pursuit': 'Persecución',
+            'rapid-spin': 'Giro Rápido',
+            'sweet-scent': 'Dulce Aroma',
+            'iron-tail': 'Cola Férrea',
+            'metal-claw': 'Garra Metal',
+            'vital-throw': 'Tiro Vital',
+            'morning-sun': 'Sol Matinal',
+            'synthesis': 'Síntesis',
+            'moonlight': 'Luz Lunar',
+            'hidden-power': 'Poder Oculto',
+            'cross-chop': 'Tajo Cruzado',
+            'twister': 'Ciclón',
+            'rain-dance': 'Danza Lluvia',
+            'sunny-day': 'Día Soleado',
+            'crunch': 'Triturar',
+            'mirror-coat': 'Manto Espejo',
+            'psych-up': 'Psico-up',
+            'extreme-speed': 'Velocidad Extrema',
+            'ancient-power': 'Poder Pasado',
+            'shadow-ball': 'Bola Sombra',
+            'future-sight': 'Premonición',
+            'rock-smash': 'Golpe Roca',
+            'whirlpool': 'Torbellino',
+            'beat-up': 'Paliza',
+            
+            // Algunos Gen III y posteriores
+            'fake-out': 'Sorpresa',
+            'uproar': 'Alboroto',
+            'stockpile': 'Reserva',
+            'spit-up': 'Escupir',
+            'swallow': 'Tragar',
+            'heat-wave': 'Onda Ígnea',
+            'hail': 'Granizo',
+            'torment': 'Tormento',
+            'flatter': 'Camelo',
+            'will-o-wisp': 'Fuego Fatuo',
+            'memento': 'Legado',
+            'facade': 'Fachada',
+            'focus-punch': 'Puño Certero',
+            'smelling-salts': 'Estímulo',
+            'follow-me': 'Señuelo',
+            'nature-power': 'Adaptación',
+            'charge': 'Carga',
+            'taunt': 'Mofa',
+            'helping-hand': 'Refuerzo',
+            'trick': 'Truco',
+            'role-play': 'Imitación',
+            'wish': 'Deseo',
+            'assist': 'Ayuda',
+            'ingrain': 'Arraigo',
+            'superpower': 'Fuerza Bruta',
+            'magic-coat': 'Capa Mágica',
+            'recycle': 'Reciclaje',
+            'revenge': 'Desquite',
+            'brick-break': 'Demolición',
+            'yawn': 'Bostezo',
+            'knock-off': 'Desarme',
+            'endeavor': 'Esfuerzo',
+            'eruption': 'Estallido',
+            'skill-swap': 'Intercambio',
+            'imprison': 'Cerca',
+            'refresh': 'Alivio',
+            'grudge': 'Rabia',
+            'snatch': 'Robo',
+            'secret-power': 'Poder Secreto',
+            'dive': 'Buceo',
+            'arm-thrust': 'Empujón',
+            'camouflage': 'Camuflaje',
+            'tail-glow': 'Luz Cola',
+            'luster-purge': 'Resplandor',
+            'mist-ball': 'Bola Neblina',
+            'feather-dance': 'Danza Pluma',
+            'teeter-dance': 'Danza Caos',
+            'blaze-kick': 'Patada Ígnea',
+            'mud-sport': 'Chapoteo Lodo',
+            'ice-ball': 'Bola Hielo',
+            'needle-arm': 'Brazo Pincho',
+            'slack-off': 'Relajo',
+            'hyper-voice': 'Vozarrón',
+            'poison-fang': 'Colmillo Veneno',
+            'crush-claw': 'Garra Brutal',
+            'blast-burn': 'Anillo Ígneo',
+            'hydro-cannon': 'Hidrocañón',
+            'meteor-mash': 'Puño Meteoro',
+            'astonish': 'Impresionar',
+            'weather-ball': 'Meteorobola',
+            'aromatherapy': 'Aromaterapia',
+            'fake-tears': 'Llanto Falso',
+            'air-cutter': 'Viento Cortante',
+            'overheat': 'Sofoco',
+            'odor-sleuth': 'Rastreo',
+            'rock-tomb': 'Tumba Rocas',
+            'silver-wind': 'Viento Plata',
+            'metal-sound': 'Eco Metálico',
+            'grass-whistle': 'Silbato',
+            'tickle': 'Cosquillas',
+            'cosmic-power': 'Masa Cósmica',
+            'water-spout': 'Salpiadura',
+            'signal-beam': 'Rayo Signal',
+            'shadow-punch': 'Puño Sombra',
+            'extrasensory': 'Paranormal',
+            'sky-uppercut': 'Gancho Alto',
+            'sand-tomb': 'Bucle Arena',
+            'sheer-cold': 'Frío Polar',
+            'muddy-water': 'Agua Lodosa',
+            'bullet-seed': 'Semilladora',
+            'aerial-ace': 'Golpe Aéreo',
+            'icicle-spear': 'Carámbano',
+            'iron-defense': 'Defensa Férrea',
+            'block': 'Bloqueo',
+            'howl': 'Aullido',
+            'dragon-claw': 'Garra Dragón',
+            'frenzy-plant': 'Planta Feroz',
+            'bulk-up': 'Corpulencia',
+            'bounce': 'Bote',
+            'mud-shot': 'Disparo Lodo',
+            'poison-tail': 'Cola Veneno',
+            'covet': 'Antojo',
+            'volt-tackle': 'Placaje Eléctrico',
+            'magical-leaf': 'Hoja Mágica',
+            'water-sport': 'Hidrochorro',
+            'calm-mind': 'Paz Mental',
+            'leaf-blade': 'Hoja Aguda',
+            'dragon-dance': 'Danza Dragón',
+            'rock-blast': 'Pedrada',
+            'shock-wave': 'Onda Voltio',
+            'water-pulse': 'Hidropulso',
+            'doom-desire': 'Deseo Oculto',
+            'psycho-boost': 'Psicoimpulso',
+            
+            // Algunos movimientos comunes de generaciones más recientes
+            'close-combat': 'A Bocajarro',
+            'aura-sphere': 'Esfera Aural',
+            'dark-pulse': 'Pulso Umbrío',
+            'dragon-pulse': 'Pulso Dragón',
+            'power-gem': 'Joya de Luz',
+            'energy-ball': 'Energibola',
+            'brave-bird': 'Pájaro Osado',
+            'earth-power': 'Tierra Viva',
+            'gunk-shot': 'Lanzamugre',
+            'iron-head': 'Cabeza Hierro',
+            'stone-edge': 'Roca Afilada',
+            'stealth-rock': 'Trampa Rocas',
+            'grass-knot': 'Hierba Lazo',
+            'bug-buzz': 'Zumbido',
+            'discharge': 'Chispazo',
+            'lava-plume': 'Humareda',
+            'leaf-storm': 'Lluevehojas',
+            'power-whip': 'Látigo Cepa',
+            'rock-wrecker': 'Romperrocas',
+            'cross-poison': 'Veneno X',
+            'ice-shard': 'Esquirla Helada',
+            'shadow-claw': 'Garra Umbría',
+            'thunder-fang': 'Colmillo Rayo',
+            'ice-fang': 'Colmillo Hielo',
+            'fire-fang': 'Colmillo Ígneo',
+            'shadow-sneak': 'Sombra Vil',
+            'mud-bomb': 'Bomba Fango',
+            'psycho-cut': 'Psicocorte',
+            'zen-headbutt': 'Cabezazo Zen',
+            'flash-cannon': 'Foco Resplandor',
+            'rock-climb': 'Treparrocas',
+            'draco-meteor': 'Cometa Draco',
+            'leaf-tornado': 'Ciclón de Hojas',
+            'power-split': 'Isoguardia',
+            'guard-split': 'Isoguardia',
+            'electro-ball': 'Bola Voltio',
+            'flame-charge': 'Nitrocarga',
+            'coil': 'Enrosque',
+            'low-sweep': 'Puntapié',
+            'hex': 'Infortunio',
+            'sky-drop': 'Caída Libre',
+            'acrobatics': 'Acróbata',
+            'sludge-wave': 'Onda Tóxica',
+            'heavy-slam': 'Cuerpo Pesado',
+            'electroweb': 'Electrotela',
+            'wild-charge': 'Voltio Cruel',
+            'drill-run': 'Taladradora',
+            'dual-chop': 'Doble Tajo',
+            'heart-stamp': 'Arrumaco',
+            'wood-hammer': 'Mazazo',
+            'aqua-tail': 'Acua Cola',
+            'seed-bomb': 'Bomba Germen',
+            'air-slash': 'Tajo Aéreo',
+            'x-scissor': 'Tijera X',
+            'dragon-rush': 'Carga Dragón',
+            'aqua-jet': 'Acua Jet',
+            'attack-order': 'Mandato',
+            'defending-order': 'Guardia Real',
+            'healing-order': 'Auxilio',
+            'head-smash': 'Testarazo',
+            'double-hit': 'Doble Golpe',
+            'roar-of-time': 'Distorsión',
+            'spacial-rend': 'Corte Vacío',
+            'lunar-dance': 'Danza Lunar',
+            'crush-grip': 'Agarrón',
+            'magma-storm': 'Lluvia Ígnea',
+            'dark-void': 'Brecha Negra',
+            'seed-flare': 'Fogonazo',
+            'ominous-wind': 'Viento Aciago',
+            'shadow-force': 'Golpe Umbrío',
+            
+            // Movimientos Z y más recientes
+            'breakneck-blitz': 'Embestida Gigante',
+            'play-rough': 'Carantoña',
+            'moonblast': 'Fuerza Lunar',
+            'boomburst': 'Estruendo',
+            'fairy-wind': 'Viento Feérico',
+            'dazzling-gleam': 'Brillo Mágico',
+            'parting-shot': 'Última Palabra',
+            'topsy-turvy': 'Reversión',
+            'baby-doll-eyes': 'Ojitos Tiernos',
+            'nuzzle': 'Moflete Estático',
+            'infestation': 'Acoso',
+            'power-up-punch': 'Puño Incremento',
+            'oblivion-wing': 'Ala Mortífera',
+            'lands-wrath': 'Fuerza Telúrica',
+            'thousand-arrows': 'Mil Flechas',
+            'thousand-waves': 'Mil Temblores',
+            'precipice-blades': 'Filo del Abismo',
+            'origin-pulse': 'Hidropulso Primigenio',
+            'hyperspace-hole': 'Agujero Dimensional',
+            'steam-eruption': 'Chorro de Vapor',
+            
+            // Más movimientos modernos
+            'spirit-shackle': 'Puntada Sombría',
+            'darkest-lariat': 'Lariat Oscuro',
+            'sparkling-aria': 'Aria Burbuja',
+            'ice-hammer': 'Martillo Hielo',
+            'floral-healing': 'Cura Floral',
+            'solar-blade': 'Filo Solar',
+            'leafage': 'Follaje',
+            'spotlight': 'Foco',
+            'toxic-thread': 'Hilo Venenoso',
+            'laser-focus': 'Aguzar',
+            'gear-up': 'Piñón Auxiliar',
+            'throat-chop': 'Golpe Mordaza',
+            'pollen-puff': 'Bola de Polen',
+            'anchor-shot': 'Anclaje',
+            'psychic-terrain': 'Campo Psíquico',
+            'lunge': 'Plancha',
+            'fire-lash': 'Látigo Ígneo',
+            'power-trip': 'Chulería',
+            'burn-up': 'Llama Final',
+            'speed-swap': 'Cambiovelocidad',
+            'smart-strike': 'Cuerno Certero',
+            'purify': 'Purificación',
+            'revelation-dance': 'Danza Revealed',
+            'core-enforcer': 'Núcleo Castigo',
+            'trop-kick': 'Patada Tropical',
+            'instruct': 'Mandato',
+            'beak-blast': 'Pico Cañón',
+            'clanging-scales': 'Fragor Escamas',
+            'dragon-hammer': 'Martillo Dragón',
+            'brutal-swing': 'Giro Vil',
+            'aurora-veil': 'Velo Aurora',
+            'shell-trap': 'Coraza Trampa',
+            'fleur-cannon': 'Cañón Floral',
+            'psychic-fangs': 'Colmillo Psíquico',
+            'stomping-tantrum': 'Pataleta',
+            'shadow-bone': 'Hueso Sombrío',
+            'accelerock': 'Roca Veloz',
+            'liquidation': 'Hidroariete',
+            'prismatic-laser': 'Láser Prisma',
+            'spectral-thief': 'Robasombra',
+            'sunsteel-strike': 'Meteoimpacto',
+            'moongeist-beam': 'Rayo Umbrío',
+            'tearful-look': 'Ojos Llorosos',
+            'zing-zap': 'Electropunzada',
+            'natures-madness': 'Furia Naturaleza',
+            'multi-attack': 'Multiataque',
+            'clangorous-soulblaze': 'Estruendo Escamas',
+            'zippy-zap': 'Electrorrápido',
+            'splishy-splash': 'Salpikasurf',
+            'floaty-fall': 'Globoimpacto',
+            'pika-papow': 'Pikavoltio',
+            'bouncy-bubble': 'Plancha Superespuma',
+            'buzzy-buzz': 'Electrofiesta',
+            'sizzly-slide': 'Ígneoparty',
+            'glitzy-glow': 'Doble Rayo',
+            'baddy-bad': 'Maleficazo',
+            'sappy-seed': 'Seísmo Forestal',
+            'freezy-frost': 'Glaceoprisma',
+            'sparkly-swirl': 'Feerotormenta',
+            'veevee-volley': 'Eeveepunzada',
+            'double-iron-bash': 'Ferropaliza'
+        };
+
+        // Si existe traducción, usarla; si no, formatear el nombre en inglés
+        if (moveTranslations[name]) {
+            return moveTranslations[name];
+        }
+        
+        // Fallback: Convertir guiones en espacios y capitalizar cada palabra
+        return name.split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
     // Método para manejar errores de carga de imagen
     handleImageError(event) {
         const img = event.target;
         const locationName = img.getAttribute('data-location') || 'Ubicación';
+        const locationSlug = img.getAttribute('data-location-slug');
         const originalSrc = img.src;
         
         // Si ya intentamos fuentes alternativas, mostrar placeholder
@@ -1861,10 +3138,7 @@ class PokedexMain extends LitElement {
         // Marcar que estamos intentando fuentes alternativas
         img.dataset.fallbackAttempted = 'true';
         
-        // Intentar con fuentes alternativas
-        const locationSlug = img.src.split('/').pop().replace('.png', '');
-        
-        console.log(`🔍 Buscando imagen para: ${locationSlug}`);
+        console.log(`🔍 Buscando imagen para: ${locationSlug} (${locationName})`);
         
         // Lista de URLs alternativas para intentar
         const fallbackUrls = this.getFallbackImageUrls(locationSlug, locationName);
@@ -2149,63 +3423,14 @@ class PokedexMain extends LitElement {
 
     // Método para mostrar imagen placeholder
     showPlaceholderImage(img, locationName) {
-        console.log(`📍 Generando placeholder para: ${locationName}`);
+        console.log(`📍 Generando placeholder SVG para: ${locationName}`);
         
-        // Crear un canvas con un diseño placeholder
-        const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 300;
-        const ctx = canvas.getContext('2d');
+        // Obtener el slug de la ubicación desde el atributo data
+        const locationSlug = img.getAttribute('data-location-slug') || 
+                           locationName.toLowerCase().replace(/\s+/g, '-');
         
-        // Fondo con gradiente
-        const gradient = ctx.createLinearGradient(0, 0, 400, 300);
-        gradient.addColorStop(0, '#e2e8f0');
-        gradient.addColorStop(1, '#cbd5e0');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 400, 300);
-        
-        // Borde
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(0, 0, 400, 300);
-        
-        // Icono de ubicación (pin)
-        ctx.fillStyle = '#64748b';
-        ctx.font = 'bold 80px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('📍', 200, 120);
-        
-        // Texto
-        ctx.fillStyle = '#475569';
-        ctx.font = 'bold 20px Arial';
-        ctx.fillText('Imagen no disponible', 200, 200);
-        
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#64748b';
-        
-        // Dividir el nombre de la ubicación en líneas si es muy largo
-        const maxWidth = 360;
-        const words = locationName.split(' ');
-        let line = '';
-        let y = 240;
-        
-        for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i] + ' ';
-            const metrics = ctx.measureText(testLine);
-            
-            if (metrics.width > maxWidth && i > 0) {
-                ctx.fillText(line, 200, y);
-                line = words[i] + ' ';
-                y += 20;
-            } else {
-                line = testLine;
-            }
-        }
-        ctx.fillText(line, 200, y);
-        
-        // Reemplazar la imagen con el canvas
-        img.src = canvas.toDataURL();
+        // Usar el generador SVG mejorado que ya tenemos
+        img.src = this.generateLocationUrl(locationSlug);
         img.classList.add('placeholder-image');
     }
 
@@ -2401,8 +3626,12 @@ class PokedexMain extends LitElement {
         this.encounters = this.fichaPokemon.encounters;
         this.speciesInfo = this.fichaPokemon.species_info;
         this.evolutionChain = this.fichaPokemon.evolution_chain;
+        this.moves = this.fichaPokemon.moves || [];
+        this.varieties = this.speciesInfo?.varieties || [];
         console.log("Species Info:", this.speciesInfo);
         console.log("Evolution Chain:", this.evolutionChain);
+        console.log("Moves:", this.moves);
+        console.log("Varieties:", this.varieties);
         console.log("AQUIII");
     }
     mascaraNum(n){
@@ -2420,10 +3649,21 @@ class PokedexMain extends LitElement {
                 if (!versionMap.has(versionName)) {
                     versionMap.set(versionName, []);
                 }
-                versionMap.get(versionName).push({
-                    location: encounter.location_area.name,
-                    locationDisplay: this.getLugar(encounter.location_area.name)
-                });
+                
+                const locationDisplay = this.getLugar(encounter.location_area.name);
+                const existingLocations = versionMap.get(versionName);
+                
+                // Solo agregar si no existe ya esta localización para esta versión
+                const isDuplicate = existingLocations.some(loc => 
+                    loc.locationDisplay === locationDisplay
+                );
+                
+                if (!isDuplicate) {
+                    versionMap.get(versionName).push({
+                        location: encounter.location_area.name,
+                        locationDisplay: locationDisplay
+                    });
+                }
             });
         });
         
@@ -2441,6 +3681,7 @@ class PokedexMain extends LitElement {
             case "johto":
             case "sinnoh":
             case "kalos":
+            case "alola":
                 return "Ruta " + arrayDeCadenas[2] + " - " + this.capitalizeFirstLetter(arrayDeCadenas[0]);
             case "unova":
                     return "Ruta " + arrayDeCadenas[2] + " - " + "Teselia";
@@ -2482,11 +3723,37 @@ class PokedexMain extends LitElement {
             "viridian-forest-area": "Bosque Verde",
             "digletts-cave-area": "Cueva Diglett",
             "mt-moon-area": "Monte Moon",
+            "mt-moon-1f": "Monte Moon - 1ª Planta",
+            "mt-moon-2f": "Monte Moon - 2ª Planta",
+            "mt-moon-b1f": "Monte Moon - Sótano 1",
+            "mt-moon-b2f": "Monte Moon - Sótano 2",
             "rock-tunnel-area": "Túnel Roca",
+            "rock-tunnel-1f": "Túnel Roca - 1ª Planta",
+            "rock-tunnel-b1f": "Túnel Roca - Sótano 1",
             "victory-road-area": "Ruta Victoria",
+            "victory-road-1f": "Ruta Victoria - 1ª Planta",
+            "victory-road-2f": "Ruta Victoria - 2ª Planta",
+            "victory-road-3f": "Ruta Victoria - 3ª Planta",
             "cerulean-cave-area": "Cueva Celeste",
+            "cerulean-cave-1f": "Cueva Celeste - 1ª Planta",
+            "cerulean-cave-2f": "Cueva Celeste - 2ª Planta",
+            "cerulean-cave-b1f": "Cueva Celeste - Sótano 1",
             "seafoam-islands-area": "Islas Espuma",
+            "seafoam-islands-1f": "Islas Espuma - 1ª Planta",
+            "seafoam-islands-b1f": "Islas Espuma - Sótano 1",
+            "seafoam-islands-b2f": "Islas Espuma - Sótano 2",
+            "seafoam-islands-b3f": "Islas Espuma - Sótano 3",
+            "seafoam-islands-b4f": "Islas Espuma - Sótano 4",
             "safari-zone-area": "Zona Safari",
+            "safari-zone-center-area": "Zona Safari - Centro",
+            "safari-zone-east-area": "Zona Safari - Este",
+            "safari-zone-north-area": "Zona Safari - Norte",
+            "safari-zone-west-area": "Zona Safari - Oeste",
+            "pokemon-tower-3f": "Torre Pokémon - 3ª Planta",
+            "pokemon-tower-4f": "Torre Pokémon - 4ª Planta",
+            "pokemon-tower-5f": "Torre Pokémon - 5ª Planta",
+            "pokemon-tower-6f": "Torre Pokémon - 6ª Planta",
+            "pokemon-tower-7f": "Torre Pokémon - 7ª Planta",
             
             // Johto - Ciudades y Pueblos
             "new-bark-town-area": "Pueblo Primavera",
@@ -2505,16 +3772,73 @@ class PokedexMain extends LitElement {
             "national-park-area": "Parque Nacional",
             "lake-of-rage-area": "Lago de la Furia",
             "ice-path-area": "Ruta Helada",
+            "ice-path-1f": "Ruta Helada - 1ª Planta",
+            "ice-path-b1f": "Ruta Helada - Sótano 1",
+            "ice-path-b2f": "Ruta Helada - Sótano 2",
             "dark-cave-area": "Cueva Oscura",
+            "dark-cave-violet-entrance": "Cueva Oscura - Entrada Violeta",
+            "dark-cave-blackthorn-entrance": "Cueva Oscura - Entrada Encina",
             "union-cave-area": "Cueva Unión",
+            "union-cave-1f": "Cueva Unión - 1ª Planta",
+            "union-cave-b1f": "Cueva Unión - Sótano 1",
+            "union-cave-b2f": "Cueva Unión - Sótano 2",
             "slowpoke-well-area": "Pozo Slowpoke",
+            "slowpoke-well-b1f": "Pozo Slowpoke - Sótano 1",
+            "slowpoke-well-b2f": "Pozo Slowpoke - Sótano 2",
             "ruins-of-alph-area": "Ruinas Alfa",
+            "ruins-of-alph-outside-south": "Ruinas Alfa - Exterior Sur",
             "sprout-tower-area": "Torre Bellsprout",
+            "sprout-tower-2f": "Torre Bellsprout - 2ª Planta",
+            "sprout-tower-3f": "Torre Bellsprout - 3ª Planta",
             "burned-tower-area": "Torre Quemada",
+            "burned-tower-1f": "Torre Quemada - 1ª Planta",
+            "burned-tower-b1f": "Torre Quemada - Sótano 1",
             "tin-tower-area": "Torre Estaño",
+            "bell-tower-area": "Torre Campana",
+            "bell-tower-1f": "Torre Campana - 1ª Planta",
+            "bell-tower-2f": "Torre Campana - 2ª Planta",
+            "bell-tower-3f": "Torre Campana - 3ª Planta",
+            "bell-tower-4f": "Torre Campana - 4ª Planta",
+            "bell-tower-5f": "Torre Campana - 5ª Planta",
+            "bell-tower-6f": "Torre Campana - 6ª Planta",
+            "bell-tower-7f": "Torre Campana - 7ª Planta",
+            "bell-tower-8f": "Torre Campana - 8ª Planta",
+            "bell-tower-9f": "Torre Campana - 9ª Planta",
+            "bell-tower-10f": "Torre Campana - 10ª Planta",
+            "bell-tower-roof": "Torre Campana - Azotea",
             "whirl-islands-area": "Islas Remolino",
+            "whirl-islands-nw": "Islas Remolino - Noroeste",
+            "whirl-islands-ne": "Islas Remolino - Noreste",
+            "whirl-islands-sw": "Islas Remolino - Suroeste",
+            "whirl-islands-se": "Islas Remolino - Sureste",
             "mt-mortar-area": "Monte Mortero",
+            "mt-mortar-1f-1": "Monte Mortero - 1ª Planta (1)",
+            "mt-mortar-1f-2": "Monte Mortero - 1ª Planta (2)",
+            "mt-mortar-b1f": "Monte Mortero - Sótano 1",
+            "mt-silver-cave-1f": "Monte Plateado - 1ª Planta",
+            "mt-silver-cave-2f": "Monte Plateado - 2ª Planta",
+            "mt-silver-cave-3f": "Monte Plateado - 3ª Planta",
+            "lighthouse-2f": "Faro - 2ª Planta",
+            "lighthouse-3f": "Faro - 3ª Planta",
+            "lighthouse-4f": "Faro - 4ª Planta",
+            "lighthouse-5f": "Faro - 5ª Planta",
+            "lighthouse-6f": "Faro - 6ª Planta",
             "tohjo-falls-area": "Cataratas Tohjo",
+            
+            // Johto - Safari Zone
+            "safari-zone-johto": "Zona Safari - Johto",
+            "johto-safari-zone-gate": "Zona Safari - Johto (Entrada)",
+            "safari-zone-johto-wetland": "Zona Safari - Johto (Humedal)",
+            "safari-zone-johto-meadow": "Zona Safari - Johto (Pradera)",
+            "safari-zone-johto-peak": "Zona Safari - Johto (Cima)",
+            "safari-zone-johto-forest": "Zona Safari - Johto (Bosque)",
+            "safari-zone-johto-swamp": "Zona Safari - Johto (Pantano)",
+            "safari-zone-johto-marshland": "Zona Safari - Johto (Ciénaga)",
+            "safari-zone-johto-wasteland": "Zona Safari - Johto (Erial)",
+            "safari-zone-johto-savannah": "Zona Safari - Johto (Sabana)",
+            "safari-zone-johto-rocky-beach": "Zona Safari - Johto (Playa Rocosa)",
+            "safari-zone-johto-mountain": "Zona Safari - Johto (Montaña)",
+            "safari-zone-johto-desert": "Zona Safari - Johto (Desierto)",
             
             // Hoenn - Ciudades
             "littleroot-town-area": "Pueblo Raíz Pequeña",
@@ -2554,6 +3878,20 @@ class PokedexMain extends LitElement {
             "eterna-forest-area": "Bosque Vetusto",
             "fuego-ironworks-area": "Fundición Fuego",
             "mt-coronet-area": "Monte Corona",
+            "mt-coronet-1f-route-207": "Monte Corona - 1ª Planta (Ruta 207)",
+            "mt-coronet-1f-route-216": "Monte Corona - 1ª Planta (Ruta 216)",
+            "mt-coronet-2f": "Monte Corona - 2ª Planta",
+            "mt-coronet-3f": "Monte Corona - 3ª Planta",
+            "mt-coronet-4f": "Monte Corona - 4ª Planta",
+            "mt-coronet-4f-small-room": "Monte Corona - 4ª Planta (Sala Pequeña)",
+            "mt-coronet-5f": "Monte Corona - 5ª Planta",
+            "mt-coronet-6f": "Monte Corona - 6ª Planta",
+            "mt-coronet-1f-from-exterior": "Monte Corona - 1ª Planta (Exterior)",
+            "mt-coronet-b1f": "Monte Corona - Sótano 1",
+            "mt-coronet-route-216-entrance": "Monte Corona - Entrada Ruta 216",
+            "mt-coronet-route-211-entrance": "Monte Corona - Entrada Ruta 211",
+            "mt-coronet-exterior-snowfall": "Monte Corona - Exterior Nevado",
+            "mt-coronet-exterior-blizzard": "Monte Corona - Exterior Ventisca",
             "great-marsh-area": "Gran Pantano",
             "victory-road-sinnoh-area": "Ruta Victoria - Sinnoh",
             
@@ -2561,9 +3899,58 @@ class PokedexMain extends LitElement {
             "castelia-city-area": "Ciudad Esmalte",
             "nimbasa-city-area": "Ciudad Mayólica",
             
+            // Unova - Giant Chasm (Boquete Gigante)
+            "giant-chasm-area": "Boquete Gigante",
+            "giant-chasm-forest": "Boquete Gigante - Bosque",
+            "giant-chasm-cave": "Boquete Gigante - Cueva",
+            "giant-chasm-crater": "Boquete Gigante - Cráter",
+            "giant-chasm-outside": "Boquete Gigante - Exterior",
+            "giant-chasm-forest-area": "Boquete Gigante - Bosque",
+            "giant-chasm-cave-area": "Boquete Gigante - Cueva",
+            "giant-chasm-crater-forest-area": "Boquete Gigante - Cráter del Bosque",
+            
             // Kalos
             "lumiose-city-area": "Ciudad Luminalia",
             "santalune-forest-area": "Bosque de Novarte",
+            
+            // Alola - Mount Hokulani (Monte Hokulani)
+            "mount-hokulani-area": "Monte Hokulani",
+            "mount-hokulani": "Monte Hokulani",
+            "mount-hokulani-main": "Monte Hokulani - Principal",
+            "mount-hokulani-center": "Monte Hokulani - Centro",
+            "mount-hokulani-west": "Monte Hokulani - Oeste",
+            "mount-hokulani-east": "Monte Hokulani - Este",
+            "mount-hokulani-north": "Monte Hokulani - Norte",
+            "mount-hokulani-south": "Monte Hokulani - Sur",
+            "mount-hokulani-summit": "Monte Hokulani - Cumbre",
+            "mount-hokulani-observatory": "Monte Hokulani - Observatorio",
+            
+            // Alola - Seaward Cave (Gruta Unemar)
+            "seaward-cave": "Gruta Unemar",
+            "seaward-cave-area": "Gruta Unemar",
+            "seaward-cave-entrance": "Gruta Unemar - Entrada",
+            "seaward-cave-inside": "Gruta Unemar - Interior",
+            "seaward-cave-depths": "Gruta Unemar - Profundidades",
+            
+            // Alola - Lush Jungle (Jungla Umbría)
+            "lush-jungle": "Jungla Umbría",
+            "lush-jungle-area": "Jungla Umbría",
+            "lush-jungle-entrance": "Jungla Umbría - Entrada",
+            "lush-jungle-south": "Jungla Umbría - Sur",
+            "lush-jungle-north": "Jungla Umbría - Norte",
+            "lush-jungle-east": "Jungla Umbría - Este",
+            "lush-jungle-west": "Jungla Umbría - Oeste",
+            "lush-jungle-depths": "Jungla Umbría - Profundidades",
+            "lush-jungle-trial-site": "Jungla Umbría - Zona de Prueba",
+            
+            // Melemele Meadow - Alola
+            "melemele-meadow-area": "Jardines de Melemele",
+            "melemele-meadow": "Jardines de Melemele",
+            "melemele-meadow-entrance": "Jardines de Melemele - Entrada",
+            "melemele-meadow-north": "Jardines de Melemele - Norte",
+            "melemele-meadow-south": "Jardines de Melemele - Sur",
+            "melemele-meadow-east": "Jardines de Melemele - Este",
+            "melemele-meadow-west": "Jardines de Melemele - Oeste",
             
             // Islas Sevii
             "berry-forest-area": "Bosque Baya",

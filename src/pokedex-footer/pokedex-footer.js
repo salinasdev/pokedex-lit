@@ -180,7 +180,7 @@ class PokedexFooter extends LitElement {
             <footer>
                 <div class="footer-content">
                     <div class="footer-brand">
-                        <span class="footer-text">© 2021 salinasdev</span>
+                        <span class="footer-text">© ${new Date().getFullYear()} salinasdev</span>
                     </div>
 
                     <ul class="social-links">
