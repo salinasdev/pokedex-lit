@@ -25,7 +25,10 @@ class PokedexMain extends LitElement {
             showLocations: {type: Boolean},
             showMoves: {type: Boolean},
             varieties: {type: Array},
-            showVarieties: {type: Boolean}
+            showVarieties: {type: Boolean},
+            pokedexEntries: {type: Array},
+            showPokedexEntries: {type: Boolean},
+            showSpriteGallery: {type: Boolean}
         };
 
     }
@@ -51,6 +54,9 @@ class PokedexMain extends LitElement {
         this.showMoves = false;
         this.varieties = [];
         this.showVarieties = false;
+        this.pokedexEntries = [];
+        this.showPokedexEntries = false;
+        this.showSpriteGallery = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -398,6 +404,30 @@ class PokedexMain extends LitElement {
                                 </div>
                                 <div class="section-content ${this.showVarieties ? 'show' : ''}">
                                     ${this.renderVarieties()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.pokedexEntries.length > 0 ? html`
+                            <div class="pokedex-entries-section collapsible-section">
+                                <div class="section-header" @click="${() => this.togglePokedexEntries()}">
+                                    <h3 class="pokedex-entries-title">📖 Descripciones de la Pokédex</h3>
+                                    <span class="toggle-icon">${this.showPokedexEntries ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showPokedexEntries ? 'show' : ''}">
+                                    ${this.renderPokedexEntries()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.fichaPokemon.idp ? html`
+                            <div class="sprite-gallery-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleSpriteGallery()}">
+                                    <h3 class="sprite-gallery-title">✨ Galería de Sprites</h3>
+                                    <span class="toggle-icon">${this.showSpriteGallery ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showSpriteGallery ? 'show' : ''}">
+                                    ${this.renderSpriteGallery()}
                                 </div>
                             </div>
                         ` : ''}
@@ -1562,6 +1592,191 @@ class PokedexMain extends LitElement {
             font-weight: 600;
         }
 
+        /* Estilos para Descripciones de la Pokédex */
+        .pokedex-entries-section {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .pokedex-entries-title {
+            margin: 0;
+            font-size: 1.6rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .pokedex-entries-container {
+            display: grid;
+            gap: 1.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .pokedex-entry-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .pokedex-entry-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e0;
+        }
+
+        .entry-version {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .entry-version-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .entry-version-name {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-badge {
+            font-size: 0.85rem;
+            padding: 0.2rem 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .entry-text {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #2d3748;
+            text-align: justify;
+        }
+
+        .no-entries {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        /* Estilos para Galería de Sprites */
+        .sprite-gallery-section {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .sprite-gallery-title {
+            margin: 0;
+            font-size: 1.6rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .sprite-gallery-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 0.5rem 0;
+        }
+
+        .sprite-category {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+        }
+
+        .sprite-category-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .sprites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .sprites-grid.large-sprites {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        .sprite-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+        }
+
+        .sprite-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e0;
+        }
+
+        .sprite-card.shiny-card {
+            background: linear-gradient(135deg, #fef5e7 0%, #fcf3cf 100%);
+            border-color: #f8c471;
+        }
+
+        .sprite-card.shiny-card:hover {
+            box-shadow: 0 8px 16px rgba(248, 196, 113, 0.3);
+            border-color: #f39c12;
+        }
+
+        .sprite-image {
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        .sprite-image.large-sprite {
+            width: 150px;
+            height: 150px;
+            image-rendering: auto;
+        }
+
+        .sprite-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4a5568;
+            text-align: center;
+        }
+
         @media (max-width: 968px) {
             .detail-header {
                 grid-template-columns: 1fr;
@@ -2249,6 +2464,66 @@ class PokedexMain extends LitElement {
             return '../img/areas/alola-melemele-meadow.png';
         }
         
+        // Poke Pelago (Poke Resort) - Alola
+        if (locationSlug && locationSlug.includes('poke-pelago')) {
+            return '../img/areas/alola_poke_pelago.png';
+        }
+        
+        // Nacrene City (Ciudad Esmalte) - Unova
+        if (locationSlug && locationSlug.includes('nacrene-city')) {
+            return '../img/areas/unova_nacrene_city.png';
+        }
+        
+        // Castelia Sewers (Cloacas Porcelana) - Unova
+        if (locationSlug && locationSlug.includes('castelia-sewers')) {
+            return '../img/areas/unova_castelia_sewers.png';
+        }
+        
+        // Relic Passage (Pasadizo Ancestral) - Unova
+        if (locationSlug && locationSlug.includes('relic-passage')) {
+            return '../img/areas/unova_relic_passage.png';
+        }
+        
+        // Goldenrod City (Ciudad Trigal) - Johto
+        if (locationSlug && locationSlug.includes('goldenrod-city')) {
+            return '../img/areas/johto_goldenrod_city.png';
+        }
+        
+        // Mt Ember (Monte Ascuas) - Sevii Islands
+        if (locationSlug && locationSlug.includes('mt-ember')) {
+            return '../img/areas/sevii_islands_mt_ember.png';
+        }
+        
+        // Kindle Road (Camino Candente) - Sevii Islands
+        if (locationSlug && locationSlug.includes('kindle-road')) {
+            return '../img/areas/sevii_islands_kindle_road.png';
+        }
+        
+        // Treasure Beach (Playa Tesoro) - Sevii Islands
+        if (locationSlug && locationSlug.includes('treasure-beach')) {
+            return '../img/areas/sevii_islands_treasure_beach.png';
+        }
+        
+        // Cape Brink (Cabo Extremo) - Sevii Islands
+        if (locationSlug && locationSlug.includes('cape-brink')) {
+            return '../img/areas/sevii_islands_cape_brink.png';
+        }
+        
+        // Water Path (Vía Acuática) - Sevii Islands
+        if (locationSlug && locationSlug.includes('water-path')) {
+            return '../img/areas/sevii_islands_water_path.png';
+        }
+        
+        // Ruin Valley (Valle Ruinas) - Sevii Islands
+        if (locationSlug && locationSlug.includes('ruin-valley')) {
+            return '../img/areas/sevii_islands_ruin_valley.png';
+        }
+        
+        // Canyon Entrance (Entrada al Cañón) - Sevii Islands
+        if (locationSlug && locationSlug.includes('canyon-entrance')) {
+            return '../img/areas/sevii_islands_canyon_entrance.png';
+        }
+        
         // Usar las imágenes locales si existen, o generar un SVG placeholder atractivo
         return `../img/areas/${locationSlug}.png`;
     }
@@ -2343,6 +2618,250 @@ class PokedexMain extends LitElement {
     toggleVarieties() {
         this.showVarieties = !this.showVarieties;
         this.requestUpdate();
+    }
+
+    togglePokedexEntries() {
+        this.showPokedexEntries = !this.showPokedexEntries;
+        this.requestUpdate();
+    }
+
+    toggleSpriteGallery() {
+        this.showSpriteGallery = !this.showSpriteGallery;
+        this.requestUpdate();
+    }
+
+    renderSpriteGallery() {
+        if (!this.fichaPokemon.idp) {
+            return html``;
+        }
+
+        const pokemonId = this.fichaPokemon.idp;
+        const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
+
+        // Definir categorías de sprites
+        const spriteCategories = [
+            {
+                title: '🎨 Sprites Actuales',
+                sprites: [
+                    { name: 'Normal', url: `${baseUrl}/${pokemonId}.png`, shiny: false },
+                    { name: 'Shiny ✨', url: `${baseUrl}/shiny/${pokemonId}.png`, shiny: true },
+                    { name: 'Espalda', url: `${baseUrl}/back/${pokemonId}.png`, shiny: false },
+                    { name: 'Espalda Shiny ✨', url: `${baseUrl}/back/shiny/${pokemonId}.png`, shiny: true }
+                ]
+            },
+            {
+                title: '🕹️ Generación V (Animados)',
+                sprites: [
+                    { name: 'Gen V Normal', url: `${baseUrl}/versions/generation-v/black-white/animated/${pokemonId}.gif`, shiny: false },
+                    { name: 'Gen V Shiny ✨', url: `${baseUrl}/versions/generation-v/black-white/animated/shiny/${pokemonId}.gif`, shiny: true }
+                ]
+            },
+            {
+                title: '🎮 Generación I (Game Boy)',
+                sprites: [
+                    { name: 'Red/Blue', url: `${baseUrl}/versions/generation-i/red-blue/${pokemonId}.png`, shiny: false },
+                    { name: 'Yellow', url: `${baseUrl}/versions/generation-i/yellow/${pokemonId}.png`, shiny: false }
+                ]
+            },
+            {
+                title: '🎮 Generación II (Game Boy Color)',
+                sprites: [
+                    { name: 'Gold', url: `${baseUrl}/versions/generation-ii/gold/${pokemonId}.png`, shiny: false },
+                    { name: 'Silver', url: `${baseUrl}/versions/generation-ii/silver/${pokemonId}.png`, shiny: false },
+                    { name: 'Crystal', url: `${baseUrl}/versions/generation-ii/crystal/${pokemonId}.png`, shiny: false },
+                    { name: 'Crystal Shiny ✨', url: `${baseUrl}/versions/generation-ii/crystal/shiny/${pokemonId}.png`, shiny: true }
+                ]
+            },
+            {
+                title: '🎮 Generación III (GBA)',
+                sprites: [
+                    { name: 'Ruby/Sapphire', url: `${baseUrl}/versions/generation-iii/ruby-sapphire/${pokemonId}.png`, shiny: false },
+                    { name: 'Emerald', url: `${baseUrl}/versions/generation-iii/emerald/${pokemonId}.png`, shiny: false },
+                    { name: 'FireRed/LeafGreen', url: `${baseUrl}/versions/generation-iii/firered-leafgreen/${pokemonId}.png`, shiny: false }
+                ]
+            },
+            {
+                title: '🎮 Generación IV (DS)',
+                sprites: [
+                    { name: 'Diamond/Pearl', url: `${baseUrl}/versions/generation-iv/diamond-pearl/${pokemonId}.png`, shiny: false },
+                    { name: 'Platinum', url: `${baseUrl}/versions/generation-iv/platinum/${pokemonId}.png`, shiny: false },
+                    { name: 'HeartGold/SoulSilver', url: `${baseUrl}/versions/generation-iv/heartgold-soulsilver/${pokemonId}.png`, shiny: false }
+                ]
+            },
+            {
+                title: '📱 Artwork Oficial',
+                sprites: [
+                    { name: 'Artwork Normal', url: `${baseUrl}/other/official-artwork/${pokemonId}.png`, shiny: false, large: true },
+                    { name: 'Artwork Shiny ✨', url: `${baseUrl}/other/official-artwork/shiny/${pokemonId}.png`, shiny: true, large: true }
+                ]
+            },
+            {
+                title: '🏠 HOME',
+                sprites: [
+                    { name: 'HOME Normal', url: `${baseUrl}/other/home/${pokemonId}.png`, shiny: false },
+                    { name: 'HOME Shiny ✨', url: `${baseUrl}/other/home/shiny/${pokemonId}.png`, shiny: true }
+                ]
+            }
+        ];
+
+        return html`
+            <div class="sprite-gallery-container">
+                ${spriteCategories.map(category => html`
+                    <div class="sprite-category">
+                        <h4 class="sprite-category-title">${category.title}</h4>
+                        <div class="sprites-grid ${category.sprites[0]?.large ? 'large-sprites' : ''}">
+                            ${category.sprites.map(sprite => html`
+                                <div class="sprite-card ${sprite.shiny ? 'shiny-card' : ''}">
+                                    <img 
+                                        src="${sprite.url}" 
+                                        alt="${sprite.name}"
+                                        class="sprite-image ${sprite.large ? 'large-sprite' : ''}"
+                                        @error="${(e) => this.handleSpriteError(e)}"
+                                        loading="lazy">
+                                    <span class="sprite-name">${sprite.name}</span>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                `)}
+            </div>
+        `;
+    }
+
+    handleSpriteError(event) {
+        // Ocultar el sprite si no se puede cargar
+        event.target.parentElement.style.display = 'none';
+    }
+
+    togglePokedexEntries() {
+        this.showPokedexEntries = !this.showPokedexEntries;
+        this.requestUpdate();
+    }
+
+    renderPokedexEntries() {
+        console.log("🔍 renderPokedexEntries - Total entries:", this.pokedexEntries?.length);
+        
+        if (!this.pokedexEntries || this.pokedexEntries.length === 0) {
+            console.log("❌ No entries at all!");
+            return html``;
+        }
+
+        // Log TODAS las versiones disponibles
+        const allVersions = this.pokedexEntries.map(e => `${e.version.name} (${e.language.name})`);
+        console.log("📋 ALL VERSIONS AVAILABLE:", allVersions);
+
+        // Crear un mapa de versiones: para cada versión, guardar la mejor descripción (español > inglés)
+        const versionMap = new Map();
+        
+        this.pokedexEntries.forEach(entry => {
+            const versionName = entry.version.name;
+            const language = entry.language.name;
+            const flavorText = entry.flavor_text;
+            
+            // Si ya existe esta versión
+            if (versionMap.has(versionName)) {
+                const existing = versionMap.get(versionName);
+                // Priorizar español sobre cualquier otro idioma
+                if (language === 'es' && existing.language !== 'es') {
+                    versionMap.set(versionName, { text: flavorText, language: language });
+                }
+            } else {
+                // Si es español o inglés, agregarla
+                if (language === 'es' || language === 'en') {
+                    versionMap.set(versionName, { text: flavorText, language: language });
+                }
+            }
+        });
+
+        console.log("🗺️ Version Map created with", versionMap.size, "versions");
+        
+        if (versionMap.size === 0) {
+            console.log("❌ No entries in Spanish OR English!");
+            return html`<p class="no-entries">No hay descripciones disponibles.</p>`;
+        }
+        
+        // Mapeo de versiones agrupadas a versiones individuales
+        const versionGroupMapping = {
+            'red-blue': ['red', 'blue'],
+            'gold-silver': ['gold', 'silver'],
+            'ruby-sapphire': ['ruby', 'sapphire'],
+            'diamond-pearl': ['diamond', 'pearl'],
+            'black-white': ['black', 'white'],
+            'black-2-white-2': ['black-2', 'white-2'],
+            'x-y': ['x', 'y'],
+            'omega-ruby-alpha-sapphire': ['omega-ruby', 'alpha-sapphire'],
+            'sun-moon': ['sun', 'moon'],
+            'ultra-sun-ultra-moon': ['ultra-sun', 'ultra-moon'],
+            'lets-go-pikachu-lets-go-eevee': ['lets-go-pikachu', 'lets-go-eevee'],
+            'sword-shield': ['sword', 'shield']
+        };
+        
+        // Crear un array de entradas expandiendo los grupos de versiones si existen
+        const formattedEntries = [];
+        
+        versionMap.forEach((data, versionName) => {
+            console.log(`📝 Processing: ${versionName} (${data.language})`);
+            
+            // Si la versión es un grupo, expandirla a versiones individuales
+            if (versionGroupMapping[versionName]) {
+                versionGroupMapping[versionName].forEach(individualVersion => {
+                    formattedEntries.push({
+                        version: individualVersion,
+                        text: data.text,
+                        language: data.language
+                    });
+                });
+            } else {
+                // Añadir la entrada tal cual
+                formattedEntries.push({
+                    version: versionName,
+                    text: data.text,
+                    language: data.language
+                });
+            }
+        });
+
+        // Ordenar por versión para mantener consistencia
+        formattedEntries.sort((a, b) => {
+            const orderMap = {
+                'red': 1, 'blue': 2, 'yellow': 3,
+                'gold': 4, 'silver': 5, 'crystal': 6,
+                'ruby': 7, 'sapphire': 8, 'emerald': 9,
+                'firered': 10, 'leafgreen': 11,
+                'diamond': 12, 'pearl': 13, 'platinum': 14,
+                'heartgold': 15, 'soulsilver': 16,
+                'black': 17, 'white': 18, 'black-2': 19, 'white-2': 20,
+                'x': 21, 'y': 22,
+                'omega-ruby': 23, 'alpha-sapphire': 24,
+                'sun': 25, 'moon': 26,
+                'ultra-sun': 27, 'ultra-moon': 28,
+                'lets-go-pikachu': 29, 'lets-go-eevee': 30,
+                'sword': 31, 'shield': 32
+            };
+            
+            return (orderMap[a.version] || 999) - (orderMap[b.version] || 999);
+        });
+
+        console.log("✅ Final entries to render:", formattedEntries.length);
+
+        return html`
+            <div class="pokedex-entries-container">
+                ${formattedEntries.map(entry => html`
+                    <div class="pokedex-entry-card">
+                        <div class="entry-version">
+                            <img src="${this.getVersionIcon(entry.version)}" 
+                                 class="entry-version-icon"
+                                 alt="${entry.version}">
+                            <h4 class="entry-version-name">
+                                ${this.getVersionNameInSpanish(entry.version)}
+                                ${entry.language === 'en' ? html`<span class="lang-badge">🇬🇧</span>` : ''}
+                            </h4>
+                        </div>
+                        <p class="entry-text">${entry.text.replace(/\f/g, ' ').replace(/\n/g, ' ')}</p>
+                    </div>
+                `)}
+            </div>
+        `;
     }
 
     renderVarieties() {
@@ -3479,6 +3998,8 @@ class PokedexMain extends LitElement {
             'moon': 'Luna',
             'ultra-sun': 'Ultra Sol',
             'ultra-moon': 'Ultra Luna',
+            'lets-go-pikachu': 'Let\'s Go Pikachu',
+            'lets-go-eevee': 'Let\'s Go Eevee',
             
             // Generación VIII
             'sword': 'Espada',
@@ -3628,10 +4149,12 @@ class PokedexMain extends LitElement {
         this.evolutionChain = this.fichaPokemon.evolution_chain;
         this.moves = this.fichaPokemon.moves || [];
         this.varieties = this.speciesInfo?.varieties || [];
+        this.pokedexEntries = this.speciesInfo?.flavor_text_entries || [];
         console.log("Species Info:", this.speciesInfo);
         console.log("Evolution Chain:", this.evolutionChain);
         console.log("Moves:", this.moves);
         console.log("Varieties:", this.varieties);
+        console.log("Pokedex Entries:", this.pokedexEntries);
         console.log("AQUIII");
     }
     mascaraNum(n){
@@ -3957,6 +4480,50 @@ class PokedexMain extends LitElement {
             "bond-bridge-area": "Puente Unión",
             "five-isle-meadow-area": "Prado Isla Inta",
             "pattern-bush-area": "Bosquejo",
+            "mt-ember-area": "Monte Ascuas",
+            "mt-ember-exterior": "Monte Ascuas - Exterior",
+            "mt-ember-summit-path-1f": "Monte Ascuas - Camino a la Cumbre 1ª Planta",
+            "mt-ember-summit-path-2f": "Monte Ascuas - Camino a la Cumbre 2ª Planta",
+            "mt-ember-summit-path-3f": "Monte Ascuas - Camino a la Cumbre 3ª Planta",
+            "mt-ember-ruby-path-1f": "Monte Ascuas - Camino Rubí 1ª Planta",
+            "mt-ember-ruby-path-b1f": "Monte Ascuas - Camino Rubí Sótano 1",
+            "mt-ember-ruby-path-b2f": "Monte Ascuas - Camino Rubí Sótano 2",
+            "mt-ember-ruby-path-b3f": "Monte Ascuas - Camino Rubí Sótano 3",
+            "kindle-road-area": "Camino Candente",
+            "treasure-beach-area": "Playa Tesoro",
+            "cape-brink-area": "Cabo Extremo",
+            "water-path-area": "Vía Acuática",
+            "ruin-valley-area": "Valle Ruinas",
+            "canyon-entrance-area": "Entrada al Cañón",
+            
+            // Johto - Ciudad Trigal (Goldenrod City)
+            "goldenrod-city-goldenrod-dept": "Ciudad Trigal - Grandes Almacenes",
+            "goldenrod-city-goldenrod-game-corner": "Ciudad Trigal - Casino",
+            "goldenrod-city-goldenrod-tunnel": "Ciudad Trigal - Túnel Subterráneo",
+            "goldenrod-city-radio-tower": "Ciudad Trigal - Torre Radio",
+            "goldenrod-city-north-gate": "Ciudad Trigal - Puerta Norte",
+            "goldenrod-city-south-gate": "Ciudad Trigal - Puerta Sur",
+            "goldenrod-city-east-gate": "Ciudad Trigal - Puerta Este",
+            "goldenrod-city-west-gate": "Ciudad Trigal - Puerta Oeste",
+            
+            // Unova - Ciudades
+            "nacrene-city-area": "Ciudad Esmalte",
+            "nacrene-city-museum": "Ciudad Esmalte - Museo",
+            
+            // Unova - Lugares Especiales
+            "castelia-sewers-area": "Cloacas Porcelana",
+            "castelia-sewers-entrance": "Cloacas Porcelana - Entrada",
+            "relic-passage-area": "Pasadizo Ancestral",
+            "relic-passage-castelia-sewers-entrance": "Pasadizo Ancestral - Entrada por Cloacas Porcelana",
+            "relic-passage-pwt-entrance": "Pasadizo Ancestral - Entrada por PWT",
+            
+            // Alola - Poke Pelago (Poke Resort)
+            "poke-pelago-area": "Poké Resort",
+            "poke-pelago-isle-abeens": "Poké Resort - Isla Abeens",
+            "poke-pelago-isle-aplenny": "Poké Resort - Isla Aplenny",
+            "poke-pelago-isle-aphun": "Poké Resort - Isla Aphun",
+            "poke-pelago-isle-evelup": "Poké Resort - Isla Evelup",
+            "poke-pelago-wild-pokemon": "Poké Resort - Pokémon Salvajes",
             
             // Lugares Genéricos/Desconocidos
             "unknown-all-bugs-area": "Zona Desconocida - Bichos"
@@ -3975,6 +4542,55 @@ class PokedexMain extends LitElement {
     formatLocationName(string) {
         // Remover sufijos comunes
         let formatted = string.replace(/-area$/, '').replace(/-zone$/, '');
+        
+        // Manejo especial para Poke Pelago - todo lo que empiece con poke-pelago debe traducirse con Poké Resort
+        if (formatted.startsWith('poke-pelago')) {
+            // Extraer la parte después de 'poke-pelago-'
+            const suffix = formatted.substring('poke-pelago'.length);
+            if (suffix) {
+                // Si hay un sufijo, agregarlo a "Poké Resort"
+                const parts = suffix.substring(1).split('-').map(part => this.capitalizeFirstLetter(part));
+                return 'Poké Resort - ' + parts.join(' ');
+            }
+            return 'Poké Resort';
+        }
+        
+        // Nombres de ciudades y lugares específicos que deben mantener un orden específico
+        const specificPlaces = {
+            'goldenrod-city': 'Ciudad Trigal',
+            'goldenrod-city-north-gate': 'Ciudad Trigal - Puerta Norte',
+            'goldenrod-city-south-gate': 'Ciudad Trigal - Puerta Sur',
+            'goldenrod-city-east-gate': 'Ciudad Trigal - Puerta Este',
+            'goldenrod-city-west-gate': 'Ciudad Trigal - Puerta Oeste',
+            'nacrene-city': 'Ciudad Esmalte',
+            'castelia-city': 'Ciudad Porcelana',
+            'nimbasa-city': 'Ciudad Mayólica',
+            'pallet-town': 'Pueblo Paleta',
+            'viridian-city': 'Ciudad Verde',
+            'viridian-city-north-gate': 'Ciudad Verde - Puerta Norte',
+            'viridian-city-south-gate': 'Ciudad Verde - Puerta Sur',
+            'pewter-city': 'Ciudad Plateada',
+            'cerulean-city': 'Ciudad Celeste',
+            'vermilion-city': 'Ciudad Carmín',
+            'lavender-town': 'Pueblo Lavanda',
+            'celadon-city': 'Ciudad Azafrán',
+            'fuchsia-city': 'Ciudad Fucsia',
+            'saffron-city': 'Ciudad Azafrán',
+            'new-bark-town': 'Pueblo Primavera',
+            'cherrygrove-city': 'Ciudad Cerezo',
+            'violet-city': 'Ciudad Violeta',
+            'azalea-town': 'Pueblo Azalea',
+            'ecruteak-city': 'Ciudad Ecruteak',
+            'olivine-city': 'Ciudad Olivo',
+            'cianwood-city': 'Ciudad Orquídea',
+            'mahogany-town': 'Pueblo Caoba',
+            'blackthorn-city': 'Ciudad Encina'
+        };
+        
+        // Verificar si es un lugar específico
+        if (specificPlaces[formatted]) {
+            return specificPlaces[formatted];
+        }
         
         // Dividir por guiones y capitalizar
         const words = formatted.split('-').map(word => {
@@ -4000,7 +4616,16 @@ class PokedexMain extends LitElement {
                 'tunnel': 'Túnel',
                 'valley': 'Valle',
                 'river': 'Río',
-                'sea': 'Mar'
+                'sea': 'Mar',
+                'gate': 'Puerta',
+                'north': 'Norte',
+                'south': 'Sur',
+                'east': 'Este',
+                'west': 'Oeste',
+                'entrance': 'Entrada',
+                'exit': 'Salida',
+                'area': 'Zona',
+                'goldenrod': 'Trigal'
             };
             
             const lowerWord = word.toLowerCase();
