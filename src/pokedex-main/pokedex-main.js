@@ -1,4 +1,4 @@
-import { html, LitElement ,css} from "lit";
+import { html, svg, LitElement ,css} from "lit";
 import '../pokemon-data/pokemon-data.js';
 import '../pokemon-ficha-listado/pokemon-ficha-listado.js';
 import '../pokemon-sidebar/pokemon-sidebar.js';
@@ -28,7 +28,16 @@ class PokedexMain extends LitElement {
             showVarieties: {type: Boolean},
             pokedexEntries: {type: Array},
             showPokedexEntries: {type: Boolean},
-            showSpriteGallery: {type: Boolean}
+            showSpriteGallery: {type: Boolean},
+            stats: {type: Array},
+            showAdvancedSearch: {type: Boolean},
+            filterType: {type: String},
+            filterGeneration: {type: String},
+            filterMinStat: {type: Number},
+            sortBy: {type: String},
+            filteredPokemons: {type: Array},
+            currentLanguage: {type: String},
+            showStatsRadar: {type: Boolean}
         };
 
     }
@@ -57,6 +66,15 @@ class PokedexMain extends LitElement {
         this.pokedexEntries = [];
         this.showPokedexEntries = false;
         this.showSpriteGallery = false;
+        this.stats = [];
+        this.showAdvancedSearch = false;
+        this.filterType = '';
+        this.filterGeneration = '';
+        this.filterMinStat = 0;
+        this.sortBy = 'id';
+        this.filteredPokemons = [];
+        this.currentLanguage = this.loadLanguagePreference();
+        this.showStatsRadar = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -79,23 +97,139 @@ class PokedexMain extends LitElement {
             <div id="listPokemon" class="d-none">
                 <div class="back-button-container">
                     <button @click="${this.volverAGeneraciones}" class="back-button">
-                        ← Volver a Generaciones
+                        ${this.t('backToGenerations')}
                     </button>
                 </div>
-                <div class="search-container">
-                    <input 
-                        type="text" 
-                        class="search-input"
-                        placeholder="🔍 Buscar Pokémon por nombre..."
-                        .value="${this.searchQuery}"
-                        @input="${this.handleSearchInput}"
-                    />
-                    ${this.searchQuery ? html`
-                        <button class="clear-search-button" @click="${this.clearSearch}">✕</button>
-                    ` : ''}
+                <div class="search-and-language-container">
+                    <div class="language-selector">
+                        <button 
+                            class="language-button ${this.currentLanguage === 'es' ? 'active' : ''}" 
+                            @click="${() => this.changeLanguage('es')}"
+                            title="Español"
+                        >
+                            🇪🇸
+                        </button>
+                        <button 
+                            class="language-button ${this.currentLanguage === 'en' ? 'active' : ''}" 
+                            @click="${() => this.changeLanguage('en')}"
+                            title="English"
+                        >
+                            🇬🇧
+                        </button>
+                        <button 
+                            class="language-button ${this.currentLanguage === 'ja' ? 'active' : ''}" 
+                            @click="${() => this.changeLanguage('ja')}"
+                            title="日本語"
+                        >
+                            🇯🇵
+                        </button>
+                    </div>
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            class="search-input"
+                            placeholder="${this.t('searchPlaceholder')}"
+                            .value="${this.searchQuery}"
+                            @input="${this.handleSearchInput}"
+                        />
+                        ${this.searchQuery ? html`
+                            <button class="clear-search-button" @click="${this.clearSearch}">✕</button>
+                        ` : ''}
+                        <button class="advanced-search-toggle" @click="${this.toggleAdvancedSearch}" title="${this.t('advancedSearch')}">
+                            ${this.showAdvancedSearch ? '🔽' : '⚙️'}
+                        </button>
+                    </div>
                 </div>
+
+                ${this.showAdvancedSearch ? html`
+                    <div class="advanced-search-panel">
+                        <h3 class="advanced-search-title">🔍 ${this.t('advancedSearch')}</h3>
+                        
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <span class="filter-icon">🏷️</span> Tipo
+                                </label>
+                                <select class="filter-select" .value="${this.filterType}" @change="${this.handleTypeFilter}">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="normal">⚪ Normal</option>
+                                    <option value="fire">🔥 Fuego</option>
+                                    <option value="water">💧 Agua</option>
+                                    <option value="electric">⚡ Eléctrico</option>
+                                    <option value="grass">🌿 Planta</option>
+                                    <option value="ice">❄️ Hielo</option>
+                                    <option value="fighting">👊 Lucha</option>
+                                    <option value="poison">☠️ Veneno</option>
+                                    <option value="ground">🌍 Tierra</option>
+                                    <option value="flying">🦅 Volador</option>
+                                    <option value="psychic">🔮 Psíquico</option>
+                                    <option value="bug">🐛 Bicho</option>
+                                    <option value="rock">🪨 Roca</option>
+                                    <option value="ghost">👻 Fantasma</option>
+                                    <option value="dragon">🐉 Dragón</option>
+                                    <option value="dark">🌙 Siniestro</option>
+                                    <option value="steel">⚙️ Acero</option>
+                                    <option value="fairy">✨ Hada</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <span class="filter-icon">🔢</span> Ordenar por
+                                </label>
+                                <select class="filter-select" .value="${this.sortBy}" @change="${this.handleSortChange}">
+                                    <option value="id">Número de Pokédex</option>
+                                    <option value="name">Nombre (A-Z)</option>
+                                    <option value="name-desc">Nombre (Z-A)</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <span class="filter-icon">📊</span> Estadística Base Mínima
+                                </label>
+                                <div class="stat-filter-container">
+                                    <input 
+                                        type="range" 
+                                        class="stat-slider" 
+                                        min="0" 
+                                        max="200" 
+                                        step="10"
+                                        value="${this.filterMinStat}"
+                                        @input="${this.handleMinStatFilter}"
+                                    />
+                                    <span class="stat-value-display">${this.filterMinStat}</span>
+                                </div>
+                            </div>
+
+                            <div class="filter-actions">
+                                <button class="clear-filters-btn" @click="${this.clearAllFilters}">
+                                    🗑️ Limpiar Filtros
+                                </button>
+                                <button class="apply-filters-btn" @click="${this.toggleAdvancedSearch}">
+                                    ✅ Aplicar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="active-filters">
+                            ${this.filterType || this.filterMinStat > 0 || this.sortBy !== 'id' ? html`
+                                <span class="active-filters-label">Filtros activos:</span>
+                                ${this.filterType ? html`
+                                    <span class="filter-badge">Tipo: ${this.getTypeNameInSpanish(this.filterType)}</span>
+                                ` : ''}
+                                ${this.filterMinStat > 0 ? html`
+                                    <span class="filter-badge">Stat mín: ${this.filterMinStat}</span>
+                                ` : ''}
+                                ${this.sortBy !== 'id' ? html`
+                                    <span class="filter-badge">Orden: ${this.sortBy === 'name' ? 'A-Z' : 'Z-A'}</span>
+                                ` : ''}
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
                 
-                ${this.getFilteredPokemons().length > 0 ? html`
+                ${this.getFilteredAndSortedPokemons().length > 0 ? html`
                     <div class="capture-progress-bar ${this.showProgressBar ? 'visible' : 'hidden'}">
                         <button @click="${this.toggleProgressBar}" class="toggle-progress-btn" title="${this.showProgressBar ? 'Ocultar barra' : 'Mostrar barra'}">
                             ${this.showProgressBar ? '▼' : '▲'}
@@ -124,7 +258,7 @@ class PokedexMain extends LitElement {
                 
                 <div id="peopleList">
                     <div class="listado">
-                    ${this.getFilteredPokemons().map(
+                    ${this.getFilteredAndSortedPokemons().map(
                         (pokemon, index) => {
                             const pokemonId = parseInt(pokemon.url.match(/\d+/g)[1]);
                             return html`<pokemon-ficha-listado 
@@ -143,7 +277,7 @@ class PokedexMain extends LitElement {
                         }
                     )}
                     </div>
-                    ${this.getFilteredPokemons().length === 0 ? html`
+                    ${this.getFilteredAndSortedPokemons().length === 0 ? html`
                         <div class="no-results">
                             <p>No se encontraron Pokémon con el nombre "${this.searchQuery}"</p>
                         </div>
@@ -165,7 +299,12 @@ class PokedexMain extends LitElement {
                                      class="detail-pokemon-image">
                             </div>
                             <div class="detail-info-section">
-                                <h2 class="detail-title">${this.capitalizeFirstLetter(this.fichaPokemon.name)}</h2>
+                                <div class="title-with-sound">
+                                    <h2 class="detail-title">${this.capitalizeFirstLetter(this.fichaPokemon.name)}</h2>
+                                    <button class="sound-button" @click="${() => this.playPokemonCry()}" title="Escuchar sonido">
+                                        🔊
+                                    </button>
+                                </div>
                                 <span class="detail-number">#${this.fichaPokemon.idp}</span>
                                 
                                 <div class="detail-stats">
@@ -304,10 +443,42 @@ class PokedexMain extends LitElement {
 
                         ${this.evolutionChain ? html`
                             <div class="evolution-section">
-                                <h3 class="evolution-title">Cadena Evolutiva</h3>
+                                <h3 class="evolution-title">${this.t('evolutionChain')}</h3>
                                 <div class="evolution-chain-container">
                                     ${this.renderEvolutionChain(this.evolutionChain)}
                                 </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.stats && this.stats.length > 0 ? html`
+                            <div class="stats-chart-section">
+                                <div class="stats-header">
+                                    <h3 class="stats-title">📊 ${this.t('baseStats')}</h3>
+                                    <button 
+                                        class="chart-toggle-button" 
+                                        @click="${this.toggleStatsView}"
+                                        title="${this.showStatsRadar ? this.t('showBars') : this.t('showRadar')}"
+                                    >
+                                        ${this.showStatsRadar ? '📊' : '🎯'}
+                                    </button>
+                                </div>
+                                <div class="stats-total">
+                                    <span class="total-label">${this.t('total')}:</span>
+                                    <span class="total-value">${this.calculateTotalStats()}</span>
+                                </div>
+                                <div class="stats-chart-container">
+                                    ${this.showStatsRadar ? this.renderStatsRadar() : this.renderStatsChart()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.types && this.types.length > 0 ? html`
+                            <div class="type-effectiveness-section">
+                                <h3 class="effectiveness-section-title">⚔️ ${this.t('typeEffectiveness')}</h3>
+                                <p class="effectiveness-description">
+                                    ${this.t('damageReceived')}
+                                </p>
+                                ${this.renderTypeEffectiveness()}
                             </div>
                         ` : ''}
 
@@ -524,15 +695,57 @@ class PokedexMain extends LitElement {
             transform: translateY(0);
         }
 
-        .search-container {
+        .search-and-language-container {
             max-width: 1400px;
             margin: 1.5rem auto;
             padding: 0 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .language-button {
+            background: transparent;
+            border: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+
+        .language-button:hover {
+            opacity: 1;
+            background: #f8fafc;
+        }
+
+        .language-button.active {
+            opacity: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .search-container {
+            flex: 1;
             position: relative;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
         }
 
         .search-input {
-            width: 100%;
+            flex: 1;
             padding: 1rem 3rem 1rem 1.5rem;
             font-size: 1.1rem;
             border: 2px solid #e2e8f0;
@@ -554,7 +767,7 @@ class PokedexMain extends LitElement {
 
         .clear-search-button {
             position: absolute;
-            right: 2.5rem;
+            right: calc(2rem + 60px);
             top: 50%;
             transform: translateY(-50%);
             background: #e2e8f0;
@@ -575,6 +788,230 @@ class PokedexMain extends LitElement {
         .clear-search-button:hover {
             background: #cbd5e0;
             transform: translateY(-50%) scale(1.1);
+        }
+
+        .advanced-search-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .advanced-search-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Panel de búsqueda avanzada */
+        .advanced-search-panel {
+            max-width: 1400px;
+            margin: 0 auto 1.5rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #c7d2fe;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .advanced-search-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3730a3;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #4c1d95;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-icon {
+            font-size: 1.2rem;
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid #c7d2fe;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .stat-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 2px solid #c7d2fe;
+        }
+
+        .stat-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #ddd6fe 0%, #6366f1 100%);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .stat-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .stat-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+        }
+
+        .stat-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .stat-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+        }
+
+        .stat-value-display {
+            font-weight: 700;
+            color: #4c1d95;
+            font-size: 1.1rem;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .filter-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .clear-filters-btn,
+        .apply-filters-btn {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clear-filters-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .clear-filters-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .apply-filters-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .apply-filters-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #c7d2fe;
+        }
+
+        .active-filters-label {
+            font-weight: 600;
+            color: #4c1d95;
+        }
+
+        .filter-badge {
+            padding: 0.4rem 0.8rem;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
         }
 
         .no-results {
@@ -810,11 +1247,68 @@ class PokedexMain extends LitElement {
             gap: 1rem;
         }
 
+        .title-with-sound {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .detail-title {
             font-size: 2.5rem;
             font-weight: 700;
             color: #1a1a1a;
             margin: 0;
+        }
+
+        .sound-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sound-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .sound-button:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .sound-button:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .sound-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .sound-button:active::before {
+            width: 0;
+            height: 0;
+            transition: 0s;
         }
 
         .detail-number {
@@ -1053,6 +1547,310 @@ class PokedexMain extends LitElement {
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
+        /* Estilos para la sección de estadísticas */
+        .stats-chart-section {
+            padding: 2rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-top: 3px solid #fcd34d;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #78350f;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-toggle-button {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-toggle-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-toggle-button:active {
+            transform: translateY(0);
+        }
+
+        .stats-total {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #fbbf24;
+        }
+
+        .total-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        .total-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #b45309;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-name {
+            font-weight: 700;
+            color: #374151;
+            min-width: 100px;
+            font-size: 1rem;
+        }
+
+        .stat-value {
+            font-weight: 800;
+            color: #111827;
+            font-size: 1.1rem;
+            min-width: 40px;
+        }
+
+        .stat-ev {
+            font-size: 0.85rem;
+            color: #6366f1;
+            font-weight: 600;
+            background: #eef2ff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            border: 1px solid #c7d2fe;
+        }
+
+        .stat-bar-container {
+            width: 100%;
+            height: 28px;
+            background: #f3f4f6;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .stat-bar {
+            height: 100%;
+            border-radius: 14px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-bar-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.4) 50%, 
+                transparent 100%
+            );
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            50%, 100% { left: 150%; }
+        }
+
+        /* Estilos para el gráfico radar */
+        .stats-radar-container {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-radar-svg {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+            overflow: visible;
+        }
+
+        .radar-label {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .radar-value {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Estilos para la sección de efectividad de tipos */
+        .type-effectiveness-section {
+            padding: 2rem;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-top: 3px solid #fca5a5;
+        }
+
+        .effectiveness-section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #7f1d1d;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .effectiveness-description {
+            text-align: center;
+            color: #991b1b;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .type-effectiveness-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .effectiveness-group {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid;
+        }
+
+        .effectiveness-group.super-weak {
+            border-left-color: #dc2626;
+            background: linear-gradient(135deg, #fff 0%, #fee2e2 100%);
+        }
+
+        .effectiveness-group.weak {
+            border-left-color: #f97316;
+            background: linear-gradient(135deg, #fff 0%, #fed7aa 100%);
+        }
+
+        .effectiveness-group.resistant {
+            border-left-color: #84cc16;
+            background: linear-gradient(135deg, #fff 0%, #d9f99d 100%);
+        }
+
+        .effectiveness-group.super-resistant {
+            border-left-color: #22c55e;
+            background: linear-gradient(135deg, #fff 0%, #bbf7d0 100%);
+        }
+
+        .effectiveness-group.immune {
+            border-left-color: #6366f1;
+            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+        }
+
+        .effectiveness-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .type-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .type-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: default;
+        }
+
+        .type-badge:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Colores por tipo */
+        .type-normal { background: linear-gradient(135deg, #A8A878 0%, #9C9C83 100%); }
+        .type-fire { background: linear-gradient(135deg, #F08030 0%, #DD6610 100%); }
+        .type-water { background: linear-gradient(135deg, #6890F0 0%, #386CEB 100%); }
+        .type-electric { background: linear-gradient(135deg, #F8D030 0%, #F0C108 100%); }
+        .type-grass { background: linear-gradient(135deg, #78C850 0%, #5CA935 100%); }
+        .type-ice { background: linear-gradient(135deg, #98D8D8 0%, #69C6C6 100%); }
+        .type-fighting { background: linear-gradient(135deg, #C03028 0%, #9D2721 100%); }
+        .type-poison { background: linear-gradient(135deg, #A040A0 0%, #803380 100%); }
+        .type-ground { background: linear-gradient(135deg, #E0C068 0%, #D4A82F 100%); }
+        .type-flying { background: linear-gradient(135deg, #A890F0 0%, #9180C4 100%); }
+        .type-psychic { background: linear-gradient(135deg, #F85888 0%, #F61C5D 100%); }
+        .type-bug { background: linear-gradient(135deg, #A8B820 0%, #8D9A1B 100%); }
+        .type-rock { background: linear-gradient(135deg, #B8A038 0%, #A48A27 100%); }
+        .type-ghost { background: linear-gradient(135deg, #705898 0%, #554374 100%); }
+        .type-dragon { background: linear-gradient(135deg, #7038F8 0%, #4C08EF 100%); }
+        .type-dark { background: linear-gradient(135deg, #705848 0%, #513F34 100%); }
+        .type-steel { background: linear-gradient(135deg, #B8B8D0 0%, #9797BA 100%); }
+        .type-fairy { background: linear-gradient(135deg, #EE99AC 0%, #EC6D9A 100%); }
 
         .evolution-chain-container {
             display: flex;
@@ -1930,8 +2728,113 @@ class PokedexMain extends LitElement {
                 padding: 1rem 0.5rem;
             }
 
+            .search-and-language-container {
+                padding: 0 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .language-selector {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .search-container {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .search-input {
+                font-size: 1rem;
+                padding: 0.875rem 3rem 0.875rem 1rem;
+            }
+
+            .advanced-search-toggle {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+
+            .clear-search-button {
+                right: calc(1rem + 55px);
+            }
+
+            .advanced-search-panel {
+                padding: 1rem;
+                margin: 0 1rem 1rem;
+            }
+
+            .advanced-search-title {
+                font-size: 1.2rem;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .filter-actions {
+                flex-direction: column;
+            }
+
+            .clear-filters-btn,
+            .apply-filters-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
             .detail-title {
                 font-size: 2rem;
+            }
+
+            .title-with-sound {
+                gap: 0.5rem;
+            }
+
+            .sound-button {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .stats-chart-section,
+            .stats-chart-container {
+                padding: 1rem;
+            }
+
+            .stat-name {
+                min-width: 80px;
+                font-size: 0.9rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .stat-ev {
+                font-size: 0.75rem;
+                padding: 0.15rem 0.4rem;
+            }
+
+            .type-effectiveness-section {
+                padding: 1rem;
+            }
+
+            .effectiveness-section-title {
+                font-size: 1.4rem;
+            }
+
+            .effectiveness-group {
+                padding: 1rem;
+            }
+
+            .effectiveness-title {
+                font-size: 1rem;
+            }
+
+            .type-badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
             }
 
             .locations-grid {
@@ -2290,6 +3193,283 @@ class PokedexMain extends LitElement {
         return this.pokemons.filter(pokemon => 
             pokemon.name.toLowerCase().includes(query)
         );
+    }
+
+    // Toggle búsqueda avanzada
+    toggleAdvancedSearch() {
+        this.showAdvancedSearch = !this.showAdvancedSearch;
+    }
+
+    // Aplicar filtros avanzados
+    applyAdvancedFilters() {
+        let filtered = [...this.pokemons];
+
+        // Aplicar búsqueda por nombre
+        if (this.searchQuery && this.searchQuery.trim() !== '') {
+            const query = this.searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(pokemon => 
+                pokemon.name.toLowerCase().includes(query)
+            );
+        }
+
+        // Filtrar por tipo usando la URL del Pokémon
+        if (this.filterType && this.filterType !== '') {
+            filtered = this.filterByType(filtered);
+        }
+
+        // Ordenar resultados
+        filtered = this.sortPokemons(filtered);
+
+        return filtered;
+    }
+
+    // Filtrar por tipo (usando los datos que ya tenemos o haciendo una consulta)
+    filterByType(pokemons) {
+        // Lista completa de Pokémon por tipo (Gen 1-8)
+        const typeMapping = {
+            'fire': [4, 5, 6, 37, 38, 58, 59, 77, 78, 126, 136, 146, 155, 156, 157, 218, 219, 240, 244, 250, 255, 256, 257, 322, 323, 324, 351, 390, 391, 392, 467, 485, 494, 498, 499, 500, 513, 514, 554, 555, 631, 636, 637, 643, 662, 663, 667, 668, 721, 725, 726, 727, 757, 776, 813, 814, 815, 838, 839, 850, 851],
+            'water': [7, 8, 9, 54, 55, 60, 61, 62, 72, 73, 79, 80, 86, 87, 90, 91, 98, 99, 116, 117, 118, 119, 120, 121, 130, 131, 134, 138, 139, 140, 141, 158, 159, 160, 170, 171, 183, 184, 186, 194, 195, 199, 211, 223, 224, 226, 230, 245, 258, 259, 260, 270, 271, 272, 278, 279, 283, 284, 318, 319, 320, 321, 339, 340, 341, 342, 349, 350, 351, 366, 367, 368, 369, 382, 393, 394, 395, 400, 418, 419, 422, 423, 456, 457, 458, 484, 490, 501, 502, 503, 515, 516, 550, 564, 565, 580, 581, 592, 593, 594, 647, 656, 657, 658, 686, 687, 688, 689, 690, 691, 692, 693, 698, 699, 721, 728, 729, 730, 746, 747, 748, 751, 752, 767, 768, 771, 779, 788, 816, 817, 818, 833, 834, 845, 846, 847, 882, 883],
+            'grass': [1, 2, 3, 43, 44, 45, 46, 47, 69, 70, 71, 102, 103, 114, 152, 153, 154, 182, 187, 188, 189, 191, 192, 252, 253, 254, 270, 271, 272, 273, 274, 275, 285, 286, 315, 331, 332, 357, 387, 388, 389, 406, 407, 413, 420, 421, 455, 459, 460, 465, 470, 492, 495, 496, 497, 511, 512, 540, 541, 542, 546, 547, 548, 549, 556, 585, 586, 590, 591, 597, 598, 640, 650, 651, 652, 672, 673, 708, 709, 722, 723, 724, 753, 754, 755, 756, 761, 762, 763, 764, 781, 787, 810, 811, 812, 819, 820, 829, 830, 840, 841, 842, 893],
+            'electric': [25, 26, 81, 82, 100, 101, 125, 135, 145, 170, 171, 172, 179, 180, 181, 243, 309, 310, 311, 312, 405, 406, 417, 462, 466, 479, 522, 523, 587, 595, 596, 603, 604, 605, 618, 642, 644, 694, 695, 702, 737, 738, 785, 807, 871, 872, 877, 894],
+            'psychic': [63, 64, 65, 79, 80, 96, 97, 102, 103, 121, 122, 124, 150, 151, 177, 178, 196, 199, 201, 203, 251, 280, 281, 282, 307, 308, 325, 326, 337, 338, 343, 344, 358, 360, 374, 375, 376, 380, 381, 385, 386, 433, 436, 437, 439, 475, 480, 481, 482, 488, 494, 517, 518, 527, 528, 561, 562, 574, 575, 576, 577, 578, 579, 605, 606, 648, 655, 677, 678, 686, 687, 720, 765, 779, 786, 789, 790, 791, 792, 800, 825, 826, 856, 857, 858, 866, 876, 898],
+            'normal': [16, 17, 18, 19, 20, 21, 22, 39, 40, 52, 53, 83, 84, 85, 108, 113, 115, 128, 132, 133, 137, 143, 161, 162, 163, 164, 174, 190, 203, 206, 216, 217, 233, 234, 235, 241, 242, 263, 264, 276, 277, 287, 288, 289, 293, 294, 295, 298, 300, 301, 327, 333, 334, 335, 351, 352, 396, 397, 398, 399, 400, 424, 427, 428, 431, 432, 440, 441, 446, 463, 474, 486, 493, 504, 505, 506, 507, 508, 519, 520, 521, 531, 572, 573, 585, 586, 626, 627, 628, 648, 659, 660, 661, 667, 668, 676, 694, 695, 734, 735, 759, 760, 765, 772, 780, 819, 820, 831, 832, 862, 876],
+            'poison': [1, 2, 3, 13, 14, 15, 23, 24, 29, 30, 31, 32, 33, 34, 41, 42, 43, 44, 45, 48, 49, 69, 70, 71, 72, 73, 88, 89, 92, 93, 94, 109, 110, 167, 168, 169, 211, 315, 336, 406, 407, 434, 435, 451, 452, 453, 454, 543, 544, 545, 568, 569, 590, 591, 617, 690, 691, 747, 748, 757, 758, 793, 803, 804, 848, 849],
+            'ground': [27, 28, 31, 34, 50, 51, 74, 75, 76, 95, 104, 105, 111, 112, 194, 195, 207, 208, 220, 221, 231, 232, 246, 247, 259, 260, 322, 323, 328, 329, 330, 339, 340, 343, 344, 383, 389, 423, 443, 444, 445, 449, 450, 464, 472, 473, 529, 530, 536, 537, 551, 552, 553, 618, 622, 623, 645, 660, 718, 749, 750, 769, 770, 843, 844, 867, 874],
+            'fighting': [56, 57, 62, 66, 67, 68, 106, 107, 214, 236, 237, 256, 257, 286, 296, 297, 307, 308, 391, 392, 447, 448, 453, 454, 475, 499, 500, 532, 533, 534, 538, 539, 559, 560, 619, 620, 638, 639, 640, 647, 652, 674, 675, 701, 739, 740, 759, 760, 766, 794, 795, 802, 852, 853, 865, 870, 889, 890, 892],
+            'flying': [6, 12, 16, 17, 18, 21, 22, 41, 42, 83, 84, 85, 123, 130, 142, 144, 145, 146, 149, 163, 164, 166, 169, 176, 177, 178, 198, 207, 225, 226, 227, 249, 250, 267, 269, 276, 277, 278, 279, 284, 291, 334, 357, 358, 384, 396, 397, 398, 414, 415, 416, 425, 426, 430, 441, 468, 469, 472, 479, 487, 493, 519, 520, 521, 527, 528, 561, 567, 580, 581, 587, 627, 628, 630, 635, 641, 642, 645, 661, 663, 666, 701, 714, 715, 717, 721, 741, 773, 797, 821, 822, 823, 845],
+            'bug': [10, 11, 12, 13, 14, 15, 46, 47, 48, 49, 123, 127, 165, 166, 167, 168, 193, 212, 214, 265, 266, 267, 268, 269, 283, 284, 290, 291, 292, 313, 314, 329, 347, 348, 402, 413, 414, 415, 416, 451, 452, 469, 540, 541, 542, 543, 544, 545, 557, 558, 588, 589, 595, 596, 616, 617, 632, 636, 637, 649, 664, 665, 666, 736, 737, 738, 742, 743, 751, 752, 767, 768, 794, 795, 824, 825, 826, 872, 873, 900],
+            'rock': [74, 75, 76, 95, 111, 112, 138, 139, 140, 141, 142, 185, 213, 219, 222, 246, 247, 248, 299, 304, 305, 306, 337, 338, 345, 346, 369, 377, 408, 409, 410, 411, 438, 464, 476, 524, 525, 526, 557, 558, 564, 565, 566, 567, 639, 688, 689, 696, 697, 698, 699, 703, 719, 744, 745, 774, 834, 837, 838, 839, 874, 884, 885, 886],
+            'ghost': [92, 93, 94, 200, 201, 292, 302, 353, 354, 355, 356, 425, 426, 429, 442, 477, 478, 479, 487, 562, 563, 592, 593, 607, 608, 609, 622, 623, 678, 708, 709, 710, 711, 720, 724, 769, 770, 778, 781, 792, 802, 806, 854, 855, 864, 867, 885, 886, 887],
+            'ice': [86, 87, 91, 124, 131, 144, 215, 220, 221, 225, 361, 362, 363, 364, 365, 459, 460, 471, 473, 478, 582, 583, 584, 613, 614, 615, 698, 699, 712, 713, 872, 873, 875, 881],
+            'dragon': [147, 148, 149, 230, 329, 330, 334, 371, 372, 373, 380, 381, 384, 443, 444, 445, 483, 484, 487, 610, 611, 612, 621, 633, 634, 635, 643, 644, 646, 691, 696, 697, 704, 705, 706, 718, 776, 780, 782, 783, 784, 799, 804, 840, 841, 842, 880, 882, 883, 884, 885, 886, 887, 890],
+            'dark': [197, 198, 215, 228, 229, 248, 261, 262, 274, 275, 302, 318, 319, 332, 335, 359, 430, 434, 435, 442, 452, 461, 491, 509, 510, 551, 552, 553, 559, 560, 571, 624, 625, 629, 630, 633, 634, 635, 658, 675, 686, 687, 717, 727, 799, 828, 829, 862, 877, 892],
+            'steel': [81, 82, 205, 208, 212, 227, 303, 304, 305, 306, 374, 375, 376, 379, 385, 410, 411, 436, 437, 448, 462, 483, 485, 530, 589, 597, 598, 599, 600, 601, 624, 625, 632, 638, 649, 679, 680, 681, 707, 798, 801, 805, 807, 808, 809, 823, 863, 878, 879, 884, 888],
+            'fairy': [35, 36, 39, 40, 122, 174, 175, 176, 183, 184, 196, 209, 210, 242, 280, 281, 282, 303, 439, 468, 531, 547, 669, 670, 671, 682, 683, 685, 700, 703, 707, 730, 742, 743, 755, 756, 764, 778, 785, 786, 788, 801, 858, 868, 869, 888, 897, 898]
+        };
+
+        const typeIds = typeMapping[this.filterType] || [];
+        
+        return pokemons.filter(pokemon => {
+            const pokemonId = parseInt(pokemon.url.split('/').slice(-2, -1)[0]);
+            return typeIds.includes(pokemonId);
+        });
+    }
+
+    // Ordenar Pokémon
+    sortPokemons(pokemons) {
+        const sorted = [...pokemons];
+        
+        switch(this.sortBy) {
+            case 'id':
+                return sorted.sort((a, b) => {
+                    const idA = parseInt(a.url.split('/').slice(-2, -1)[0]);
+                    const idB = parseInt(b.url.split('/').slice(-2, -1)[0]);
+                    return idA - idB;
+                });
+            
+            case 'name':
+                return sorted.sort((a, b) => a.name.localeCompare(b.name));
+            
+            case 'name-desc':
+                return sorted.sort((a, b) => b.name.localeCompare(a.name));
+            
+            default:
+                return sorted;
+        }
+    }
+
+    // Obtener Pokémon filtrados y ordenados
+    getFilteredAndSortedPokemons() {
+        // Primero aplicar búsqueda por nombre
+        let filtered = this.getFilteredPokemons();
+        
+        // Luego aplicar filtro de tipo si está activo
+        if (this.filterType && this.filterType !== '') {
+            filtered = this.filterByType(filtered);
+        }
+        
+        // Finalmente ordenar
+        filtered = this.sortPokemons(filtered);
+        
+        return filtered;
+    }
+
+    // Manejadores de cambio de filtros
+    handleTypeFilter(e) {
+        this.filterType = e.target.value;
+        this.requestUpdate();
+    }
+
+    handleGenerationFilter(e) {
+        this.filterGeneration = e.target.value;
+        this.requestUpdate();
+    }
+
+    handleMinStatFilter(e) {
+        this.filterMinStat = parseInt(e.target.value) || 0;
+        this.requestUpdate();
+    }
+
+    handleSortChange(e) {
+        this.sortBy = e.target.value;
+        this.requestUpdate();
+    }
+
+    // Limpiar todos los filtros
+    clearAllFilters() {
+        this.searchQuery = '';
+        this.filterType = '';
+        this.filterGeneration = '';
+        this.filterMinStat = 0;
+        this.sortBy = 'id';
+        this.requestUpdate();
+    }
+
+    // ============ MULTI-IDIOMA ============
+    
+    // Diccionario de traducciones
+    getTranslations() {
+        return {
+            es: {
+                backToGenerations: '← Volver a Generaciones',
+                searchPlaceholder: '🔍 Buscar Pokémon por nombre...',
+                advancedSearch: 'Búsqueda Avanzada',
+                type: 'Tipo',
+                allTypes: 'Todos los tipos',
+                sortBy: 'Ordenar por',
+                pokedexNumber: 'Número de Pokédex',
+                nameAZ: 'Nombre (A-Z)',
+                nameZA: 'Nombre (Z-A)',
+                minBaseStat: 'Estadística Base Mínima',
+                clearFilters: 'Limpiar Filtros',
+                apply: 'Aplicar',
+                activeFilters: 'Filtros activos:',
+                capturedPokemons: 'Pokémon capturados',
+                evolutionChain: 'Cadena Evolutiva',
+                baseStats: 'Estadísticas Base',
+                total: 'Total',
+                typeEffectiveness: 'Efectividad de Tipos',
+                damageReceived: 'Daño recibido de ataques de cada tipo',
+                veryWeak: 'Muy Débil',
+                weak: 'Débil',
+                resistant: 'Resiste',
+                veryResistant: 'Muy Resistente',
+                immune: 'Inmune',
+                locations: 'Ubicaciones por Versión',
+                moves: 'Movimientos',
+                regionalForms: 'Formas Regionales y Variedades',
+                pokedexEntries: 'Entradas de Pokédex',
+                spriteGallery: 'Galería de Sprites',
+                listenSound: 'Escuchar sonido',
+                showRadar: 'Cambiar a gráfico radar',
+                showBars: 'Cambiar a barras'
+            },
+            en: {
+                backToGenerations: '← Back to Generations',
+                searchPlaceholder: '🔍 Search Pokémon by name...',
+                advancedSearch: 'Advanced Search',
+                type: 'Type',
+                allTypes: 'All types',
+                sortBy: 'Sort by',
+                pokedexNumber: 'Pokédex Number',
+                nameAZ: 'Name (A-Z)',
+                nameZA: 'Name (Z-A)',
+                minBaseStat: 'Minimum Base Stat',
+                clearFilters: 'Clear Filters',
+                apply: 'Apply',
+                activeFilters: 'Active filters:',
+                capturedPokemons: 'Captured Pokémon',
+                evolutionChain: 'Evolution Chain',
+                baseStats: 'Base Stats',
+                total: 'Total',
+                typeEffectiveness: 'Type Effectiveness',
+                damageReceived: 'Damage taken from attacks of each type',
+                veryWeak: 'Very Weak',
+                weak: 'Weak',
+                resistant: 'Resistant',
+                veryResistant: 'Very Resistant',
+                immune: 'Immune',
+                locations: 'Locations by Version',
+                moves: 'Moves',
+                regionalForms: 'Regional Forms and Varieties',
+                pokedexEntries: 'Pokédex Entries',
+                spriteGallery: 'Sprite Gallery',
+                listenSound: 'Listen to cry',
+                showRadar: 'Switch to radar chart',
+                showBars: 'Switch to bar chart'
+            },
+            ja: {
+                backToGenerations: '← 世代に戻る',
+                searchPlaceholder: '🔍 ポケモンを名前で検索...',
+                advancedSearch: '詳細検索',
+                type: 'タイプ',
+                allTypes: 'すべてのタイプ',
+                sortBy: '並べ替え',
+                pokedexNumber: '図鑑番号',
+                nameAZ: '名前 (A-Z)',
+                nameZA: '名前 (Z-A)',
+                minBaseStat: '最小基本ステータス',
+                clearFilters: 'フィルターをクリア',
+                apply: '適用',
+                activeFilters: 'アクティブフィルター:',
+                capturedPokemons: '捕獲したポケモン',
+                evolutionChain: '進化チェーン',
+                baseStats: '基本ステータス',
+                total: '合計',
+                typeEffectiveness: 'タイプ相性',
+                damageReceived: '各タイプの攻撃から受けるダメージ',
+                veryWeak: '非常に弱い',
+                weak: '弱い',
+                resistant: '耐性あり',
+                veryResistant: '非常に耐性あり',
+                immune: '無効',
+                locations: 'バージョン別の場所',
+                moves: '技',
+                regionalForms: 'リージョンフォームとバリエーション',
+                pokedexEntries: '図鑑エントリー',
+                spriteGallery: 'スプライトギャラリー',
+                listenSound: '鳴き声を聞く',
+                showRadar: 'レーダーチャートに切り替え',
+                showBars: '棒グラフに切り替え'
+            }
+        };
+    }
+
+    // Obtener texto traducido
+    t(key) {
+        const translations = this.getTranslations();
+        return translations[this.currentLanguage]?.[key] || translations['es'][key] || key;
+    }
+
+    // Cargar preferencia de idioma
+    loadLanguagePreference() {
+        try {
+            return localStorage.getItem('pokede xLanguage') || 'es';
+        } catch (e) {
+            return 'es';
+        }
+    }
+
+    // Guardar preferencia de idioma
+    saveLanguagePreference(lang) {
+        try {
+            localStorage.setItem('pokedexLanguage', lang);
+        } catch (e) {
+            console.error('Error saving language preference:', e);
+        }
+    }
+
+    // Cambiar idioma
+    changeLanguage(lang) {
+        this.currentLanguage = lang;
+        this.saveLanguagePreference(lang);
+        this.requestUpdate();
+    }
+
+    // Toggle entre gráfico radar y barras
+    toggleStatsView() {
+        this.showStatsRadar = !this.showStatsRadar;
+        this.requestUpdate();
     }
 
     // Métodos para gestionar capturas de Pokémon
@@ -2731,6 +3911,468 @@ class PokedexMain extends LitElement {
     handleSpriteError(event) {
         // Ocultar el sprite si no se puede cargar
         event.target.parentElement.style.display = 'none';
+    }
+
+    // Método para reproducir el sonido del Pokémon
+    playPokemonCry() {
+        if (!this.fichaPokemon.idp) return;
+        
+        // URL del sonido más reciente del Pokémon
+        const cryUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${this.fichaPokemon.idp}.ogg`;
+        
+        // Crear un elemento de audio y reproducirlo
+        const audio = new Audio(cryUrl);
+        audio.volume = 0.5; // Volumen al 50%
+        
+        audio.play().catch(error => {
+            console.error('Error al reproducir el sonido:', error);
+            // Intentar con el formato legacy
+            const legacyCryUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/legacy/${this.fichaPokemon.idp}.ogg`;
+            const legacyAudio = new Audio(legacyCryUrl);
+            legacyAudio.volume = 0.5;
+            legacyAudio.play().catch(err => {
+                console.error('Error al reproducir el sonido legacy:', err);
+            });
+        });
+    }
+
+    // Método para calcular el total de estadísticas base
+    calculateTotalStats() {
+        if (!this.stats || this.stats.length === 0) return 0;
+        
+        return this.stats.reduce((total, stat) => {
+            return total + stat.base_stat;
+        }, 0);
+    }
+
+    // Método para obtener el nombre de la estadística en español
+    getStatNameInSpanish(statName) {
+        const translations = {
+            'hp': 'PS',
+            'attack': 'Ataque',
+            'defense': 'Defensa',
+            'special-attack': 'At. Esp.',
+            'special-defense': 'Def. Esp.',
+            'speed': 'Velocidad'
+        };
+        return translations[statName] || statName;
+    }
+
+    // Método para obtener el color de la barra según el valor de la estadística
+    getStatColor(value) {
+        if (value >= 150) return '#10b981'; // Verde brillante
+        if (value >= 120) return '#22c55e'; // Verde
+        if (value >= 90) return '#84cc16'; // Lima
+        if (value >= 60) return '#eab308'; // Amarillo
+        if (value >= 30) return '#f97316'; // Naranja
+        return '#ef4444'; // Rojo
+    }
+
+    // Método para renderizar el gráfico de estadísticas
+    renderStatsChart() {
+        if (!this.stats || this.stats.length === 0) return html``;
+
+        const maxStat = 255; // Valor máximo posible de una estadística base
+
+        return html`
+            <div class="stats-bars">
+                ${this.stats.map(stat => {
+                    const statName = this.getStatNameInSpanish(stat.stat.name);
+                    const percentage = (stat.base_stat / maxStat) * 100;
+                    const color = this.getStatColor(stat.base_stat);
+                    const effort = stat.effort;
+
+                    return html`
+                        <div class="stat-row">
+                            <div class="stat-info">
+                                <span class="stat-name">${statName}</span>
+                                <span class="stat-value">${stat.base_stat}</span>
+                                ${effort > 0 ? html`
+                                    <span class="stat-ev" title="EVs que otorga">+${effort} EV</span>
+                                ` : ''}
+                            </div>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar" style="width: ${percentage}%; background: ${color};">
+                                    <div class="stat-bar-shine"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                })}
+            </div>
+        `;
+    }
+
+    // Renderizar gráfico radar hexagonal
+    renderStatsRadar() {
+        if (!this.stats || this.stats.length === 0) return html``;
+
+        const maxStat = 255;
+        const centerX = 250;
+        const centerY = 250;
+        const radius = 120;
+        const labelDistance = 180;
+        
+        // Calcular puntos del hexágono
+        const points = this.stats.map((stat, index) => {
+            const angle = (Math.PI / 3) * index - Math.PI / 2;
+            const value = stat.base_stat;
+            const percentage = value / maxStat;
+            const distance = radius * percentage;
+            
+            const labelX = centerX + labelDistance * Math.cos(angle);
+            const labelY = centerY + labelDistance * Math.sin(angle);
+            
+            const statName = this.getStatNameInSpanish(stat.stat.name);
+            
+            return {
+                x: centerX + distance * Math.cos(angle),
+                y: centerY + distance * Math.sin(angle),
+                labelX: labelX,
+                labelY: labelY,
+                value: value,
+                name: statName,
+                color: this.getStatColor(value),
+                angle: angle
+            };
+        });
+
+        // Crear el path del polígono de datos
+        const dataPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ') + ' Z';
+
+        // Crear los paths de las líneas de referencia (hexágonos de fondo)
+        const referenceLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
+        const referenceHexagons = referenceLevels.map(level => {
+            const hexPoints = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 2;
+                const distance = radius * level;
+                hexPoints.push({
+                    x: centerX + distance * Math.cos(angle),
+                    y: centerY + distance * Math.sin(angle)
+                });
+            }
+            return hexPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ') + ' Z';
+        });
+
+        return html`
+            <div class="stats-radar-container">
+                <svg class="stats-radar-svg" viewBox="0 0 500 500">
+                    ${svg`
+                        <defs>
+                            <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.6" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        
+                        ${referenceHexagons.map((path, i) => svg`
+                            <path 
+                                d="${path}" 
+                                fill="none" 
+                                stroke="#e2e8f0" 
+                                stroke-width="1"
+                                opacity="${0.3 + i * 0.15}"
+                            />
+                        `)}
+                        
+                        ${points.map(p => svg`
+                            <line 
+                                x1="${centerX}" 
+                                y1="${centerY}" 
+                                x2="${p.labelX}" 
+                                y2="${p.labelY}" 
+                                stroke="#cbd5e0" 
+                                stroke-width="1"
+                            />
+                        `)}
+                        
+                        <path 
+                            d="${dataPath}" 
+                            fill="url(#radarGradient)" 
+                            stroke="#667eea" 
+                            stroke-width="3"
+                            opacity="0.7"
+                        />
+                        
+                        ${points.map(p => svg`
+                            <circle 
+                                cx="${p.x}" 
+                                cy="${p.y}" 
+                                r="6" 
+                                fill="${p.color}"
+                                stroke="white"
+                                stroke-width="3"
+                                filter="url(#glow)"
+                            >
+                                <title>${p.name}: ${p.value}</title>
+                            </circle>
+                        `)}
+                        
+                        ${points.map(p => svg`
+                            <g class="stat-label-group">
+                                <rect
+                                    x="${p.labelX - 40}"
+                                    y="${p.labelY - 22}"
+                                    width="80"
+                                    height="44"
+                                    fill="white"
+                                    opacity="0.95"
+                                    rx="8"
+                                    stroke="#e2e8f0"
+                                    stroke-width="2"
+                                />
+                                <text 
+                                    x="${p.labelX}" 
+                                    y="${p.labelY - 5}" 
+                                    text-anchor="middle" 
+                                    dominant-baseline="middle"
+                                    fill="#1e293b"
+                                    font-weight="700"
+                                    font-size="14"
+                                    font-family="system-ui, -apple-system, sans-serif"
+                                >${p.name}</text>
+                                <text 
+                                    x="${p.labelX}" 
+                                    y="${p.labelY + 12}" 
+                                    text-anchor="middle" 
+                                    dominant-baseline="middle"
+                                    fill="#6366f1"
+                                    font-weight="700"
+                                    font-size="18"
+                                    font-family="system-ui, -apple-system, sans-serif"
+                                >${p.value}</text>
+                            </g>
+                        `)}
+                    `}
+                </svg>
+            </div>
+        `;
+    }
+
+    // Tabla de efectividad de tipos (basada en las mecánicas de Pokémon)
+    getTypeEffectiveness() {
+        const typeChart = {
+            'normal': { weakTo: ['fighting'], resistsTo: [], immuneTo: ['ghost'] },
+            'fire': { weakTo: ['water', 'ground', 'rock'], resistsTo: ['fire', 'grass', 'ice', 'bug', 'steel', 'fairy'], immuneTo: [] },
+            'water': { weakTo: ['electric', 'grass'], resistsTo: ['fire', 'water', 'ice', 'steel'], immuneTo: [] },
+            'electric': { weakTo: ['ground'], resistsTo: ['electric', 'flying', 'steel'], immuneTo: [] },
+            'grass': { weakTo: ['fire', 'ice', 'poison', 'flying', 'bug'], resistsTo: ['water', 'electric', 'grass', 'ground'], immuneTo: [] },
+            'ice': { weakTo: ['fire', 'fighting', 'rock', 'steel'], resistsTo: ['ice'], immuneTo: [] },
+            'fighting': { weakTo: ['flying', 'psychic', 'fairy'], resistsTo: ['bug', 'rock', 'dark'], immuneTo: [] },
+            'poison': { weakTo: ['ground', 'psychic'], resistsTo: ['grass', 'fighting', 'poison', 'bug', 'fairy'], immuneTo: [] },
+            'ground': { weakTo: ['water', 'grass', 'ice'], resistsTo: ['poison', 'rock'], immuneTo: ['electric'] },
+            'flying': { weakTo: ['electric', 'ice', 'rock'], resistsTo: ['grass', 'fighting', 'bug'], immuneTo: ['ground'] },
+            'psychic': { weakTo: ['bug', 'ghost', 'dark'], resistsTo: ['fighting', 'psychic'], immuneTo: [] },
+            'bug': { weakTo: ['fire', 'flying', 'rock'], resistsTo: ['grass', 'fighting', 'ground'], immuneTo: [] },
+            'rock': { weakTo: ['water', 'grass', 'fighting', 'ground', 'steel'], resistsTo: ['normal', 'fire', 'poison', 'flying'], immuneTo: [] },
+            'ghost': { weakTo: ['ghost', 'dark'], resistsTo: ['poison', 'bug'], immuneTo: ['normal', 'fighting'] },
+            'dragon': { weakTo: ['ice', 'dragon', 'fairy'], resistsTo: ['fire', 'water', 'electric', 'grass'], immuneTo: [] },
+            'dark': { weakTo: ['fighting', 'bug', 'fairy'], resistsTo: ['ghost', 'dark'], immuneTo: ['psychic'] },
+            'steel': { weakTo: ['fire', 'fighting', 'ground'], resistsTo: ['normal', 'grass', 'ice', 'flying', 'psychic', 'bug', 'rock', 'dragon', 'steel', 'fairy'], immuneTo: ['poison'] },
+            'fairy': { weakTo: ['poison', 'steel'], resistsTo: ['fighting', 'bug', 'dark'], immuneTo: ['dragon'] }
+        };
+
+        return typeChart;
+    }
+
+    // Calcular la efectividad combinada contra el Pokémon
+    calculateTypeEffectiveness() {
+        if (!this.types || this.types.length === 0) return {};
+
+        const typeChart = this.getTypeEffectiveness();
+        const effectiveness = {};
+
+        // Inicializar todos los tipos con multiplicador 1
+        const allTypes = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 
+                         'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 
+                         'dragon', 'dark', 'steel', 'fairy'];
+
+        allTypes.forEach(type => {
+            effectiveness[type] = 1;
+        });
+
+        // Calcular efectividad para cada tipo del Pokémon
+        this.types.forEach(typeObj => {
+            const pokemonType = typeObj.type.name;
+            const typeData = typeChart[pokemonType];
+
+            if (typeData) {
+                // Debilidades (x2)
+                typeData.weakTo.forEach(attackType => {
+                    effectiveness[attackType] *= 2;
+                });
+
+                // Resistencias (x0.5)
+                typeData.resistsTo.forEach(attackType => {
+                    effectiveness[attackType] *= 0.5;
+                });
+
+                // Inmunidades (x0)
+                typeData.immuneTo.forEach(attackType => {
+                    effectiveness[attackType] = 0;
+                });
+            }
+        });
+
+        return effectiveness;
+    }
+
+    // Obtener el nombre del tipo en español
+    getTypeNameInSpanish(typeName) {
+        const translations = {
+            'normal': 'Normal',
+            'fire': 'Fuego',
+            'water': 'Agua',
+            'electric': 'Eléctrico',
+            'grass': 'Planta',
+            'ice': 'Hielo',
+            'fighting': 'Lucha',
+            'poison': 'Veneno',
+            'ground': 'Tierra',
+            'flying': 'Volador',
+            'psychic': 'Psíquico',
+            'bug': 'Bicho',
+            'rock': 'Roca',
+            'ghost': 'Fantasma',
+            'dragon': 'Dragón',
+            'dark': 'Siniestro',
+            'steel': 'Acero',
+            'fairy': 'Hada'
+        };
+        return translations[typeName] || typeName;
+    }
+
+    // Obtener el emoji del tipo
+    getTypeEmoji(typeName) {
+        const emojis = {
+            'normal': '⚪',
+            'fire': '🔥',
+            'water': '💧',
+            'electric': '⚡',
+            'grass': '🌿',
+            'ice': '❄️',
+            'fighting': '👊',
+            'poison': '☠️',
+            'ground': '🌍',
+            'flying': '🦅',
+            'psychic': '🔮',
+            'bug': '🐛',
+            'rock': '🪨',
+            'ghost': '👻',
+            'dragon': '🐉',
+            'dark': '🌙',
+            'steel': '⚙️',
+            'fairy': '✨'
+        };
+        return emojis[typeName] || '❓';
+    }
+
+    // Renderizar la calculadora de efectividad
+    renderTypeEffectiveness() {
+        if (!this.types || this.types.length === 0) return html``;
+
+        const effectiveness = this.calculateTypeEffectiveness();
+
+        // Agrupar por efectividad
+        const immune = [];        // x0
+        const superWeak = [];     // x4
+        const weak = [];          // x2
+        const resistant = [];     // x0.5
+        const superResistant = []; // x0.25
+        const normal = [];        // x1
+
+        Object.entries(effectiveness).forEach(([type, multiplier]) => {
+            if (multiplier === 0) {
+                immune.push(type);
+            } else if (multiplier >= 4) {
+                superWeak.push(type);
+            } else if (multiplier === 2) {
+                weak.push(type);
+            } else if (multiplier === 0.5) {
+                resistant.push(type);
+            } else if (multiplier <= 0.25) {
+                superResistant.push(type);
+            } else {
+                normal.push(type);
+            }
+        });
+
+        return html`
+            <div class="type-effectiveness-container">
+                ${superWeak.length > 0 ? html`
+                    <div class="effectiveness-group super-weak">
+                        <h4 class="effectiveness-title">⚠️ Muy Débil (×4)</h4>
+                        <div class="type-badges">
+                            ${superWeak.map(type => html`
+                                <span class="type-badge type-${type}">
+                                    ${this.getTypeEmoji(type)} ${this.getTypeNameInSpanish(type)}
+                                </span>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${weak.length > 0 ? html`
+                    <div class="effectiveness-group weak">
+                        <h4 class="effectiveness-title">❌ Débil (×2)</h4>
+                        <div class="type-badges">
+                            ${weak.map(type => html`
+                                <span class="type-badge type-${type}">
+                                    ${this.getTypeEmoji(type)} ${this.getTypeNameInSpanish(type)}
+                                </span>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${resistant.length > 0 ? html`
+                    <div class="effectiveness-group resistant">
+                        <h4 class="effectiveness-title">✅ Resiste (×0.5)</h4>
+                        <div class="type-badges">
+                            ${resistant.map(type => html`
+                                <span class="type-badge type-${type}">
+                                    ${this.getTypeEmoji(type)} ${this.getTypeNameInSpanish(type)}
+                                </span>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${superResistant.length > 0 ? html`
+                    <div class="effectiveness-group super-resistant">
+                        <h4 class="effectiveness-title">💪 Muy Resistente (×0.25)</h4>
+                        <div class="type-badges">
+                            ${superResistant.map(type => html`
+                                <span class="type-badge type-${type}">
+                                    ${this.getTypeEmoji(type)} ${this.getTypeNameInSpanish(type)}
+                                </span>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${immune.length > 0 ? html`
+                    <div class="effectiveness-group immune">
+                        <h4 class="effectiveness-title">🛡️ Inmune (×0)</h4>
+                        <div class="type-badges">
+                            ${immune.map(type => html`
+                                <span class="type-badge type-${type}">
+                                    ${this.getTypeEmoji(type)} ${this.getTypeNameInSpanish(type)}
+                                </span>
+                            `)}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
 
     togglePokedexEntries() {
@@ -4150,11 +5792,13 @@ class PokedexMain extends LitElement {
         this.moves = this.fichaPokemon.moves || [];
         this.varieties = this.speciesInfo?.varieties || [];
         this.pokedexEntries = this.speciesInfo?.flavor_text_entries || [];
+        this.stats = this.fichaPokemon.stats || [];
         console.log("Species Info:", this.speciesInfo);
         console.log("Evolution Chain:", this.evolutionChain);
         console.log("Moves:", this.moves);
         console.log("Varieties:", this.varieties);
         console.log("Pokedex Entries:", this.pokedexEntries);
+        console.log("Stats:", this.stats);
         console.log("AQUIII");
     }
     mascaraNum(n){

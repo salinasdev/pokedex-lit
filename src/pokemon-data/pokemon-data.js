@@ -207,7 +207,8 @@ class PokemonData extends LitElement {
                             encounters: this.miPokemon.encounters,
                             species_info: this.miPokemon.species_info || null,
                             evolution_chain: this.miPokemon.evolution_chain || null,
-                            moves: this.miPokemon.moves || []
+                            moves: this.miPokemon.moves || [],
+                            stats: this.miPokemon.stats || []
                         }
                     }
                 )
