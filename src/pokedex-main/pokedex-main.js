@@ -5,7 +5,7 @@ import '../pokemon-sidebar/pokemon-sidebar.js';
 import '../pokedex-generation-card/pokedex-generation-card.js';
 import '../pokemon-stats/pokemon-stats.js';
 import '../pokemon-daily-challenge/pokemon-daily-challenge.js';
-// import '../pokemon-events/pokemon-events.js';
+import '../pokemon-events/pokemon-events.js';
 
 class PokedexMain extends LitElement {
 
@@ -106,6 +106,9 @@ class PokedexMain extends LitElement {
                     <button @click="${this.showDailyChallengeView}" class="challenge-button">
                         🎯 Desafío Diario
                     </button>
+                    <button @click="${this.showEventsView}" class="events-button">
+                        🎉 Eventos Pokémon
+                    </button>
                     <button @click="${this.goToRandomPokemon}" class="random-button">
                         🎲 Pokémon Aleatorio
                     </button>
@@ -136,6 +139,7 @@ class PokedexMain extends LitElement {
                 </div>
                 <pokemon-daily-challenge></pokemon-daily-challenge>
             </div>
+            <pokemon-events id="eventsPanel"></pokemon-events>
             <div id="listPokemon" class="d-none">
                 <div class="back-button-container">
                     <button @click="${this.volverAGeneraciones}" class="back-button">
@@ -746,6 +750,33 @@ class PokedexMain extends LitElement {
         }
 
         .challenge-button:active {
+            transform: translateY(-1px);
+        }
+
+        .events-button {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(250, 112, 154, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .events-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(250, 112, 154, 0.6);
+            background: linear-gradient(135deg, #fee140 0%, #fa709a 100%);
+        }
+
+        .events-button:active {
             transform: translateY(-1px);
         }
 
@@ -3496,6 +3527,7 @@ class PokedexMain extends LitElement {
 
             .stats-button,
             .challenge-button,
+            .events-button,
             .random-button {
                 width: 100%;
                 font-size: 1rem;
@@ -3736,6 +3768,22 @@ class PokedexMain extends LitElement {
         console.log("hideDailyChallenge - Ocultando desafío diario");
         this.showDailyChallenge = false;
         window.scrollTo(0, 0);
+    }
+
+    showEventsView() {
+        console.log("showEventsView - Mostrando panel de eventos");
+        const eventsPanel = this.shadowRoot.getElementById('eventsPanel');
+        if (eventsPanel) {
+            eventsPanel.open();
+        }
+    }
+
+    hideEvents() {
+        console.log("hideEvents - Ocultando panel de eventos");
+        const eventsPanel = this.shadowRoot.getElementById('eventsPanel');
+        if (eventsPanel) {
+            eventsPanel.close();
+        }
     }
 
     async goToRandomPokemon() {
