@@ -647,8 +647,8 @@ class PokedexMain extends LitElement {
                           id="pokeData"></pokemon-data>
             
             <!-- Botón flotante para scroll hacia abajo -->
-            ${this.muestra === 'listPokemon' && this.getFilteredPokemons().length > 0 ? html`
-                <button class="scroll-to-bottom-btn" @click="${this.scrollToBottom}" title="Ir al final del listado">
+            ${(this.muestra === 'listPokemon' && this.getFilteredPokemons().length > 0) || this.muestra === 'fichaPokemon' ? html`
+                <button class="scroll-to-bottom-btn" @click="${this.scrollToBottom}" title="Ir al final de la página">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="7 13 12 18 17 13"></polyline>
                         <polyline points="7 6 12 11 17 6"></polyline>
@@ -657,8 +657,8 @@ class PokedexMain extends LitElement {
             ` : ''}
             
             <!-- Botón flotante para scroll hacia arriba -->
-            ${this.muestra === 'listPokemon' && this.getFilteredPokemons().length > 0 ? html`
-                <button class="scroll-to-top-btn" @click="${this.scrollToTop}" title="Ir al inicio del listado">
+            ${(this.muestra === 'listPokemon' && this.getFilteredPokemons().length > 0) || this.muestra === 'fichaPokemon' ? html`
+                <button class="scroll-to-top-btn" @click="${this.scrollToTop}" title="Ir al inicio de la página">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="17 11 12 6 7 11"></polyline>
                         <polyline points="17 18 12 13 7 18"></polyline>
