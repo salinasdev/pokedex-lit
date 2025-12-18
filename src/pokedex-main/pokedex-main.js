@@ -42,7 +42,8 @@ class PokedexMain extends LitElement {
             currentLanguage: {type: String},
             showStatsRadar: {type: Boolean},
             showStatsRankings: {type: Boolean},
-            showDailyChallenge: {type: Boolean}
+            showDailyChallenge: {type: Boolean},
+            previousView: {type: String}
         };
 
     }
@@ -82,6 +83,7 @@ class PokedexMain extends LitElement {
         this.showStatsRadar = false;
         this.showStatsRankings = false;
         this.showDailyChallenge = false;
+        this.previousView = "listGens"; // Vista anterior por defecto
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -97,6 +99,9 @@ class PokedexMain extends LitElement {
                     </button>
                     <button @click="${this.showDailyChallengeView}" class="challenge-button">
                         🎯 Desafío Diario
+                    </button>
+                    <button @click="${this.goToRandomPokemon}" class="random-button">
+                        🎲 Pokémon Aleatorio
                     </button>
                 </div>
                 <div class="listado">
@@ -764,6 +769,32 @@ class PokedexMain extends LitElement {
 
         .challenge-button:active {
             transform: translateY(-1px);
+        }
+
+        .random-button {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: #1a202c;
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .random-button:hover {
+            transform: translateY(-3px) rotate(5deg);
+            box-shadow: 0 8px 30px rgba(67, 233, 123, 0.6);
+            background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
+        }
+
+        .random-button:active {
+            transform: translateY(-1px) rotate(0deg);
         }
 
         .back-button-container {
@@ -3032,6 +3063,24 @@ class PokedexMain extends LitElement {
                 width: 20px;
                 height: 20px;
             }
+
+            .stats-button-container {
+                flex-direction: column;
+                padding: 0 1rem;
+                gap: 1rem;
+            }
+
+            .stats-button,
+            .challenge-button,
+            .random-button {
+                width: 100%;
+                font-size: 1rem;
+                padding: 1rem 1.5rem;
+            }
+
+            .random-button:hover {
+                transform: translateY(-2px) rotate(3deg);
+            }
         }
     `;
 
@@ -3265,14 +3314,44 @@ class PokedexMain extends LitElement {
         window.scrollTo(0, 0);
     }
 
+    async goToRandomPokemon() {
+        console.log("goToRandomPokemon - Navegando a Pokémon aleatorio");
+        
+        // Guardar la vista actual antes de cambiar
+        this.previousView = this.muestra;
+        
+        // Generar un número aleatorio entre 1 y 898 (Gen 1-8)
+        const randomId = Math.floor(Math.random() * 898) + 1;
+        
+        console.log(`Pokémon aleatorio seleccionado: ID #${randomId}`);
+        
+        // Cambiar la vista a la ficha del Pokémon
+        this.muestra = "fichaPokemon";
+        
+        // Asignar el ID al componente pokemon-data para que cargue los datos
+        this.shadowRoot.getElementById("pokeData").idPokemon = parseInt(randomId);
+        
+        // Hacer scroll hacia arriba
+        window.scrollTo(0, 0);
+    }
+
     volverAListado(e){
         console.log("volverAListado en pokedex-main");
-        this.muestra = "listPokemon";
+        // Si la vista anterior era generaciones, volver ahí
+        // Si no, volver al listado de Pokémon
+        if (this.previousView === "listGens") {
+            this.muestra = "listGens";
+        } else {
+            this.muestra = "listPokemon";
+        }
     }
 
     // Método para ir a la ficha de un Pokémon específico por ID
     goToPokemonById(pokemonId) {
         console.log("goToPokemonById - Navegando al Pokémon con ID:", pokemonId);
+        
+        // Guardar la vista actual antes de cambiar
+        this.previousView = this.muestra;
         
         // Cambiar la vista a la ficha del Pokémon
         this.muestra = "fichaPokemon";
@@ -5896,11 +5975,13 @@ class PokedexMain extends LitElement {
     getGeneration(e){
         console.log("pokedex-main "+ e.detail.url);
         this.shadowRoot.getElementById("pokeData").urlGeneration = e.detail.url;
+        this.previousView = this.muestra; // Guardar vista actual
         this.muestra = "listPokemon";
     }
 
     consultaPokemon(e){
         console.log("consultaPokemon en pokedex-main " + e.detail.idp);
+        this.previousView = this.muestra; // Guardar vista actual antes de cambiar
         this.muestra = "fichaPokemon";
         this.shadowRoot.getElementById("pokeData").idPokemon = e.detail.idp;
     }
