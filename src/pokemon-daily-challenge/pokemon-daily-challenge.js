@@ -197,6 +197,131 @@ class PokemonDailyChallenge extends LitElement {
         return 'Generación VIII (Galar)';
     }
 
+    async shareResults() {
+        const today = new Date();
+        const dateStr = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+        
+        // Crear mensaje con emojis
+        const resultEmoji = this.isCorrect ? '✅' : '❌';
+        const streakEmoji = this.streak >= 7 ? '🔥🔥🔥' : this.streak >= 3 ? '🔥🔥' : this.streak > 0 ? '🔥' : '💔';
+        
+        // Calcular porcentaje de aciertos
+        const percentage = this.totalPlayed > 0 ? Math.round((this.totalCorrect / this.totalPlayed) * 100) : 0;
+        
+        // Generar indicador de pistas usadas
+        const hintsUsed = this.hintLevel > 0 ? `\n💡 Pistas usadas: ${this.hintLevel}/3` : '';
+        
+        const shareText = `🎮 ¿Quién es ese Pokémon? - ${dateStr}
+
+${resultEmoji} Resultado: ${this.isCorrect ? 'CORRECTO' : 'INCORRECTO'}
+${this.isCorrect ? `🎯 ¡Es ${this.currentPokemon.name.toUpperCase()}!` : `😔 Era ${this.currentPokemon.name.toUpperCase()}`}${hintsUsed}
+
+${streakEmoji} Racha actual: ${this.streak} día${this.streak !== 1 ? 's' : ''}
+🏆 Mejor racha: ${this.bestStreak} día${this.bestStreak !== 1 ? 's' : ''}
+📊 Aciertos: ${this.totalCorrect}/${this.totalPlayed} (${percentage}%)
+
+¡Juega tú también en la Pokédex!`;
+
+        try {
+            // Intentar usar la Web Share API (funciona en móviles y algunos navegadores)
+            if (navigator.share) {
+                await navigator.share({
+                    title: '¿Quién es ese Pokémon?',
+                    text: shareText,
+                    url: window.location.href
+                });
+                this.showNotification('¡Compartido exitosamente! 🎉', 'success');
+            } else {
+                // Fallback: copiar al portapapeles
+                await navigator.clipboard.writeText(shareText);
+                this.showNotification('¡Resultado copiado al portapapeles! 📋', 'success');
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            // Si todo falla, mostrar el texto para copiar manualmente
+            this.showShareDialog(shareText);
+        }
+    }
+
+    showShareDialog(text) {
+        // Crear un diálogo temporal para mostrar el texto
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card, white);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 90%;
+            width: 500px;
+        `;
+        
+        dialog.innerHTML = `
+            <h3 style="margin: 0 0 1rem 0; color: var(--text-primary, #333);">Compartir Resultado</h3>
+            <textarea readonly style="
+                width: 100%;
+                height: 200px;
+                padding: 1rem;
+                border: 2px solid var(--border-color, #ddd);
+                border-radius: 8px;
+                font-family: monospace;
+                resize: none;
+                background: var(--bg-primary, #f5f5f5);
+                color: var(--text-primary, #333);
+            ">${text}</textarea>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.value).then(() => alert('¡Copiado!')); this.parentElement.parentElement.remove();" style="
+                    padding: 0.75rem 1.5rem;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">Copiar</button>
+                <button onclick="this.parentElement.parentElement.remove();" style="
+                    padding: 0.75rem 1.5rem;
+                    background: var(--bg-secondary, #ddd);
+                    color: var(--text-primary, #333);
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">Cerrar</button>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#333'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     renderHints() {
         if (!this.showHint || this.hintLevel === 0) return '';
         
@@ -312,6 +437,9 @@ class PokemonDailyChallenge extends LitElement {
                             <p>Era <strong>${this.currentPokemon.name}</strong></p>
                             <p class="streak-lost">Racha perdida. ¡Inténtalo mañana!</p>
                         `}
+                        <button class="share-button" @click="${this.shareResults}">
+                            📤 Compartir Resultado
+                        </button>
                     </div>
                 ` : ''}
 
@@ -648,6 +776,33 @@ class PokemonDailyChallenge extends LitElement {
             font-weight: 600;
         }
 
+        .share-button {
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .share-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .share-button:active {
+            transform: translateY(0);
+        }
+
         .next-challenge-info {
             text-align: center;
             background: var(--bg-card, white);
@@ -702,6 +857,33 @@ class PokemonDailyChallenge extends LitElement {
 
             .options-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .share-button {
+                font-size: 1rem;
+                padding: 0.875rem 1.75rem;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
             }
         }
     `;
