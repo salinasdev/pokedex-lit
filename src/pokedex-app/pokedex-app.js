@@ -23,7 +23,8 @@ class PokedexApp extends LitElement {
             min-height: 100vh;
             background-color: var(--bg-primary, #f5f7fa);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            padding-bottom: 180px; /* Espacio para el footer fijo */
+            display: flex;
+            flex-direction: column;
         }
     `;
 

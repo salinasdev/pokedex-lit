@@ -34,17 +34,13 @@ class PokedexFooter extends LitElement {
             margin-top: 4rem;
             padding: 2rem 0;
             box-shadow: 0 -4px 20px var(--shadow-color, rgba(0, 0, 0, 0.15));
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
+            position: relative;
+            width: 100%;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .footer-container.scrolled {
-            padding: 1rem 0;
-            transform: scale(0.95);
+            padding: 1.5rem 0;
         }
 
         footer {

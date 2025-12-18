@@ -4,6 +4,7 @@ import '../pokemon-ficha-listado/pokemon-ficha-listado.js';
 import '../pokemon-sidebar/pokemon-sidebar.js';
 import '../pokedex-generation-card/pokedex-generation-card.js';
 import '../pokemon-stats/pokemon-stats.js';
+import '../pokemon-daily-challenge/pokemon-daily-challenge.js';
 // import '../pokemon-events/pokemon-events.js';
 
 class PokedexMain extends LitElement {
@@ -40,7 +41,8 @@ class PokedexMain extends LitElement {
             filteredPokemons: {type: Array},
             currentLanguage: {type: String},
             showStatsRadar: {type: Boolean},
-            showStatsRankings: {type: Boolean}
+            showStatsRankings: {type: Boolean},
+            showDailyChallenge: {type: Boolean}
         };
 
     }
@@ -79,6 +81,7 @@ class PokedexMain extends LitElement {
         this.currentLanguage = this.loadLanguagePreference();
         this.showStatsRadar = false;
         this.showStatsRankings = false;
+        this.showDailyChallenge = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -87,10 +90,13 @@ class PokedexMain extends LitElement {
     render(){
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-            <div id="listGens" class="${this.showStatsRankings ? 'd-none' : ''}">
+            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge ? 'd-none' : ''}">
                 <div class="stats-button-container">
                     <button @click="${this.showStats}" class="stats-button">
                         📊 Ver Estadísticas y Rankings
+                    </button>
+                    <button @click="${this.showDailyChallengeView}" class="challenge-button">
+                        🎯 Desafío Diario
                     </button>
                 </div>
                 <div class="listado">
@@ -110,6 +116,14 @@ class PokedexMain extends LitElement {
                     </button>
                 </div>
                 <pokemon-stats></pokemon-stats>
+            </div>
+            <div id="dailyChallengeView" class="${this.showDailyChallenge ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideDailyChallenge}" class="back-button">
+                        ← Volver a Generaciones
+                    </button>
+                </div>
+                <pokemon-daily-challenge></pokemon-daily-challenge>
             </div>
             <div id="listPokemon" class="d-none">
                 <div class="back-button-container">
@@ -661,6 +675,12 @@ class PokedexMain extends LitElement {
     }
 
     static styles = css`
+        :host {
+            display: block;
+            flex: 1;
+            padding-bottom: 2rem;
+        }
+
         .listado {
             display: flex;
             flex-wrap: wrap;
@@ -688,6 +708,10 @@ class PokedexMain extends LitElement {
             margin: 2rem auto;
             padding: 0 2rem;
             text-align: center;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .stats-button {
@@ -713,6 +737,32 @@ class PokedexMain extends LitElement {
         }
 
         .stats-button:active {
+            transform: translateY(-1px);
+        }
+
+        .challenge-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .challenge-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(240, 147, 251, 0.6);
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        }
+
+        .challenge-button:active {
             transform: translateY(-1px);
         }
 
@@ -3200,6 +3250,18 @@ class PokedexMain extends LitElement {
     hideStats() {
         console.log("hideStats - Ocultando estadísticas");
         this.showStatsRankings = false;
+        window.scrollTo(0, 0);
+    }
+
+    showDailyChallengeView() {
+        console.log("showDailyChallengeView - Mostrando desafío diario");
+        this.showDailyChallenge = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideDailyChallenge() {
+        console.log("hideDailyChallenge - Ocultando desafío diario");
+        this.showDailyChallenge = false;
         window.scrollTo(0, 0);
     }
 
