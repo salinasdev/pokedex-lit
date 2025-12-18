@@ -3,6 +3,8 @@ import '../pokemon-data/pokemon-data.js';
 import '../pokemon-ficha-listado/pokemon-ficha-listado.js';
 import '../pokemon-sidebar/pokemon-sidebar.js';
 import '../pokedex-generation-card/pokedex-generation-card.js';
+import '../pokemon-stats/pokemon-stats.js';
+// import '../pokemon-events/pokemon-events.js';
 
 class PokedexMain extends LitElement {
 
@@ -37,7 +39,8 @@ class PokedexMain extends LitElement {
             sortBy: {type: String},
             filteredPokemons: {type: Array},
             currentLanguage: {type: String},
-            showStatsRadar: {type: Boolean}
+            showStatsRadar: {type: Boolean},
+            showStatsRankings: {type: Boolean}
         };
 
     }
@@ -75,6 +78,7 @@ class PokedexMain extends LitElement {
         this.filteredPokemons = [];
         this.currentLanguage = this.loadLanguagePreference();
         this.showStatsRadar = false;
+        this.showStatsRankings = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -83,7 +87,12 @@ class PokedexMain extends LitElement {
     render(){
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-            <div id="listGens">
+            <div id="listGens" class="${this.showStatsRankings ? 'd-none' : ''}">
+                <div class="stats-button-container">
+                    <button @click="${this.showStats}" class="stats-button">
+                        📊 Ver Estadísticas y Rankings
+                    </button>
+                </div>
                 <div class="listado">
                     ${this.generations.map(
                         (generation, index) => html`<pokedex-generation-card
@@ -93,6 +102,14 @@ class PokedexMain extends LitElement {
                                                    ></pokedex-generation-card>`
                     )}
                 </div>
+            </div>
+            <div id="statsView" class="${this.showStatsRankings ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideStats}" class="back-button">
+                        ← Volver a Generaciones
+                    </button>
+                </div>
+                <pokemon-stats></pokemon-stats>
             </div>
             <div id="listPokemon" class="d-none">
                 <div class="back-button-container">
@@ -629,13 +646,15 @@ class PokedexMain extends LitElement {
                     </svg>
                 </button>
             ` : ''}
+
+            <!-- <pokemon-events></pokemon-events> -->
             
             <style>
                 .themed-grid-col-cab {
                     padding-top: .75rem;
                     padding-bottom: .75rem;
-                    background-color: rgba(86, 61, 124, .15);
-                    border: 1px solid rgba(86, 61, 124, .2);
+                    background-color: var(--bg-themed, rgba(86, 61, 124, .15));
+                    border: 1px solid var(--border-color, rgba(86, 61, 124, .2));
                 }
             </style>
         `;
@@ -650,17 +669,51 @@ class PokedexMain extends LitElement {
             max-width: 1400px;
             margin: 2rem auto;
             padding: 2rem 1rem;
+            background-color: var(--bg-primary);
         }
 
         .themed-grid-col-cab {
             padding: 1rem;
-            background-color: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(74, 85, 104, 0.2);
+            background-color: var(--bg-card, rgba(255, 255, 255, 0.95));
+            border: 1px solid var(--border-color, rgba(74, 85, 104, 0.2));
             border-radius: 8px;
         }
 
         #listGens, #listPokemon, #fichaPokemon {
             min-height: 400px;
+        }
+
+        .stats-button-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+
+        .stats-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .stats-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .stats-button:active {
+            transform: translateY(-1px);
         }
 
         .back-button-container {
@@ -670,8 +723,8 @@ class PokedexMain extends LitElement {
         }
 
         .back-button {
-            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-            color: white;
+            background: var(--button-bg, linear-gradient(135deg, #4a5568 0%, #2d3748 100%));
+            color: var(--button-text, white);
             border: none;
             border-radius: 12px;
             padding: 0.9rem 1.8rem;
@@ -679,7 +732,7 @@ class PokedexMain extends LitElement {
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(45, 55, 72, 0.3);
+            box-shadow: 0 4px 15px var(--shadow-color, rgba(45, 55, 72, 0.3));
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -687,8 +740,8 @@ class PokedexMain extends LitElement {
 
         .back-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(45, 55, 72, 0.4);
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            box-shadow: 0 6px 20px var(--shadow-hover, rgba(45, 55, 72, 0.4));
+            background: var(--button-bg-hover, linear-gradient(135deg, #2d3748 0%, #1a202c 100%));
         }
 
         .back-button:active {
@@ -707,10 +760,10 @@ class PokedexMain extends LitElement {
         .language-selector {
             display: flex;
             gap: 0.5rem;
-            background: white;
+            background: var(--bg-card, white);
             padding: 0.5rem;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.05));
         }
 
         .language-button {
@@ -726,7 +779,7 @@ class PokedexMain extends LitElement {
 
         .language-button:hover {
             opacity: 1;
-            background: #f8fafc;
+            background: var(--bg-hover, #f8fafc);
         }
 
         .language-button.active {
@@ -748,21 +801,22 @@ class PokedexMain extends LitElement {
             flex: 1;
             padding: 1rem 3rem 1rem 1.5rem;
             font-size: 1.1rem;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--input-border, #e2e8f0);
             border-radius: 12px;
-            background: white;
+            background: var(--input-bg, white);
+            color: var(--text-primary, #333333);
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.05));
         }
 
         .search-input:focus {
             outline: none;
-            border-color: #4a5568;
-            box-shadow: 0 4px 12px rgba(74, 85, 104, 0.15);
+            border-color: var(--input-border-focus, #4a5568);
+            box-shadow: 0 4px 12px var(--shadow-hover, rgba(74, 85, 104, 0.15));
         }
 
         .search-input::placeholder {
-            color: #a0aec0;
+            color: var(--input-placeholder, #a0aec0);
         }
 
         .clear-search-button {
@@ -1210,9 +1264,9 @@ class PokedexMain extends LitElement {
         }
 
         .pokemon-detail-card {
-            background: white;
+            background: var(--bg-card, white);
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 40px var(--shadow-color, rgba(0, 0, 0, 0.15));
             overflow: hidden;
         }
 
@@ -1221,17 +1275,17 @@ class PokedexMain extends LitElement {
             grid-template-columns: 300px 1fr;
             gap: 2rem;
             padding: 2rem;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: var(--bg-image-container, linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%));
         }
 
         .detail-image-section {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 16px;
             padding: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px var(--shadow-color, rgba(0, 0, 0, 0.1));
         }
 
         .detail-pokemon-image {
@@ -1256,7 +1310,7 @@ class PokedexMain extends LitElement {
         .detail-title {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             margin: 0;
         }
 
@@ -1313,7 +1367,7 @@ class PokedexMain extends LitElement {
 
         .detail-number {
             font-size: 1.5rem;
-            color: #666;
+            color: var(--text-secondary, #666);
             font-weight: 600;
         }
 
@@ -1325,16 +1379,16 @@ class PokedexMain extends LitElement {
         }
 
         .stat-item {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             padding: 1rem;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .stat-label {
             display: block;
             font-size: 0.9rem;
-            color: #666;
+            color: var(--text-secondary, #666);
             font-weight: 600;
             margin-bottom: 0.3rem;
         }
@@ -1342,7 +1396,7 @@ class PokedexMain extends LitElement {
         .stat-value {
             display: block;
             font-size: 1.3rem;
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             font-weight: 700;
         }
 
@@ -1353,7 +1407,7 @@ class PokedexMain extends LitElement {
         .types-label {
             display: block;
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary, #666);
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
@@ -1410,13 +1464,13 @@ class PokedexMain extends LitElement {
         .obtain-methods-section {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--border-color, #e2e8f0);
         }
 
         .obtain-label {
             display: block;
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary, #666);
             font-weight: 600;
             margin-bottom: 0.8rem;
         }
@@ -1435,7 +1489,7 @@ class PokedexMain extends LitElement {
             border-radius: 10px;
             font-size: 0.9rem;
             font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 6px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .method-badge.baby {
@@ -1475,7 +1529,7 @@ class PokedexMain extends LitElement {
         .species-details-section {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--border-color, #e2e8f0);
         }
 
         .species-info-grid {
@@ -1489,15 +1543,15 @@ class PokedexMain extends LitElement {
             align-items: center;
             gap: 0.7rem;
             padding: 0.8rem 1rem;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            background: var(--bg-pokemon-info, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
             border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color, #e2e8f0);
             transition: all 0.3s ease;
         }
 
         .info-item:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px var(--shadow-hover, rgba(0, 0, 0, 0.08));
         }
 
         .info-icon {
@@ -1514,7 +1568,7 @@ class PokedexMain extends LitElement {
 
         .info-label {
             font-size: 0.75rem;
-            color: #64748b;
+            color: var(--text-muted, #64748b);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -1522,7 +1576,7 @@ class PokedexMain extends LitElement {
 
         .info-value {
             font-size: 0.9rem;
-            color: #1e293b;
+            color: var(--text-primary, #1e293b);
             font-weight: 600;
         }
 
@@ -1534,14 +1588,14 @@ class PokedexMain extends LitElement {
 
         .evolution-section {
             padding: 2rem;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-top: 3px solid #bae6fd;
+            background: var(--bg-image-container, linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%));
+            border-top: 3px solid var(--border-color, #bae6fd);
         }
 
         .evolution-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #0c4a6e;
+            color: var(--text-primary, #0c4a6e);
             margin-bottom: 2rem;
             text-align: center;
             text-transform: uppercase;
@@ -1551,8 +1605,8 @@ class PokedexMain extends LitElement {
         /* Estilos para la sección de estadísticas */
         .stats-chart-section {
             padding: 2rem;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-top: 3px solid #fcd34d;
+            background: var(--bg-image-container, linear-gradient(135deg, #fef3c7 0%, #fde68a 100%));
+            border-top: 3px solid var(--border-color, #fcd34d);
         }
 
         .stats-header {
@@ -1565,7 +1619,7 @@ class PokedexMain extends LitElement {
         .stats-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #78350f;
+            color: var(--text-primary, #78350f);
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -1579,12 +1633,12 @@ class PokedexMain extends LitElement {
             cursor: pointer;
             font-size: 1.5rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px var(--shadow-color, rgba(0, 0, 0, 0.1));
         }
 
         .chart-toggle-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 12px var(--shadow-hover, rgba(0, 0, 0, 0.15));
         }
 
         .chart-toggle-button:active {
@@ -1597,34 +1651,30 @@ class PokedexMain extends LitElement {
             justify-content: center;
             gap: 0.5rem;
             padding: 1rem;
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 12px;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 2px solid #fbbf24;
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.1));
+            border: 2px solid var(--border-color, #fbbf24);
         }
 
         .total-label {
             font-size: 1.2rem;
             font-weight: 600;
-            color: #92400e;
+            color: var(--text-primary, #92400e);
         }
 
         .total-value {
             font-size: 2rem;
             font-weight: 800;
-            color: #b45309;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary, #b45309);
         }
 
         .stats-chart-container {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             padding: 2rem;
             border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.1));
         }
 
         .stats-bars {
@@ -1647,14 +1697,14 @@ class PokedexMain extends LitElement {
 
         .stat-name {
             font-weight: 700;
-            color: #374151;
+            color: var(--text-primary, #374151);
             min-width: 100px;
             font-size: 1rem;
         }
 
         .stat-value {
             font-weight: 800;
-            color: #111827;
+            color: var(--text-primary, #111827);
             font-size: 1.1rem;
             min-width: 40px;
         }
@@ -1672,10 +1722,10 @@ class PokedexMain extends LitElement {
         .stat-bar-container {
             width: 100%;
             height: 28px;
-            background: #f3f4f6;
+            background: var(--bg-secondary, #f3f4f6);
             border-radius: 14px;
             overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 2px 4px var(--shadow-color, rgba(0, 0, 0, 0.1));
             position: relative;
         }
 
@@ -1739,14 +1789,14 @@ class PokedexMain extends LitElement {
         /* Estilos para la sección de efectividad de tipos */
         .type-effectiveness-section {
             padding: 2rem;
-            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            border-top: 3px solid #fca5a5;
+            background: var(--bg-image-container, linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%));
+            border-top: 3px solid var(--border-color, #fca5a5);
         }
 
         .effectiveness-section-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #7f1d1d;
+            color: var(--text-primary, #7f1d1d);
             margin-bottom: 0.5rem;
             text-align: center;
             text-transform: uppercase;
@@ -1755,7 +1805,7 @@ class PokedexMain extends LitElement {
 
         .effectiveness-description {
             text-align: center;
-            color: #991b1b;
+            color: var(--text-primary, #991b1b);
             font-size: 0.95rem;
             margin-bottom: 1.5rem;
             font-weight: 500;
@@ -1768,43 +1818,43 @@ class PokedexMain extends LitElement {
         }
 
         .effectiveness-group {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             padding: 1.5rem;
             border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.1));
             border-left: 5px solid;
         }
 
         .effectiveness-group.super-weak {
             border-left-color: #dc2626;
-            background: linear-gradient(135deg, #fff 0%, #fee2e2 100%);
+            background: var(--effectiveness-super-weak-bg, linear-gradient(135deg, #fff 0%, #fee2e2 100%));
         }
 
         .effectiveness-group.weak {
             border-left-color: #f97316;
-            background: linear-gradient(135deg, #fff 0%, #fed7aa 100%);
+            background: var(--effectiveness-weak-bg, linear-gradient(135deg, #fff 0%, #fed7aa 100%));
         }
 
         .effectiveness-group.resistant {
             border-left-color: #84cc16;
-            background: linear-gradient(135deg, #fff 0%, #d9f99d 100%);
+            background: var(--effectiveness-resistant-bg, linear-gradient(135deg, #fff 0%, #d9f99d 100%));
         }
 
         .effectiveness-group.super-resistant {
             border-left-color: #22c55e;
-            background: linear-gradient(135deg, #fff 0%, #bbf7d0 100%);
+            background: var(--effectiveness-super-resistant-bg, linear-gradient(135deg, #fff 0%, #bbf7d0 100%));
         }
 
         .effectiveness-group.immune {
             border-left-color: #6366f1;
-            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            background: var(--effectiveness-immune-bg, linear-gradient(135deg, #fff 0%, #e0e7ff 100%));
         }
 
         .effectiveness-title {
             font-size: 1.1rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: #374151;
+            color: var(--text-primary, #374151);
         }
 
         .type-badges {
@@ -1823,13 +1873,13 @@ class PokedexMain extends LitElement {
             align-items: center;
             gap: 0.5rem;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.15));
             cursor: default;
         }
 
         .type-badge:hover {
             transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 12px var(--shadow-hover, rgba(0, 0, 0, 0.25));
         }
 
         /* Colores por tipo */
@@ -2000,13 +2050,13 @@ class PokedexMain extends LitElement {
 
         .encounters-section {
             padding: 2rem;
-            background: #f8f9fa;
+            background: var(--bg-image-container, #f8f9fa);
         }
 
         .encounters-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             margin-bottom: 2rem;
             text-align: center;
         }
@@ -2029,21 +2079,21 @@ class PokedexMain extends LitElement {
         .generation-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             padding: 1rem 1.5rem;
-            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+            background: var(--bg-pokemon-info, linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%));
             border-radius: 12px;
             margin: 0;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid #4a5568;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.1));
+            border-left: 5px solid var(--border-color, #4a5568);
         }
 
         .version-group {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .version-header {
@@ -2111,44 +2161,44 @@ class PokedexMain extends LitElement {
         }
 
         .location-card {
-            background: #f8f9fa;
+            background: var(--bg-secondary, #f8f9fa);
             border-radius: 12px;
             overflow: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.05));
         }
 
         .location-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 16px var(--shadow-hover, rgba(0, 0, 0, 0.12));
         }
 
         .location-image {
             width: 100%;
             height: 180px;
             object-fit: contain;
-            background: #f8fafc;
+            background: var(--bg-primary, #f8fafc);
             border-radius: 8px 8px 0 0;
         }
 
         .location-image.placeholder-image {
             object-fit: contain;
-            background: #f8fafc;
+            background: var(--bg-primary, #f8fafc);
         }
 
         .location-name {
             padding: 1rem;
             font-size: 0.95rem;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             text-align: center;
-            background: white;
+            background: var(--bg-pokemon-info, white);
         }
 
         /* Estilos para secciones desplegables */
         .collapsible-section {
             padding: 2rem;
-            background: #f8f9fa;
+            background: var(--bg-image-container, #f8f9fa);
             margin-bottom: 0;
         }
 
@@ -2198,13 +2248,13 @@ class PokedexMain extends LitElement {
         /* Estilos para la sección de movimientos */
         .moves-section {
             padding: 2rem;
-            background: #f8f9fa;
+            background: var(--bg-image-container, #f8f9fa);
         }
 
         .moves-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             margin: 0;
         }
 
@@ -2215,19 +2265,19 @@ class PokedexMain extends LitElement {
         }
 
         .move-category {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .move-category-title {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             margin: 0 0 1rem 0;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--border-color, #e2e8f0);
         }
 
         .moves-grid {
@@ -2237,7 +2287,7 @@ class PokedexMain extends LitElement {
         }
 
         .move-item {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+            background: var(--bg-secondary, linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%));
             padding: 0.75rem 1rem;
             border-radius: 8px;
             display: flex;
@@ -2249,29 +2299,29 @@ class PokedexMain extends LitElement {
 
         .move-item:hover {
             transform: translateX(4px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.1));
         }
 
         .move-item.machine {
             border-left-color: #3182ce;
-            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            background: var(--move-machine-bg, linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%));
         }
 
         .move-item.tutor {
             border-left-color: #38a169;
-            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            background: var(--move-tutor-bg, linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%));
         }
 
         .move-item.egg {
             border-left-color: #d69e2e;
-            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            background: var(--move-egg-bg, linear-gradient(135deg, #fffaf0 0%, #feebc8 100%));
         }
 
         .move-level {
             font-size: 0.85rem;
             font-weight: 700;
-            color: #4a5568;
-            background: white;
+            color: var(--text-primary, #4a5568);
+            background: var(--bg-card, white);
             padding: 0.25rem 0.5rem;
             border-radius: 6px;
             min-width: 45px;
@@ -2281,20 +2331,20 @@ class PokedexMain extends LitElement {
         .move-name {
             font-size: 0.95rem;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             flex: 1;
         }
 
         /* Estilos para la sección de variantes */
         .varieties-section {
             padding: 2rem;
-            background: #f8f9fa;
+            background: var(--bg-image-container, #f8f9fa);
         }
 
         .varieties-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             margin: 0;
         }
 
@@ -2393,16 +2443,16 @@ class PokedexMain extends LitElement {
         /* Estilos para Descripciones de la Pokédex */
         .pokedex-entries-section {
             margin-top: 2rem;
-            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            background: var(--bg-card, linear-gradient(135deg, #ffffff 0%, #f7fafc 100%));
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .pokedex-entries-title {
             margin: 0;
             font-size: 1.6rem;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             font-weight: 700;
         }
 
@@ -2413,18 +2463,18 @@ class PokedexMain extends LitElement {
         }
 
         .pokedex-entry-card {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 15px;
             padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 10px var(--shadow-color, rgba(0, 0, 0, 0.05));
+            border: 2px solid var(--border-color, #e2e8f0);
             transition: all 0.3s ease;
         }
 
         .pokedex-entry-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            border-color: #cbd5e0;
+            box-shadow: 0 6px 20px var(--shadow-hover, rgba(0, 0, 0, 0.1));
+            border-color: var(--border-color, #cbd5e0);
         }
 
         .entry-version {
@@ -2433,7 +2483,7 @@ class PokedexMain extends LitElement {
             gap: 0.75rem;
             margin-bottom: 1rem;
             padding-bottom: 0.75rem;
-            border-bottom: 2px solid #edf2f7;
+            border-bottom: 2px solid var(--border-color, #edf2f7);
         }
 
         .entry-version-icon {
@@ -2446,7 +2496,7 @@ class PokedexMain extends LitElement {
             margin: 0;
             font-size: 1.1rem;
             font-weight: 700;
-            color: #4a5568;
+            color: var(--text-primary, #4a5568);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -2466,13 +2516,13 @@ class PokedexMain extends LitElement {
             margin: 0;
             font-size: 1rem;
             line-height: 1.7;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             text-align: justify;
         }
 
         .no-entries {
             text-align: center;
-            color: #718096;
+            color: var(--text-muted, #718096);
             font-style: italic;
             padding: 2rem;
         }
@@ -2480,16 +2530,16 @@ class PokedexMain extends LitElement {
         /* Estilos para Galería de Sprites */
         .sprite-gallery-section {
             margin-top: 2rem;
-            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            background: var(--bg-card, linear-gradient(135deg, #ffffff 0%, #f7fafc 100%));
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08));
         }
 
         .sprite-gallery-title {
             margin: 0;
             font-size: 1.6rem;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             font-weight: 700;
         }
 
@@ -2501,20 +2551,20 @@ class PokedexMain extends LitElement {
         }
 
         .sprite-category {
-            background: white;
+            background: var(--bg-pokemon-info, white);
             border-radius: 15px;
             padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 10px var(--shadow-color, rgba(0, 0, 0, 0.05));
+            border: 2px solid var(--border-color, #e2e8f0);
         }
 
         .sprite-category-title {
             margin: 0 0 1rem 0;
             font-size: 1.2rem;
             font-weight: 700;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             padding-bottom: 0.75rem;
-            border-bottom: 2px solid #edf2f7;
+            border-bottom: 2px solid var(--border-color, #edf2f7);
         }
 
         .sprites-grid {
@@ -2528,7 +2578,7 @@ class PokedexMain extends LitElement {
         }
 
         .sprite-card {
-            background: #f7fafc;
+            background: var(--sprite-section-bg, #f7fafc);
             border-radius: 12px;
             padding: 1rem;
             display: flex;
@@ -2536,23 +2586,23 @@ class PokedexMain extends LitElement {
             align-items: center;
             gap: 0.5rem;
             transition: all 0.3s ease;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color, #e2e8f0);
         }
 
         .sprite-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            border-color: #cbd5e0;
+            box-shadow: 0 8px 16px var(--shadow-hover, rgba(0, 0, 0, 0.1));
+            border-color: var(--border-color, #cbd5e0);
         }
 
         .sprite-card.shiny-card {
-            background: linear-gradient(135deg, #fef5e7 0%, #fcf3cf 100%);
-            border-color: #f8c471;
+            background: var(--sprite-shiny-bg, linear-gradient(135deg, #fef5e7 0%, #fcf3cf 100%));
+            border-color: var(--sprite-shiny-border, #f8c471);
         }
 
         .sprite-card.shiny-card:hover {
-            box-shadow: 0 8px 16px rgba(248, 196, 113, 0.3);
-            border-color: #f39c12;
+            box-shadow: 0 8px 16px var(--sprite-shiny-shadow, rgba(248, 196, 113, 0.3));
+            border-color: var(--sprite-shiny-border-hover, #f39c12);
         }
 
         .sprite-image {
@@ -2571,7 +2621,7 @@ class PokedexMain extends LitElement {
         .sprite-name {
             font-size: 0.85rem;
             font-weight: 600;
-            color: #4a5568;
+            color: var(--text-primary, #4a5568);
             text-align: center;
         }
 
@@ -3139,6 +3189,18 @@ class PokedexMain extends LitElement {
         console.log("volverAGeneraciones en pokedex-main");
         this.searchQuery = ''; // Limpiar búsqueda al volver
         this.muestra = "listGens";
+    }
+
+    showStats() {
+        console.log("showStats - Mostrando estadísticas");
+        this.showStatsRankings = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideStats() {
+        console.log("hideStats - Ocultando estadísticas");
+        this.showStatsRankings = false;
+        window.scrollTo(0, 0);
     }
 
     volverAListado(e){

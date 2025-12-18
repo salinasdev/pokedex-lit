@@ -195,7 +195,7 @@ class PokemonFichaListado extends LitElement {
             text-align: center;
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px var(--shadow-color, rgba(0, 0, 0, 0.1));
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
@@ -205,7 +205,7 @@ class PokemonFichaListado extends LitElement {
         
         .pokemon-button:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 25px var(--shadow-hover, rgba(0, 0, 0, 0.2));
         }
 
         .pokemon-button:active {
@@ -213,7 +213,7 @@ class PokemonFichaListado extends LitElement {
         }
 
         .pokemon-image-container {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: var(--bg-image-container, linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%));
             padding: 1.5rem;
             display: flex;
             align-items: center;
@@ -237,16 +237,17 @@ class PokemonFichaListado extends LitElement {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
+            background: var(--bg-pokemon-info, transparent);
         }
 
         .pokemon-number {
-            color: #666;
+            color: var(--text-secondary, #666);
             font-size: 0.9rem;
             font-weight: 600;
         }
 
         .pokemon-name {
-            color: #1a1a1a;
+            color: var(--text-primary, #1a1a1a);
             font-size: 1.2rem;
             font-weight: 700;
         }

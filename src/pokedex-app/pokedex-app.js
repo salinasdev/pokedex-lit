@@ -2,6 +2,7 @@ import { html, LitElement, css } from "lit";
 import '../pokedex-header/pokedex-header.js';
 import '../pokedex-footer/pokedex-footer.js';
 import '../pokedex-main/pokedex-main.js';
+// import '../pokemon-events/pokemon-events.js'; // TEMPORALMENTE DESHABILITADO
 
 class PokedexApp extends LitElement {
 
@@ -20,7 +21,7 @@ class PokedexApp extends LitElement {
         :host {
             display: block;
             min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            background-color: var(--bg-primary, #f5f7fa);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             padding-bottom: 180px; /* Espacio para el footer fijo */
         }
@@ -32,6 +33,7 @@ class PokedexApp extends LitElement {
         <pokedex-header></pokedex-header>
         <pokedex-main></pokedex-main>
         <pokedex-footer></pokedex-footer>
+        <!-- <pokemon-events></pokemon-events> TEMPORALMENTE DESHABILITADO -->
         `;
     }
 }

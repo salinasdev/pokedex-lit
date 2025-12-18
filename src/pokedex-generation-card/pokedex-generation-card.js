@@ -41,17 +41,17 @@ class PokedexGenerationCard extends LitElement {
         }
 
         .card-content {
-            background: white;
+            background: var(--bg-card, white);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px var(--shadow-color, rgba(0, 0, 0, 0.2));
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
 
         .card-content:hover {
             transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 40px var(--shadow-hover, rgba(0, 0, 0, 0.3));
         }
 
         .generation-image {
@@ -88,11 +88,11 @@ class PokedexGenerationCard extends LitElement {
         }
 
         .generation-button {
-            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            background: var(--button-bg, linear-gradient(135deg, #4a5568 0%, #2d3748 100%));
             border: none;
             border-radius: 0;
             box-sizing: border-box;
-            color: white;
+            color: var(--button-text, white);
             cursor: pointer;
             display: block;
             width: 100%;
@@ -110,7 +110,7 @@ class PokedexGenerationCard extends LitElement {
         }
         
         .generation-button:hover {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            background: var(--button-bg-hover, linear-gradient(135deg, #2d3748 0%, #1a202c 100%));
             transform: scale(1.02);
         }
 

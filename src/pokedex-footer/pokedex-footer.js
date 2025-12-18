@@ -33,7 +33,7 @@ class PokedexFooter extends LitElement {
             background: linear-gradient(135deg, #1e3a5f 0%, #2d5a88 100%);
             margin-top: 4rem;
             padding: 2rem 0;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 -4px 20px var(--shadow-color, rgba(0, 0, 0, 0.15));
             position: fixed;
             bottom: 0;
             left: 0;
