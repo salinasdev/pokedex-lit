@@ -43,7 +43,10 @@ class PokedexMain extends LitElement {
             showStatsRadar: {type: Boolean},
             showStatsRankings: {type: Boolean},
             showDailyChallenge: {type: Boolean},
-            previousView: {type: String}
+            previousView: {type: String},
+            selectedEncounterVersion: {type: String},
+            selectedLocation: {type: Object},
+            showEncounterMap: {type: Boolean}
         };
 
     }
@@ -84,6 +87,9 @@ class PokedexMain extends LitElement {
         this.showStatsRankings = false;
         this.showDailyChallenge = false;
         this.previousView = "listGens"; // Vista anterior por defecto
+        this.selectedEncounterVersion = 'all';
+        this.selectedLocation = null;
+        this.showEncounterMap = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -521,72 +527,44 @@ class PokedexMain extends LitElement {
                         ${this.encounters.length > 0 ? html`
                             <div class="encounters-section collapsible-section">
                                 <div class="section-header" @click="${() => this.toggleLocations()}">
-                                    <h3 class="encounters-title">📍 Ubicaciones por Versión</h3>
+                                    <h3 class="encounters-title">📍 Mapa Interactivo de Encuentros</h3>
                                     <span class="toggle-icon">${this.showLocations ? '▼' : '▶'}</span>
                                 </div>
                                 <div class="section-content ${this.showLocations ? 'show' : ''}">
-                                    <div class="versions-container">
-                                        ${(() => {
-                                            const sortedVersions = Array.from(this.groupEncountersByVersion(this.encounters))
-                                                .sort((a, b) => {
-                                                    const genA = this.getVersionGeneration(a[0]);
-                                                    const genB = this.getVersionGeneration(b[0]);
-                                                    if (genA !== genB) return genA - genB;
-                                                    
-                                                    const orderA = this.getVersionOrder(a[0]);
-                                                    const orderB = this.getVersionOrder(b[0]);
-                                                    return orderA - orderB;
-                                                });
-                                            
-                                            let currentGen = null;
-                                            const result = [];
-                                            
-                                            sortedVersions.forEach(([versionName, locations]) => {
-                                                const gen = this.getVersionGeneration(versionName);
-                                                
-                                                // Añadir encabezado de generación si es diferente
-                                                if (gen !== currentGen) {
-                                                    currentGen = gen;
-                                                    result.push(html`
-                                                        <div class="generation-header">
-                                                            <h3 class="generation-title">Generación ${this.getGenerationRoman(gen)}</h3>
-                                                        </div>
-                                                    `);
-                                                }
-                                                
-                                                // Añadir el grupo de versión
-                                                result.push(html`
-                                                    <div class="version-group ${this.expandedVersions.has(versionName) ? 'expanded' : ''}">
-                                                        <div class="version-header" @click="${() => this.toggleVersion(versionName)}">
-                                                            <img src="${this.getVersionIcon(versionName)}" 
-                                                                 class="version-header-icon"
-                                                                 alt="${versionName}">
-                                                            <h4 class="version-title">${this.getVersionNameInSpanish(versionName)}</h4>
-                                                            <span class="version-count">(${locations.length} ubicaciones)</span>
-                                                            <span class="toggle-icon">${this.expandedVersions.has(versionName) ? '▼' : '▶'}</span>
-                                                        </div>
-                                                        <div class="locations-grid ${this.expandedVersions.has(versionName) ? 'show' : ''}">
-                                                            ${locations.map(
-                                                                (loc) => html`
-                                                                <div class="location-card">
-                                                                    <img src="${this.getLocationImageUrl(loc.location)}" 
-                                                                         class="location-image" 
-                                                                         alt="${loc.locationDisplay}"
-                                                                         @error="${(e) => this.handleImageError(e)}"
-                                                                         data-location="${loc.locationDisplay}"
-                                                                         data-location-slug="${loc.location}">
-                                                                    <div class="location-name">${loc.locationDisplay}</div>
-                                                                </div>
-                                                                `
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                `);
-                                            });
-                                            
-                                            return result;
-                                        })()}
+                                    <!-- Filtro de versión -->
+                                    <div class="encounter-filter-bar">
+                                        <label class="filter-label">
+                                            <span class="filter-icon">🎮</span>
+                                            Filtrar por juego:
+                                        </label>
+                                        <select 
+                                            class="version-select" 
+                                            @change="${(e) => this.handleVersionFilter(e.target.value)}"
+                                            .value="${this.selectedEncounterVersion}">
+                                            <option value="all">Todos los juegos</option>
+                                            ${this.getUniqueVersions().map(version => html`
+                                                <option value="${version}">${this.getVersionNameInSpanish(version)}</option>
+                                            `)}
+                                        </select>
+                                        <button 
+                                            class="map-view-toggle ${this.showEncounterMap ? 'active' : ''}"
+                                            @click="${() => this.toggleEncounterMap()}"
+                                            title="${this.showEncounterMap ? 'Ver lista' : 'Ver mapa'}">
+                                            ${this.showEncounterMap ? '📋 Lista' : '🗺️ Mapa'}
+                                        </button>
                                     </div>
+
+                                    <!-- Vista de Mapa Interactivo -->
+                                    ${this.showEncounterMap ? html`
+                                        <div class="encounter-map-container">
+                                            ${this.renderEncounterMap()}
+                                        </div>
+                                    ` : html`
+                                        <!-- Vista de Lista (original mejorada) -->
+                                        <div class="versions-container">
+                                            ${this.renderEncountersList()}
+                                        </div>
+                                    `}
                                 </div>
                             </div>
                         ` : ''}
@@ -2276,6 +2254,382 @@ class PokedexMain extends LitElement {
             background: var(--bg-pokemon-info, white);
         }
 
+        /* Estilos para el Mapa Interactivo de Encuentros */
+        .encounter-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-card, white);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.1));
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+            font-size: 1rem;
+        }
+
+        .filter-icon {
+            font-size: 1.2rem;
+        }
+
+        .version-select {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color, #ddd);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-primary, #333);
+            background: var(--bg-primary, white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .version-select:hover {
+            border-color: var(--border-hover, #667eea);
+        }
+
+        .version-select:focus {
+            outline: none;
+            border-color: var(--border-focus, #667eea);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .map-view-toggle {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .map-view-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .map-view-toggle.active {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .encounter-map-container {
+            background: var(--bg-card, white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px var(--shadow-color, rgba(0,0,0,0.08));
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 1.5rem;
+            min-height: 500px;
+        }
+
+        .map-locations-panel {
+            background: var(--bg-primary, #f5f5f5);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary, #333);
+            margin: 0 0 1rem 0;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card, white);
+            border-radius: 8px;
+        }
+
+        .locations-list {
+            overflow-y: auto;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .locations-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .locations-list::-webkit-scrollbar-track {
+            background: var(--bg-primary, #f0f0f0);
+            border-radius: 4px;
+        }
+
+        .locations-list::-webkit-scrollbar-thumb {
+            background: var(--border-color, #cbd5e0);
+            border-radius: 4px;
+        }
+
+        .locations-list::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover, #a0aec0);
+        }
+
+        .map-location-item {
+            background: var(--bg-card, white);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .map-location-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px var(--shadow-color, rgba(0,0,0,0.15));
+            border-color: var(--border-hover, #667eea);
+        }
+
+        .map-location-item.selected {
+            border-color: var(--border-focus, #667eea);
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .map-location-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid var(--border-color, #e2e8f0);
+        }
+
+        .map-location-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .map-location-name {
+            font-weight: 600;
+            color: var(--text-primary, #333);
+            font-size: 0.95rem;
+        }
+
+        .map-location-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chance-badge, .level-badge, .versions-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .chance-badge {
+            background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+            color: #78350f;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+            color: #1e3a8a;
+        }
+
+        .versions-badge {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #3730a3;
+        }
+
+        .map-detail-panel {
+            background: var(--bg-card, white);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 2px solid var(--border-color, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .location-detail {
+            width: 100%;
+        }
+
+        .location-detail-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 3px solid var(--border-color, #e2e8f0);
+            background: var(--bg-primary, #f5f5f5);
+        }
+
+        .location-detail-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary, #333);
+            margin: 0 0 1.5rem 0;
+            text-align: center;
+        }
+
+        .encounter-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary, #f5f5f5);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.05));
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary, #666);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary, #333);
+        }
+
+        .encounter-methods, .encounter-details-list, .versions-detail {
+            margin-bottom: 1.5rem;
+        }
+
+        .encounter-methods h5, .encounter-details-list h5, .versions-detail h5 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary, #333);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .methods-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .method-badge {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #075985;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .detail-item {
+            background: var(--bg-primary, #f5f5f5);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .detail-method {
+            font-weight: 600;
+            color: var(--text-primary, #333);
+        }
+
+        .detail-level, .detail-chance {
+            padding: 0.25rem 0.6rem;
+            background: var(--bg-card, white);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary, #666);
+        }
+
+        .detail-conditions {
+            font-size: 0.85rem;
+            color: var(--text-secondary, #666);
+            font-style: italic;
+        }
+
+        .versions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .version-detail-card {
+            background: var(--bg-primary, #f5f5f5);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .version-icon-small {
+            width: 32px;
+            height: 32px;
+            background: white;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .version-name-small {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+        }
+
+        .no-selection-message, .no-encounters-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary, #666);
+        }
+
+        .message-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-selection-message p, .no-encounters-message p {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
         /* Estilos para secciones desplegables */
         .collapsible-section {
             padding: 2rem;
@@ -2430,7 +2784,7 @@ class PokedexMain extends LitElement {
         }
 
         .varieties-container {
-            background: white;
+            background: var(--bg-card, white);
             border-radius: 16px;
             padding: 1.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -2443,7 +2797,7 @@ class PokedexMain extends LitElement {
         }
 
         .variety-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+            background: var(--bg-pokemon-info, linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%));
             border-radius: 12px;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -2455,12 +2809,12 @@ class PokedexMain extends LitElement {
         .variety-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            border-color: #4a5568;
+            border-color: var(--text-secondary, #4a5568);
         }
 
         .variety-card.default {
             border-color: #f6ad55;
-            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            background: var(--bg-pokemon-info, linear-gradient(135deg, #fffaf0 0%, #feebc8 100%));
         }
 
         .variety-card.default:hover {
@@ -2469,7 +2823,7 @@ class PokedexMain extends LitElement {
 
         .variety-image-container {
             position: relative;
-            background: white;
+            background: var(--bg-image-container, white);
             padding: 1rem;
             text-align: center;
             min-height: 180px;
@@ -2511,13 +2865,13 @@ class PokedexMain extends LitElement {
         .variety-name {
             font-size: 1rem;
             font-weight: 700;
-            color: #2d3748;
+            color: var(--text-primary, #2d3748);
             margin: 0 0 0.5rem 0;
         }
 
         .variety-id {
             font-size: 0.85rem;
-            color: #718096;
+            color: var(--text-secondary, #718096);
             font-weight: 600;
         }
 
@@ -2995,6 +3349,76 @@ class PokedexMain extends LitElement {
 
             .encounters-section {
                 padding: 1rem;
+            }
+
+            .encounter-filter-bar {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 0.75rem;
+            }
+
+            .filter-label {
+                width: 100%;
+            }
+
+            .version-select {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .map-view-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .map-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .map-locations-panel {
+                max-height: 300px;
+            }
+
+            .locations-list {
+                max-height: 200px;
+            }
+
+            .map-location-thumb {
+                width: 50px;
+                height: 50px;
+            }
+
+            .map-location-name {
+                font-size: 0.85rem;
+            }
+
+            .map-detail-panel {
+                padding: 1rem;
+            }
+
+            .location-detail-image {
+                max-height: 250px;
+            }
+
+            .location-detail-title {
+                font-size: 1.4rem;
+            }
+
+            .encounter-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .versions-grid {
+                grid-template-columns: 1fr;
             }
 
             .scroll-to-bottom-btn {
@@ -6004,6 +6428,7 @@ class PokedexMain extends LitElement {
         console.log("Varieties:", this.varieties);
         console.log("Pokedex Entries:", this.pokedexEntries);
         console.log("Stats:", this.stats);
+        console.log("Encounters completos:", this.encounters);
         console.log("AQUIII");
     }
     mascaraNum(n){
@@ -6042,7 +6467,343 @@ class PokedexMain extends LitElement {
         return versionMap;
     }
 
+    // Nuevos métodos para el mapa interactivo de encuentros
 
+    getUniqueVersions() {
+        const versions = new Set();
+        this.encounters.forEach(encounter => {
+            encounter.version_details.forEach(vdetail => {
+                versions.add(vdetail.version.name);
+            });
+        });
+        return Array.from(versions).sort((a, b) => {
+            const genA = this.getVersionGeneration(a);
+            const genB = this.getVersionGeneration(b);
+            if (genA !== genB) return genA - genB;
+            return this.getVersionOrder(a) - this.getVersionOrder(b);
+        });
+    }
+
+    handleVersionFilter(version) {
+        this.selectedEncounterVersion = version;
+        this.selectedLocation = null;
+    }
+
+    toggleEncounterMap() {
+        this.showEncounterMap = !this.showEncounterMap;
+        this.selectedLocation = null;
+    }
+
+    getFilteredEncounters() {
+        if (this.selectedEncounterVersion === 'all') {
+            return this.encounters;
+        }
+        
+        return this.encounters.filter(encounter => 
+            encounter.version_details.some(v => v.version.name === this.selectedEncounterVersion)
+        );
+    }
+
+    getEncounterDetails(encounter, versionName) {
+        console.log("getEncounterDetails - encounter:", encounter);
+        console.log("getEncounterDetails - versionName:", versionName);
+        console.log("getEncounterDetails - version_details:", encounter.version_details);
+        
+        const versionDetail = encounter.version_details.find(v => v.version.name === versionName);
+        console.log("getEncounterDetails - versionDetail encontrado:", versionDetail);
+        
+        if (!versionDetail || !versionDetail.encounter_details) {
+            console.log("getEncounterDetails - No se encontró versionDetail o encounter_details");
+            return null;
+        }
+
+        console.log("getEncounterDetails - encounter_details:", versionDetail.encounter_details);
+
+        // Calcular probabilidad promedio
+        const totalChance = versionDetail.encounter_details.reduce((sum, detail) => {
+            return sum + (detail.chance || 0);
+        }, 0);
+        const avgChance = versionDetail.encounter_details.length > 0 
+            ? Math.round(totalChance / versionDetail.encounter_details.length) 
+            : 0;
+
+        // Obtener métodos de encuentro únicos
+        const methods = [...new Set(versionDetail.encounter_details.map(d => d.method.name))];
+        
+        // Obtener niveles
+        const levels = versionDetail.encounter_details.map(d => ({
+            min: d.min_level,
+            max: d.max_level
+        }));
+
+        const result = {
+            chance: avgChance,
+            methods: methods,
+            levels: levels,
+            maxLevel: Math.max(...levels.map(l => l.max)),
+            minLevel: Math.min(...levels.map(l => l.min))
+        };
+        
+        console.log("getEncounterDetails - result:", result);
+        return result;
+    }
+
+    selectLocation(encounter) {
+        this.selectedLocation = encounter;
+    }
+
+    renderEncountersList() {
+        const versionMap = this.groupEncountersByVersion(this.getFilteredEncounters());
+        const sortedVersions = Array.from(versionMap)
+            .sort((a, b) => {
+                const genA = this.getVersionGeneration(a[0]);
+                const genB = this.getVersionGeneration(b[0]);
+                if (genA !== genB) return genA - genB;
+                return this.getVersionOrder(a[0]) - this.getVersionOrder(b[0]);
+            });
+        
+        let currentGen = null;
+        const result = [];
+        
+        sortedVersions.forEach(([versionName, locations]) => {
+            const gen = this.getVersionGeneration(versionName);
+            
+            if (gen !== currentGen) {
+                currentGen = gen;
+                result.push(html`
+                    <div class="generation-header">
+                        <h3 class="generation-title">Generación ${this.getGenerationRoman(gen)}</h3>
+                    </div>
+                `);
+            }
+            
+            result.push(html`
+                <div class="version-group ${this.expandedVersions.has(versionName) ? 'expanded' : ''}">
+                    <div class="version-header" @click="${() => this.toggleVersion(versionName)}">
+                        <img src="${this.getVersionIcon(versionName)}" 
+                             class="version-header-icon"
+                             alt="${versionName}">
+                        <h4 class="version-title">${this.getVersionNameInSpanish(versionName)}</h4>
+                        <span class="version-count">(${locations.length} ubicaciones)</span>
+                        <span class="toggle-icon">${this.expandedVersions.has(versionName) ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="locations-grid ${this.expandedVersions.has(versionName) ? 'show' : ''}">
+                        ${locations.map(loc => html`
+                            <div class="location-card">
+                                <img src="${this.getLocationImageUrl(loc.location)}" 
+                                     class="location-image" 
+                                     alt="${loc.locationDisplay}"
+                                     @error="${(e) => this.handleImageError(e)}"
+                                     data-location="${loc.locationDisplay}"
+                                     data-location-slug="${loc.location}">
+                                <div class="location-name">${loc.locationDisplay}</div>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            `);
+        });
+        
+        return result;
+    }
+
+    renderEncounterMap() {
+        console.log("renderEncounterMap - this.encounters:", this.encounters);
+        console.log("renderEncounterMap - selectedEncounterVersion:", this.selectedEncounterVersion);
+        
+        const filteredEncounters = this.getFilteredEncounters();
+        console.log("renderEncounterMap - filteredEncounters:", filteredEncounters);
+        
+        if (filteredEncounters.length === 0) {
+            return html`
+                <div class="no-encounters-message">
+                    <div class="message-icon">�</div>
+                    <p><strong>No hay encuentros salvajes disponibles</strong></p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                        Este Pokémon puede ser un inicial, legendario o solo obtenible por evolución/intercambio.
+                    </p>
+                </div>
+            `;
+        }
+
+        return html`
+            <div class="map-grid">
+                <div class="map-locations-panel">
+                    <h4 class="panel-title">📍 Ubicaciones (${filteredEncounters.length})</h4>
+                    <div class="locations-list">
+                        ${filteredEncounters.map(encounter => {
+                            const locationName = this.getLugar(encounter.location_area.name);
+                            const isSelected = this.selectedLocation?.location_area.name === encounter.location_area.name;
+                            
+                            return html`
+                                <div 
+                                    class="map-location-item ${isSelected ? 'selected' : ''}"
+                                    @click="${() => this.selectLocation(encounter)}">
+                                    <img 
+                                        src="${this.getLocationImageUrl(encounter.location_area.name)}" 
+                                        class="map-location-thumb"
+                                        alt="${locationName}"
+                                        @error="${(e) => this.handleImageError(e)}">
+                                    <div class="map-location-info">
+                                        <div class="map-location-name">${locationName}</div>
+                                        <div class="map-location-meta">
+                                            ${this.selectedEncounterVersion !== 'all' ? html`
+                                                ${(() => {
+                                                    const details = this.getEncounterDetails(encounter, this.selectedEncounterVersion);
+                                                    return details ? html`
+                                                        <span class="chance-badge">${details.chance}%</span>
+                                                        <span class="level-badge">Nv. ${details.minLevel}${details.maxLevel !== details.minLevel ? `-${details.maxLevel}` : ''}</span>
+                                                    ` : '';
+                                                })()}
+                                            ` : html`
+                                                <span class="versions-badge">${encounter.version_details.length} juegos</span>
+                                            `}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        })}
+                    </div>
+                </div>
+                
+                <div class="map-detail-panel">
+                    ${this.selectedLocation ? html`
+                        <div class="location-detail">
+                            <img 
+                                src="${this.getLocationImageUrl(this.selectedLocation.location_area.name)}" 
+                                class="location-detail-image"
+                                alt="${this.getLugar(this.selectedLocation.location_area.name)}"
+                                @error="${(e) => this.handleImageError(e)}">
+                            <h4 class="location-detail-title">${this.getLugar(this.selectedLocation.location_area.name)}</h4>
+                            
+                            ${this.selectedEncounterVersion !== 'all' ? html`
+                                ${(() => {
+                                    const details = this.getEncounterDetails(this.selectedLocation, this.selectedEncounterVersion);
+                                    if (!details) return html`<p>No disponible en este juego</p>`;
+                                    
+                                    return html`
+                                        <div class="encounter-stats">
+                                            <div class="stat-card">
+                                                <div class="stat-icon">🎯</div>
+                                                <div class="stat-content">
+                                                    <div class="stat-label">Probabilidad</div>
+                                                    <div class="stat-value">${details.chance}%</div>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card">
+                                                <div class="stat-icon">📊</div>
+                                                <div class="stat-content">
+                                                    <div class="stat-label">Nivel</div>
+                                                    <div class="stat-value">${details.minLevel}${details.maxLevel !== details.minLevel ? `-${details.maxLevel}` : ''}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="encounter-methods">
+                                            <h5>Métodos de encuentro:</h5>
+                                            <div class="methods-list">
+                                                ${details.methods.map(method => html`
+                                                    <span class="method-badge">${this.getMethodNameInSpanish(method)}</span>
+                                                `)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="encounter-details-list">
+                                            <h5>Detalles por condición:</h5>
+                                            ${this.selectedLocation.version_details
+                                                .find(v => v.version.name === this.selectedEncounterVersion)
+                                                ?.encounter_details.map(detail => html`
+                                                    <div class="detail-item">
+                                                        <span class="detail-method">${this.getMethodNameInSpanish(detail.method.name)}</span>
+                                                        <span class="detail-level">Nv. ${detail.min_level}-${detail.max_level}</span>
+                                                        <span class="detail-chance">${detail.chance}%</span>
+                                                        ${detail.condition_values.length > 0 ? html`
+                                                            <span class="detail-conditions">
+                                                                ${detail.condition_values.map(c => this.getConditionNameInSpanish(c.name)).join(', ')}
+                                                            </span>
+                                                        ` : ''}
+                                                    </div>
+                                                `) || ''}
+                                        </div>
+                                    `;
+                                })()}
+                            ` : html`
+                                <div class="versions-detail">
+                                    <h5>Disponible en:</h5>
+                                    <div class="versions-grid">
+                                        ${this.selectedLocation.version_details.map(vdetail => html`
+                                            <div class="version-detail-card">
+                                                <img src="${this.getVersionIcon(vdetail.version.name)}" 
+                                                     class="version-icon-small"
+                                                     alt="${vdetail.version.name}">
+                                                <span class="version-name-small">${this.getVersionNameInSpanish(vdetail.version.name)}</span>
+                                            </div>
+                                        `)}
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    ` : html`
+                        <div class="no-selection-message">
+                            <div class="message-icon">🗺️</div>
+                            <p>Selecciona una ubicación para ver detalles</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    getMethodNameInSpanish(method) {
+        const methodNames = {
+            'walk': 'Caminar',
+            'surf': 'Surfear',
+            'old-rod': 'Caña Vieja',
+            'good-rod': 'Caña Buena',
+            'super-rod': 'Super Caña',
+            'rock-smash': 'Golpe Roca',
+            'headbutt': 'Cabezazo',
+            'dark-grass': 'Hierba Oscura',
+            'grass-spots': 'Manchas de Hierba',
+            'cave-spots': 'Manchas de Cueva',
+            'bridge-spots': 'Manchas de Puente',
+            'super-rod-spots': 'Super Caña (Manchas)',
+            'surf-spots': 'Surf (Manchas)',
+            'yellow-flowers': 'Flores Amarillas',
+            'purple-flowers': 'Flores Moradas',
+            'red-flowers': 'Flores Rojas',
+            'rough-terrain': 'Terreno Escarpado'
+        };
+        return methodNames[method] || method;
+    }
+
+    getConditionNameInSpanish(condition) {
+        const conditionNames = {
+            'time-day': 'Día',
+            'time-night': 'Noche',
+            'time-morning': 'Mañana',
+            'time-evening': 'Tarde',
+            'swarm-yes': 'Enjambre',
+            'swarm-no': 'Sin enjambre',
+            'season-spring': 'Primavera',
+            'season-summer': 'Verano',
+            'season-autumn': 'Otoño',
+            'season-winter': 'Invierno',
+            'radio-on': 'Radio encendida',
+            'radio-off': 'Radio apagada',
+            'radar-on': 'Poké Radar activo',
+            'radar-off': 'Poké Radar inactivo',
+            'slot2-ruby': 'Ruby en Slot 2',
+            'slot2-sapphire': 'Sapphire en Slot 2',
+            'slot2-emerald': 'Emerald en Slot 2',
+            'slot2-firered': 'FireRed en Slot 2',
+            'slot2-leafgreen': 'LeafGreen en Slot 2',
+            'slot2-none': 'Sin cartucho en Slot 2',
+            'story-progress-complete': 'Historia completada',
+            'tv-option': 'Canal de TV específico'
+        };
+        return conditionNames[condition] || condition;
+    }
 
     getLugar(string){
 
