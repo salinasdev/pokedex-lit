@@ -7,6 +7,8 @@ import '../pokemon-stats/pokemon-stats.js';
 import '../pokemon-daily-challenge/pokemon-daily-challenge.js';
 import '../pokemon-events/pokemon-events.js';
 import '../pokemon-team-builder/pokemon-team-builder.js';
+import '../pokemon-shiny-tracker/pokemon-shiny-tracker.js';
+import '../pokemon-battle-simulator/pokemon-battle-simulator.js';
 
 class PokedexMain extends LitElement {
 
@@ -52,7 +54,9 @@ class PokedexMain extends LitElement {
             showGenerationsView: {type: Boolean},
             showPokemonListView: {type: Boolean},
             selectedGenerationName: {type: String},
-            showPokemonDetail: {type: Boolean}
+            showPokemonDetail: {type: Boolean},
+            showShinyTracker: {type: Boolean},
+            showBattleSimulator: {type: Boolean}
         };
 
     }
@@ -98,6 +102,8 @@ class PokedexMain extends LitElement {
         this.showPokemonListView = false;
         this.selectedGenerationName = '';
         this.showPokemonDetail = false;
+        this.showShinyTracker = false;
+        this.showBattleSimulator = false;
         this.selectedEncounterVersion = 'all';
         this.selectedLocation = null;
         this.showEncounterMap = false;
@@ -109,9 +115,9 @@ class PokedexMain extends LitElement {
     render(){
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge || this.showTeamBuilder || this.showGenerationsView || this.showPokemonListView || this.showPokemonDetail ? 'd-none' : ''}">
+            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge || this.showTeamBuilder || this.showGenerationsView || this.showPokemonListView || this.showPokemonDetail || this.showShinyTracker || this.showBattleSimulator ? 'd-none' : ''}">
                 <div class="features-section">
-                    <h2 class="features-title">🎮 Bienvenido a tu Pokédex</h2>
+                    <h2 class="features-title">🎮 ¿Qué quieres hacer hoy?</h2>
                     <div class="features-grid">
                         <div class="feature-card generations-card" @click="${this.showGenerations}">
                             <div class="feature-icon">🎯</div>
@@ -143,6 +149,20 @@ class PokedexMain extends LitElement {
                             <div class="feature-icon">👥</div>
                             <h3 class="feature-title">Constructor de Equipos</h3>
                             <p class="feature-description">Crea tu equipo y analiza debilidades</p>
+                            <div class="feature-badge">Hot</div>
+                        </div>
+                        
+                        <div class="feature-card shiny-tracker-card" @click="${this.showShinyTrackerView}">
+                            <div class="feature-icon">✨</div>
+                            <h3 class="feature-title">Shiny Tracker</h3>
+                            <p class="feature-description">Rastrea tus cazas de Pokémon shiny</p>
+                            <div class="feature-badge">¡Nuevo!</div>
+                        </div>
+                        
+                        <div class="feature-card battle-simulator-card" @click="${this.showBattleSimulatorView}">
+                            <div class="feature-icon">⚔️</div>
+                            <h3 class="feature-title">Simulador de Combate</h3>
+                            <p class="feature-description">Simula batallas con IA y estadísticas</p>
                             <div class="feature-badge">Hot</div>
                         </div>
                         
@@ -197,6 +217,25 @@ class PokedexMain extends LitElement {
                 </div>
                 <pokemon-team-builder></pokemon-team-builder>
             </div>
+
+            <div id="shinyTrackerView" class="${this.showShinyTracker ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideShinyTracker}" class="back-button">
+                        ← Volver al Menú Principal
+                    </button>
+                </div>
+                <pokemon-shiny-tracker></pokemon-shiny-tracker>
+            </div>
+
+            <div id="battleSimulatorView" class="${this.showBattleSimulator ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideBattleSimulator}" class="back-button">
+                        ← Volver al Menú Principal
+                    </button>
+                </div>
+                <pokemon-battle-simulator></pokemon-battle-simulator>
+            </div>
+
             <pokemon-events id="eventsPanel"></pokemon-events>
             <div id="pokemonListView" class="${this.showPokemonListView ? '' : 'd-none'}">
                 <div class="back-button-container">
@@ -1212,6 +1251,34 @@ class PokedexMain extends LitElement {
         }
 
         .team-card .feature-badge {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .shiny-tracker-card {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 223, 0, 0.1) 100%);
+        }
+
+        .shiny-tracker-card:hover {
+            border-color: #ffd700;
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.4);
+        }
+
+        .shiny-tracker-card .feature-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .battle-simulator-card {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.05) 0%, rgba(192, 57, 43, 0.1) 100%);
+        }
+
+        .battle-simulator-card:hover {
+            border-color: #e74c3c;
+            box-shadow: 0 20px 40px rgba(231, 76, 60, 0.4);
+        }
+
+        .battle-simulator-card .feature-badge {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
         }
 
@@ -4498,6 +4565,34 @@ class PokedexMain extends LitElement {
     hideTeamBuilder() {
         console.log("hideTeamBuilder - Ocultando constructor de equipos");
         this.showTeamBuilder = false;
+        this.muestra = "listGens";
+        window.scrollTo(0, 0);
+    }
+
+    showShinyTrackerView() {
+        console.log("showShinyTrackerView - Mostrando Shiny Tracker");
+        this.muestra = "shinyTracker";
+        this.showShinyTracker = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideShinyTracker() {
+        console.log("hideShinyTracker - Ocultando Shiny Tracker");
+        this.showShinyTracker = false;
+        this.muestra = "listGens";
+        window.scrollTo(0, 0);
+    }
+
+    showBattleSimulatorView() {
+        console.log("showBattleSimulatorView - Mostrando Simulador de Combate");
+        this.muestra = "battleSimulator";
+        this.showBattleSimulator = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideBattleSimulator() {
+        console.log("hideBattleSimulator - Ocultando Simulador de Combate");
+        this.showBattleSimulator = false;
         this.muestra = "listGens";
         window.scrollTo(0, 0);
     }

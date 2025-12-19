@@ -49,10 +49,9 @@ class PokedexHeader extends LitElement {
                         `}
                     </button>
                     <a href="/" class="logo-link">
-                        <img src="../img/logo.png" alt="Pokédex" class="logo-img">
+                        <img src="../img/logo.png" alt="VicDex" class="logo-img">
                     </a>
-                    <h1 class="header-title">Bienvenido a la Pokédex</h1>
-                    <p class="header-subtitle">Explora todas las generaciones de Pokémon</p>
+                    <p class="header-subtitle">Tu compañero definitivo para explorar, coleccionar y batallar con Pokémon</p>
                 </div>
             </header>
         `;
