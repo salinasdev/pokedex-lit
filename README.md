@@ -29,6 +29,47 @@ npm init @open-wc
 For most of the tools, the configuration is in the `package.json` to reduce the amount of files in your project.
 
 If you customize the configuration a lot, you can consider moving them to individual files.
+
+## 🎮 Características de la Pokédex
+
+### 👥 Constructor de Equipos
+- **Crea tu equipo perfecto** con hasta 6 Pokémon
+- **Análisis de debilidades**: Identifica los tipos que más daño pueden hacer a tu equipo
+- **Cobertura de tipos**: Visualiza todos los tipos presentes en tu equipo
+- **Inmunidades**: Descubre las inmunidades totales de tu equipo
+- **Búsqueda rápida**: Encuentra Pokémon por nombre o número
+- **Persistencia**: Tu equipo se guarda automáticamente en el navegador
+- **Exportación**: Comparte tu equipo copiándolo al portapapeles
+
+### 📊 Estadísticas y Rankings
+- Rankings de Pokémon más fuertes por tipo
+- Comparador de estadísticas entre 2 Pokémon
+- Visualización con gráficos radar
+
+### 🎯 Desafío Diario
+- Adivina el Pokémon del día con pistas progresivas
+- Sistema de puntuación y estadísticas
+- ¡Un nuevo desafío cada día!
+
+### 🎉 Eventos Pokémon
+- Panel lateral con noticias y eventos actuales
+- Feed en tiempo real desde Pokémon Blog
+- Filtrado por categorías (Pokémon GO, TCG, Anime, etc.)
+- Imágenes de alta calidad
+
+### 🔍 Búsqueda Avanzada
+- Filtra por tipo, generación y estadísticas mínimas
+- Ordena por diferentes criterios
+
+### 📱 Modo Oscuro
+- Interfaz adaptable con tema claro y oscuro
+- Diseño responsive para móviles y tablets
+
+### 🗺️ Localizaciones y Encuentros
+- Mapa interactivo de dónde encontrar cada Pokémon
+- Detalles de encuentros por versión y método
+- Imágenes de las áreas del juego
+
 ## Demo:
 
 https://podekex-lit.onrender.com/

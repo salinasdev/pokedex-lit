@@ -6,6 +6,7 @@ import '../pokedex-generation-card/pokedex-generation-card.js';
 import '../pokemon-stats/pokemon-stats.js';
 import '../pokemon-daily-challenge/pokemon-daily-challenge.js';
 import '../pokemon-events/pokemon-events.js';
+import '../pokemon-team-builder/pokemon-team-builder.js';
 
 class PokedexMain extends LitElement {
 
@@ -46,7 +47,12 @@ class PokedexMain extends LitElement {
             previousView: {type: String},
             selectedEncounterVersion: {type: String},
             selectedLocation: {type: Object},
-            showEncounterMap: {type: Boolean}
+            showEncounterMap: {type: Boolean},
+            showTeamBuilder: {type: Boolean},
+            showGenerationsView: {type: Boolean},
+            showPokemonListView: {type: Boolean},
+            selectedGenerationName: {type: String},
+            showPokemonDetail: {type: Boolean}
         };
 
     }
@@ -87,6 +93,11 @@ class PokedexMain extends LitElement {
         this.showStatsRankings = false;
         this.showDailyChallenge = false;
         this.previousView = "listGens"; // Vista anterior por defecto
+        this.showTeamBuilder = false;
+        this.showGenerationsView = false;
+        this.showPokemonListView = false;
+        this.selectedGenerationName = '';
+        this.showPokemonDetail = false;
         this.selectedEncounterVersion = 'all';
         this.selectedLocation = null;
         this.showEncounterMap = false;
@@ -98,22 +109,60 @@ class PokedexMain extends LitElement {
     render(){
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge ? 'd-none' : ''}">
-                <div class="stats-button-container">
-                    <button @click="${this.showStats}" class="stats-button">
-                        📊 Ver Estadísticas y Rankings
-                    </button>
-                    <button @click="${this.showDailyChallengeView}" class="challenge-button">
-                        🎯 Desafío Diario
-                    </button>
-                    <button @click="${this.showEventsView}" class="events-button">
-                        🎉 Eventos Pokémon
-                    </button>
-                    <button @click="${this.goToRandomPokemon}" class="random-button">
-                        🎲 Pokémon Aleatorio
+            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge || this.showTeamBuilder || this.showGenerationsView || this.showPokemonListView || this.showPokemonDetail ? 'd-none' : ''}">
+                <div class="features-section">
+                    <h2 class="features-title">🎮 Bienvenido a tu Pokédex</h2>
+                    <div class="features-grid">
+                        <div class="feature-card generations-card" @click="${this.showGenerations}">
+                            <div class="feature-icon">🎯</div>
+                            <h3 class="feature-title">Explorar Generaciones</h3>
+                            <p class="feature-description">Descubre todas las generaciones de Pokémon</p>
+                            <div class="feature-badge">¡Empieza aquí!</div>
+                        </div>
+
+                        <div class="feature-card stats-card" @click="${this.showStats}">
+                            <div class="feature-icon">📊</div>
+                            <h3 class="feature-title">Estadísticas</h3>
+                            <p class="feature-description">Rankings, comparador y gráficos de Pokémon</p>
+                            <div class="feature-badge">Popular</div>
+                        </div>
+                        
+                        <div class="feature-card challenge-card" @click="${this.showDailyChallengeView}">
+                            <div class="feature-icon">�</div>
+                            <h3 class="feature-title">Desafío Diario</h3>
+                            <p class="feature-description">Adivina el Pokémon con pistas progresivas</p>
+                        </div>
+                        
+                        <div class="feature-card events-card" @click="${this.showEventsView}">
+                            <div class="feature-icon">🎉</div>
+                            <h3 class="feature-title">Eventos</h3>
+                            <p class="feature-description">Noticias y eventos de Pokémon en tiempo real</p>
+                        </div>
+                        
+                        <div class="feature-card team-card" @click="${this.showTeamBuilderView}">
+                            <div class="feature-icon">👥</div>
+                            <h3 class="feature-title">Constructor de Equipos</h3>
+                            <p class="feature-description">Crea tu equipo y analiza debilidades</p>
+                            <div class="feature-badge">Hot</div>
+                        </div>
+                        
+                        <div class="feature-card random-card" @click="${this.goToRandomPokemon}">
+                            <div class="feature-icon">🔀</div>
+                            <h3 class="feature-title">Pokémon Aleatorio</h3>
+                            <p class="feature-description">Descubre un Pokémon al azar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="generationsView" class="${this.showGenerationsView ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideGenerations}" class="back-button">
+                        ← Volver al Menú Principal
                     </button>
                 </div>
-                <div class="listado">
+                <div class="generations-page">
+                    <h2 class="generations-page-title">Selecciona una Generación</h2>
+                    <div class="listado">
                     ${this.generations.map(
                         (generation, index) => html`<pokedex-generation-card
                                                     fname="${this.capitalizeFirstLetter(generation.name)}"
@@ -122,11 +171,12 @@ class PokedexMain extends LitElement {
                                                    ></pokedex-generation-card>`
                     )}
                 </div>
+                </div>
             </div>
             <div id="statsView" class="${this.showStatsRankings ? '' : 'd-none'}">
                 <div class="back-button-container">
                     <button @click="${this.hideStats}" class="back-button">
-                        ← Volver a Generaciones
+                        ← Volver al Menú Principal
                     </button>
                 </div>
                 <pokemon-stats></pokemon-stats>
@@ -134,12 +184,338 @@ class PokedexMain extends LitElement {
             <div id="dailyChallengeView" class="${this.showDailyChallenge ? '' : 'd-none'}">
                 <div class="back-button-container">
                     <button @click="${this.hideDailyChallenge}" class="back-button">
-                        ← Volver a Generaciones
+                        ← Volver al Menú Principal
                     </button>
                 </div>
                 <pokemon-daily-challenge></pokemon-daily-challenge>
             </div>
+            <div id="teamBuilderView" class="${this.showTeamBuilder ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideTeamBuilder}" class="back-button">
+                        ← Volver al Menú Principal
+                    </button>
+                </div>
+                <pokemon-team-builder></pokemon-team-builder>
+            </div>
             <pokemon-events id="eventsPanel"></pokemon-events>
+            <div id="pokemonListView" class="${this.showPokemonListView ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.backToGenerations}" class="back-button">
+                        ← Volver a Generaciones
+                    </button>
+                </div>
+                <div class="pokemon-list-page">
+                    <h2 class="pokemon-list-title">${this.selectedGenerationName}</h2>
+                    ${this.pokemons.length === 0 ? html`
+                        <div class="loading-message">
+                            <div class="spinner"></div>
+                            <p>Cargando Pokémon...</p>
+                        </div>
+                    ` : html`
+                        <div class="pokemon-grid">
+                            ${this.pokemons.map((pokemon) => {
+                                const pokemonId = pokemon.idp || parseInt(pokemon.url.match(/\d+/g)[1]);
+                                return html`
+                                    <pokemon-ficha-listado 
+                                        fname="${this.capitalizeFirstLetter(pokemon.name)}" 
+                                        numPokedex="${pokemonId}"
+                                        profile="${pokemon.url}"
+                                        .photo="${{
+                                            src: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
+                                            alt: pokemon.name
+                                        }}"
+                                        .isCaptured="${this.isCaptured(pokemonId)}"
+                                        .pokemonId="${pokemonId}"
+                                        @consulta-pokemon="${this.consultaPokemon}"
+                                        @toggle-capture="${this.handleCaptureToggle}">
+                                    </pokemon-ficha-listado>
+                                `;
+                            })}
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- Pokemon Detail View (Independent Page) -->
+            <div id="pokemonDetailView" class="${this.showPokemonDetail ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.backToPokemonList}" class="back-button">
+                        ← Volver a la Lista
+                    </button>
+                </div>
+                <div class="pokemon-detail-container">
+                    <div class="pokemon-detail-card">
+                        <div class="detail-header">
+                            <div class="detail-image-section">
+                                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${this.fichaPokemon.idp}.png" 
+                                     alt="${this.capitalizeFirstLetter(this.fichaPokemon.name)}" 
+                                     class="detail-pokemon-image">
+                            </div>
+                            <div class="detail-info-section">
+                                <div class="title-with-sound">
+                                    <h2 class="detail-title">${this.capitalizeFirstLetter(this.fichaPokemon.name)}</h2>
+                                    <button class="sound-button" @click="${() => this.playPokemonCry()}" title="Escuchar sonido">
+                                        🔊
+                                    </button>
+                                </div>
+                                <span class="detail-number">#${this.fichaPokemon.idp}</span>
+                                
+                                <div class="detail-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Peso:</span>
+                                        <span class="stat-value">${this.mascaraNum(this.fichaPokemon.weight)} kg</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Altura:</span>
+                                        <span class="stat-value">${this.mascaraNum(this.fichaPokemon.height)} m</span>
+                                    </div>
+                                </div>
+
+                                <div class="types-section">
+                                    <span class="types-label">Tipos:</span>
+                                    <div class="types-container">
+                                        ${this.types.map(
+                                            (type, index) => {
+                                                const typeStyle = this.getTypeStyle(type.type.name);
+                                                const typeName = this.getTypeNameInSpanish(type.type.name);
+                                                return html`
+                                                    <div class="type-badge-modern" style="background: ${typeStyle.gradient}">
+                                                        <span class="type-icon">${typeStyle.icon}</span>
+                                                        <span class="type-name">${typeName}</span>
+                                                    </div>
+                                                `;
+                                            }
+                                        )}
+                                    </div>
+                                </div>
+
+                                ${this.speciesInfo ? html`
+                                    <div class="obtain-methods-section">
+                                        <span class="obtain-label">Métodos de obtención:</span>
+                                        <div class="obtain-methods">
+                                            ${this.isObtainableByBreeding() ? html`
+                                                <div class="method-badge baby">
+                                                    <span class="method-icon">🥚</span>
+                                                    <span class="method-text">Obtenible por crianza</span>
+                                                </div>
+                                            ` : ''}
+                                            ${this.isFossilPokemon() ? html`
+                                                <div class="method-badge fossil">
+                                                    <span class="method-icon">🦴</span>
+                                                    <span class="method-text">Obtenible por fósil${this.getFossilName() ? `: ${this.getFossilName()}` : ''}</span>
+                                                </div>
+                                            ` : ''}
+                                            ${this.speciesInfo.is_legendary ? html`
+                                                <div class="method-badge legendary">
+                                                    <span class="method-icon">⭐</span>
+                                                    <span class="method-text">Legendario</span>
+                                                </div>
+                                            ` : ''}
+                                            ${this.speciesInfo.is_mythical ? html`
+                                                <div class="method-badge mythical">
+                                                    <span class="method-icon">✨</span>
+                                                    <span class="method-text">Singular</span>
+                                                </div>
+                                            ` : ''}
+                                            ${this.speciesInfo.evolves_from_species ? html`
+                                                <div class="method-badge evolution">
+                                                    <span class="method-icon">🔄</span>
+                                                    <span class="method-text">Evoluciona de ${this.capitalizeFirstLetter(this.speciesInfo.evolves_from_species.name)}</span>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+
+                                    <div class="species-details-section">
+                                        <span class="obtain-label">Información de especie:</span>
+                                        <div class="species-info-grid">
+                                            ${this.speciesInfo.egg_groups && this.speciesInfo.egg_groups.length > 0 ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">🥚</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Grupos de Huevo:</span>
+                                                        <span class="info-value">${this.speciesInfo.egg_groups.map(g => this.getEggGroupName(g.name)).join(', ')}</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${this.speciesInfo.hatch_counter !== undefined ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">⏱️</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Pasos para Eclosión:</span>
+                                                        <span class="info-value">${(this.speciesInfo.hatch_counter + 1) * 255} pasos</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${this.speciesInfo.gender_rate !== undefined ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">⚥</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Ratio de Género:</span>
+                                                        <span class="info-value">${this.getGenderRatio(this.speciesInfo.gender_rate)}</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${this.speciesInfo.capture_rate !== undefined ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">🎯</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Ratio de Captura:</span>
+                                                        <span class="info-value">${this.speciesInfo.capture_rate}/255 (${this.getCapturePercentage(this.speciesInfo.capture_rate)}%)</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${this.speciesInfo.base_happiness !== undefined ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">😊</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Felicidad Base:</span>
+                                                        <span class="info-value">${this.speciesInfo.base_happiness}/255</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${this.speciesInfo.growth_rate ? html`
+                                                <div class="info-item">
+                                                    <span class="info-icon">📈</span>
+                                                    <div class="info-content">
+                                                        <span class="info-label">Velocidad de Crecimiento:</span>
+                                                        <span class="info-value">${this.getGrowthRateName(this.speciesInfo.growth_rate.name)}</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${this.evolutionChain ? html`
+                            <div class="evolution-section">
+                                <h3 class="evolution-title">${this.t('evolutionChain')}</h3>
+                                <div class="evolution-chain-container">
+                                    ${this.renderEvolutionChain(this.evolutionChain)}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.stats && this.stats.length > 0 ? html`
+                            <div class="stats-chart-section">
+                                <div class="stats-header">
+                                    <h3 class="stats-title">📊 ${this.t('baseStats')}</h3>
+                                    <button 
+                                        class="chart-toggle-button" 
+                                        @click="${this.toggleStatsView}"
+                                        title="${this.showStatsRadar ? this.t('showBars') : this.t('showRadar')}"
+                                    >
+                                        ${this.showStatsRadar ? '📊' : '🎯'}
+                                    </button>
+                                </div>
+                                <div class="stats-total">
+                                    <span class="total-label">${this.t('total')}:</span>
+                                    <span class="total-value">${this.calculateTotalStats()}</span>
+                                </div>
+                                <div class="stats-chart-container">
+                                    ${this.showStatsRadar ? this.renderStatsRadar() : this.renderStatsChart()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.types && this.types.length > 0 ? html`
+                            <div class="type-effectiveness-section">
+                                <h3 class="effectiveness-section-title">⚔️ ${this.t('typeEffectiveness')}</h3>
+                                <p class="effectiveness-description">
+                                    ${this.t('damageReceived')}
+                                </p>
+                                ${this.renderTypeEffectiveness()}
+                            </div>
+                        ` : ''}
+
+                        ${this.encounters.length > 0 ? html`
+                            <div class="encounters-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleLocations()}">
+                                    <h3 class="encounters-title">📍 Mapa Interactivo de Encuentros</h3>
+                                    <span class="toggle-icon">${this.showLocations ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showLocations ? 'show' : ''}">
+                                    <div class="encounter-filter-bar">
+                                        <label class="filter-label">
+                                            <span class="filter-icon">🎮</span>
+                                            Filtrar por juego:
+                                        </label>
+                                        <select 
+                                            class="version-select" 
+                                            @change="${(e) => this.handleVersionFilter(e.target.value)}"
+                                            .value="${this.selectedEncounterVersion}">
+                                            <option value="all">Todos los juegos</option>
+                                            ${this.getUniqueVersions().map(version => html`
+                                                <option value="${version}">${this.getVersionNameInSpanish(version)}</option>
+                                            `)}
+                                        </select>
+                                        <button 
+                                            class="map-view-toggle ${this.showEncounterMap ? 'active' : ''}"
+                                            @click="${() => this.toggleEncounterMap()}"
+                                            title="${this.showEncounterMap ? 'Ver lista' : 'Ver mapa'}">
+                                            ${this.showEncounterMap ? '📋 Lista' : '🗺️ Mapa'}
+                                        </button>
+                                    </div>
+
+                                    ${this.showEncounterMap ? html`
+                                        <div class="encounter-map-container">
+                                            ${this.renderEncounterMap()}
+                                        </div>
+                                    ` : html`
+                                        <div class="versions-container">
+                                            ${this.renderEncountersList()}
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.moves.length > 0 ? html`
+                            <div class="moves-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleMoves()}">
+                                    <h3 class="moves-title">⚔️ Movimientos</h3>
+                                    <span class="toggle-icon">${this.showMoves ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showMoves ? 'show' : ''}">
+                                    ${this.renderMoves()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.varieties.length > 1 ? html`
+                            <div class="varieties-section collapsible-section">
+                                <div class="section-header" @click="${() => this.toggleVarieties()}">
+                                    <h3 class="varieties-title">🌍 Variantes y Formas</h3>
+                                    <span class="toggle-icon">${this.showVarieties ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showVarieties ? 'show' : ''}">
+                                    ${this.renderVarieties()}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${this.pokedexEntries.length > 0 ? html`
+                            <div class="pokedex-entries-section collapsible-section">
+                                <div class="section-header" @click="${() => this.togglePokedexEntries()}">
+                                    <h3 class="pokedex-entries-title">📖 Descripciones de la Pokédex</h3>
+                                    <span class="toggle-icon">${this.showPokedexEntries ? '▼' : '▶'}</span>
+                                </div>
+                                <div class="section-content ${this.showPokedexEntries ? 'show' : ''}">
+                                    ${this.renderPokedexEntries()}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+
             <div id="listPokemon" class="d-none">
                 <div class="back-button-container">
                     <button @click="${this.volverAGeneraciones}" class="back-button">
@@ -679,6 +1055,251 @@ class PokedexMain extends LitElement {
             background-color: var(--bg-primary);
         }
 
+        /* Sección de Funciones Elegante */
+        .features-section {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .features-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card, white);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .stats-card {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .stats-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .challenge-card {
+            border-color: #f5576c;
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.05) 0%, rgba(240, 147, 251, 0.05) 100%);
+        }
+
+        .challenge-card:hover {
+            border-color: #f5576c;
+            box-shadow: 0 20px 40px rgba(245, 87, 108, 0.3);
+        }
+
+        .events-card {
+            border-color: #fa709a;
+            background: linear-gradient(135deg, rgba(250, 112, 154, 0.05) 0%, rgba(254, 225, 64, 0.05) 100%);
+        }
+
+        .events-card:hover {
+            border-color: #fa709a;
+            box-shadow: 0 20px 40px rgba(250, 112, 154, 0.3);
+        }
+
+        .team-card {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(118, 75, 162, 0.05) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+
+        .team-card:hover {
+            border-color: #764ba2;
+            box-shadow: 0 20px 40px rgba(118, 75, 162, 0.3);
+        }
+
+        .random-card {
+            border-color: #43e97b;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.05) 0%, rgba(56, 249, 215, 0.05) 100%);
+        }
+
+        .random-card:hover {
+            border-color: #43e97b;
+            box-shadow: 0 20px 40px rgba(67, 233, 123, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #2d3748);
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+        }
+
+        .feature-description {
+            font-size: 0.95rem;
+            color: var(--text-secondary, #718096);
+            text-align: center;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .feature-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(245, 87, 108, 0.3);
+        }
+
+        .stats-card .feature-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .team-card .feature-badge {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .generations-card {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        }
+
+        .generations-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .generations-card .feature-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Página de Lista de Pokémon */
+        .pokemon-list-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .pokemon-list-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pokemon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .loading-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .loading-message p {
+            font-size: 1.2rem;
+            color: var(--text-secondary, #718096);
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color, #e2e8f0);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+
+        /* Página de Generaciones */
+        .generations-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .generations-page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .themed-grid-col-cab {
             padding: 1rem;
             background-color: var(--bg-card, rgba(255, 255, 255, 0.95));
@@ -777,6 +1398,33 @@ class PokedexMain extends LitElement {
         }
 
         .events-button:active {
+            transform: translateY(-1px);
+        }
+
+        .team-builder-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-builder-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .team-builder-button:active {
             transform: translateY(-1px);
         }
 
@@ -3519,6 +4167,53 @@ class PokedexMain extends LitElement {
                 height: 20px;
             }
 
+            .features-section {
+                padding: 1rem;
+            }
+
+            .features-title {
+                font-size: 1.8rem;
+                margin-bottom: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .feature-icon {
+                font-size: 3rem;
+            }
+
+            .feature-title {
+                font-size: 1.3rem;
+            }
+
+            .generations-page {
+                padding: 1rem;
+            }
+
+            .generations-page-title {
+                font-size: 1.8rem;
+            }
+
+            .pokemon-list-page {
+                padding: 1rem;
+            }
+
+            .pokemon-list-title {
+                font-size: 1.8rem;
+            }
+
+            .pokemon-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
             .stats-button-container {
                 flex-direction: column;
                 padding: 0 1rem;
@@ -3528,6 +4223,7 @@ class PokedexMain extends LitElement {
             .stats-button,
             .challenge-button,
             .events-button,
+            .team-builder-button,
             .random-button {
                 width: 100%;
                 font-size: 1rem;
@@ -3574,7 +4270,8 @@ class PokedexMain extends LitElement {
 
 
     pokemonsDataUpdated(e){
-        console.log("pokemonsDataUpdated");
+        console.log("=== pokemonsDataUpdated INICIO ===");
+        console.log("Número de pokémon recibidos:", e.detail.pokemons.length);
 
         this.pokemons = e.detail.pokemons;
         
@@ -3584,7 +4281,12 @@ class PokedexMain extends LitElement {
 
         this.pokemons.sort(((a, b) => a.idp - b.idp));
 
-        console.log(this.pokemons);
+        console.log("Pokémon ordenados:", this.pokemons.length);
+        console.log("this.pokemons actualizado:", this.pokemons);
+        
+        // Forzar actualización de la vista
+        this.requestUpdate();
+        console.log("=== pokemonsDataUpdated FIN ===");
     }
 
     //Función para poner la primera letra en mayúscula
@@ -3784,6 +4486,50 @@ class PokedexMain extends LitElement {
         if (eventsPanel) {
             eventsPanel.close();
         }
+    }
+
+    showTeamBuilderView() {
+        console.log("showTeamBuilderView - Mostrando constructor de equipos");
+        this.muestra = "teamBuilder";
+        this.showTeamBuilder = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideTeamBuilder() {
+        console.log("hideTeamBuilder - Ocultando constructor de equipos");
+        this.showTeamBuilder = false;
+        this.muestra = "listGens";
+        window.scrollTo(0, 0);
+    }
+
+    showGenerations() {
+        console.log("showGenerations - Mostrando página de generaciones");
+        this.muestra = "generationsView";
+        this.showGenerationsView = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideGenerations() {
+        console.log("hideGenerations - Ocultando página de generaciones");
+        this.showGenerationsView = false;
+        this.muestra = "listGens";
+        window.scrollTo(0, 0);
+    }
+
+    backToGenerations() {
+        console.log("backToGenerations - Volviendo a página de generaciones");
+        this.showPokemonListView = false;
+        this.showGenerationsView = true;
+        this.muestra = "generationsView";
+        window.scrollTo(0, 0);
+    }
+
+    backToPokemonList() {
+        console.log("backToPokemonList - Volviendo a lista de Pokémon");
+        this.showPokemonDetail = false;
+        this.showPokemonListView = true;
+        this.muestra = "pokemonListView";
+        window.scrollTo(0, 0);
     }
 
     async goToRandomPokemon() {
@@ -6444,17 +7190,48 @@ class PokedexMain extends LitElement {
         console.log(this.generations);
     }
 
-    getGeneration(e){
-        console.log("pokedex-main "+ e.detail.url);
-        this.shadowRoot.getElementById("pokeData").urlGeneration = e.detail.url;
-        this.previousView = this.muestra; // Guardar vista actual
-        this.muestra = "listPokemon";
+    async getGeneration(e){
+        console.log("=== getGeneration INICIO ===");
+        console.log("pokedex-main getGeneration - URL:", e.detail.url);
+        console.log("pokedex-main getGeneration - Name:", e.detail.name);
+        
+        // Guardar el nombre de la generación para mostrar en el título
+        this.selectedGenerationName = this.capitalizeFirstLetter(e.detail.name);
+        
+        // Limpiar la lista de Pokémon anterior
+        this.pokemons = [];
+        
+        // Cambiar a la vista de lista de Pokémon primero
+        this.showPokemonListView = true;
+        this.showGenerationsView = false;
+        this.muestra = "pokemonListView";
+        
+        // Esperar a que se actualice el DOM
+        await this.updateComplete;
+        
+        // Cargar los datos de la generación
+        const pokeDataElement = this.shadowRoot.getElementById("pokeData");
+        console.log("pokeData element:", pokeDataElement);
+        
+        if (pokeDataElement) {
+            console.log("Asignando URL:", e.detail.url);
+            pokeDataElement.urlGeneration = e.detail.url;
+            console.log("URL asignada:", pokeDataElement.urlGeneration);
+        } else {
+            console.error("No se encontró el elemento pokeData");
+        }
+        
+        window.scrollTo(0, 0);
+        console.log("=== getGeneration FIN ===");
     }
 
     consultaPokemon(e){
         console.log("consultaPokemon en pokedex-main " + e.detail.idp);
-        this.previousView = this.muestra; // Guardar vista actual antes de cambiar
-        this.muestra = "fichaPokemon";
+        // Hide pokemon list and show detail page
+        this.showPokemonListView = false;
+        this.showPokemonDetail = true;
+        this.muestra = "pokemonDetail";
+        // Load pokemon data
         this.shadowRoot.getElementById("pokeData").idPokemon = e.detail.idp;
     }
 

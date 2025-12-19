@@ -142,7 +142,8 @@ class PokedexGenerationCard extends LitElement {
               "get-generation",
               {
                   "detail" : {
-                      url : this.url
+                      url : this.url,
+                      name: this.fname
                   }
               }
           )
