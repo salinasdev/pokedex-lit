@@ -5407,12 +5407,13 @@ class PokedexMain extends LitElement {
                         <h4 class="sprite-category-title">${category.title}</h4>
                         <div class="sprites-grid ${category.sprites[0]?.large ? 'large-sprites' : ''}">
                             ${category.sprites.map(sprite => html`
-                                <div class="sprite-card ${sprite.shiny ? 'shiny-card' : ''}">
+                                <div class="sprite-card ${sprite.shiny ? 'shiny-card' : ''}" data-sprite-url="${sprite.url}">
                                     <img 
                                         src="${sprite.url}" 
                                         alt="${sprite.name}"
                                         class="sprite-image ${sprite.large ? 'large-sprite' : ''}"
                                         @error="${(e) => this.handleSpriteError(e)}"
+                                        @load="${(e) => this.handleSpriteLoad(e)}"
                                         loading="lazy">
                                     <span class="sprite-name">${sprite.name}</span>
                                 </div>
@@ -5424,9 +5425,39 @@ class PokedexMain extends LitElement {
         `;
     }
 
+    handleSpriteLoad(event) {
+        // Cuando la imagen carga correctamente, asegurarse de que esté visible
+        const img = event.target;
+        const card = img.parentElement;
+        
+        // Remover cualquier mensaje de "no disponible" anterior
+        const unavailableMsg = card.querySelector('.sprite-unavailable');
+        if (unavailableMsg) {
+            unavailableMsg.remove();
+        }
+        
+        // Asegurar que la imagen esté visible
+        img.style.display = 'block';
+        img.style.opacity = '1';
+    }
+
     handleSpriteError(event) {
-        // Ocultar el sprite si no se puede cargar
-        event.target.parentElement.style.display = 'none';
+        // Ocultar solo la imagen que falló, no todo el contenedor
+        const img = event.target;
+        const card = img.parentElement;
+        
+        // Marcar la imagen como no disponible
+        img.style.display = 'none';
+        img.style.opacity = '0';
+        
+        // Añadir un mensaje de "no disponible" si no existe ya
+        if (!card.querySelector('.sprite-unavailable')) {
+            const unavailableMsg = document.createElement('div');
+            unavailableMsg.className = 'sprite-unavailable';
+            unavailableMsg.textContent = '❌';
+            unavailableMsg.style.cssText = 'font-size: 2em; opacity: 0.3; text-align: center; margin: 20px 0;';
+            card.insertBefore(unavailableMsg, card.querySelector('.sprite-name'));
+        }
     }
 
     // Método para reproducir el sonido del Pokémon
