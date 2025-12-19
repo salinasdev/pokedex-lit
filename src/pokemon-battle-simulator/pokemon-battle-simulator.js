@@ -130,8 +130,14 @@ export class PokemonBattleSimulator extends LitElement {
             margin-bottom: 20px;
         }
 
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
         .search-box {
-            width: 100%;
+            flex: 1;
             padding: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
@@ -145,6 +151,33 @@ export class PokemonBattleSimulator extends LitElement {
         .search-box:focus {
             outline: none;
             border-color: #3498db;
+        }
+
+        .random-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .random-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .random-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .random-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .pokemon-results {
@@ -285,11 +318,74 @@ export class PokemonBattleSimulator extends LitElement {
             margin-top: 15px;
         }
 
+        .moves-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
         .moves-title {
             font-size: 1.2em;
             font-weight: bold;
-            margin-bottom: 10px;
             color: #333;
+            margin: 0;
+        }
+
+        .random-moves-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .random-moves-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .random-moves-btn:active {
+            transform: translateY(0);
+        }
+
+        .move-search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .move-search-box {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .move-search-box:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .move-count {
+            font-size: 0.9em;
+            color: #666;
+            white-space: nowrap;
+            font-weight: 500;
         }
 
         .available-moves {
@@ -329,7 +425,41 @@ export class PokemonBattleSimulator extends LitElement {
         .move-details {
             font-size: 0.85em;
             color: #666;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
         }
+
+        .move-type {
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        /* Colores por tipo de Pokémon */
+        .type-normal { background: #A8A878; }
+        .type-fire { background: #F08030; }
+        .type-water { background: #6890F0; }
+        .type-electric { background: #F8D030; color: #333; }
+        .type-grass { background: #78C850; }
+        .type-ice { background: #98D8D8; }
+        .type-fighting { background: #C03028; }
+        .type-poison { background: #A040A0; }
+        .type-ground { background: #E0C068; }
+        .type-flying { background: #A890F0; }
+        .type-psychic { background: #F85888; }
+        .type-bug { background: #A8B820; }
+        .type-rock { background: #B8A038; }
+        .type-ghost { background: #705898; }
+        .type-dragon { background: #7038F8; }
+        .type-dark { background: #705848; }
+        .type-steel { background: #B8B8D0; }
+        .type-fairy { background: #EE99AC; }
+
 
         .battle-controls {
             text-align: center;
@@ -899,6 +1029,19 @@ export class PokemonBattleSimulator extends LitElement {
                 border-color: #5dade2;
             }
 
+            .random-btn {
+                background: linear-gradient(135deg, #8b9dc3 0%, #6b7c9c 100%);
+            }
+
+            .random-btn:hover:not(:disabled) {
+                box-shadow: 0 5px 15px rgba(139, 157, 195, 0.4);
+            }
+
+            .random-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
             .pokemon-results {
                 background: #1a252f;
                 border: 2px solid #34495e;
@@ -940,6 +1083,29 @@ export class PokemonBattleSimulator extends LitElement {
 
             .moves-title {
                 color: #ecf0f1;
+            }
+
+            .random-moves-btn {
+                background: linear-gradient(135deg, #8b9dc3 0%, #6b7c9c 100%);
+            }
+
+            .random-moves-btn:hover {
+                box-shadow: 0 5px 15px rgba(139, 157, 195, 0.4);
+            }
+
+            .move-search-box {
+                background: #34495e;
+                border-color: #2c3e50;
+                color: #ecf0f1;
+            }
+
+            .move-search-box:focus {
+                border-color: #5dade2;
+                box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.2);
+            }
+
+            .move-count {
+                color: #bdc3c7;
             }
 
             .move-item {
@@ -1128,7 +1294,13 @@ export class PokemonBattleSimulator extends LitElement {
         simulationResults: { type: Object },
         currentTurn: { type: Number },
         waitingForPlayerMove: { type: Boolean },
-        currentAttacker: { type: Number }
+        currentAttacker: { type: Number },
+        loadingPlayer1: { type: Boolean },
+        loadingPlayer2: { type: Boolean },
+        moveSearchQuery1: { type: String },
+        moveSearchQuery2: { type: String },
+        filteredMoves1: { type: Array },
+        filteredMoves2: { type: Array }
     };
 
     constructor() {
@@ -1156,6 +1328,12 @@ export class PokemonBattleSimulator extends LitElement {
         this.searchResults2 = [];
         this.showResults1 = false;
         this.showResults2 = false;
+        this.loadingPlayer1 = false;
+        this.loadingPlayer2 = false;
+        this.moveSearchQuery1 = '';
+        this.moveSearchQuery2 = '';
+        this.filteredMoves1 = [];
+        this.filteredMoves2 = [];
         this.battleStats = {
             player1: { damage: 0, turns: 0, crits: 0 },
             player2: { damage: 0, turns: 0, crits: 0 }
@@ -1251,6 +1429,46 @@ export class PokemonBattleSimulator extends LitElement {
         this.updatePokemonStats(player);
     }
 
+    async selectRandomPokemon(player) {
+        // Prevenir múltiples clics simultáneos
+        const isLoading = player === 1 ? this.loadingPlayer1 : this.loadingPlayer2;
+        if (isLoading || this.allPokemon.length === 0) return;
+        
+        // Marcar como cargando
+        if (player === 1) {
+            this.loadingPlayer1 = true;
+        } else {
+            this.loadingPlayer2 = true;
+        }
+        this.requestUpdate();
+        
+        try {
+            // Seleccionar un Pokémon aleatorio de la lista completa
+            const randomIndex = Math.floor(Math.random() * this.allPokemon.length);
+            const randomPokemon = this.allPokemon[randomIndex];
+            
+            // Seleccionar el Pokémon
+            await this.selectPokemon(randomPokemon, player);
+            
+            // Cerrar resultados de búsqueda
+            if (player === 1) {
+                this.showResults1 = false;
+            } else {
+                this.showResults2 = false;
+            }
+        } catch (error) {
+            console.error('Error selecting random Pokemon:', error);
+        } finally {
+            // Limpiar bandera siempre
+            if (player === 1) {
+                this.loadingPlayer1 = false;
+            } else {
+                this.loadingPlayer2 = false;
+            }
+            this.requestUpdate();
+        }
+    }
+
     async selectPokemon(pokemon, player) {
         try {
             const pokemonId = parseInt(pokemon.url.match(/\/(\d+)\//)[1]);
@@ -1324,11 +1542,15 @@ export class PokemonBattleSimulator extends LitElement {
             );
             const moveDetails = await Promise.all(movePromises);
 
-            // Filtrar solo movimientos ofensivos (con poder) y ordenar por poder
+            // Filtrar solo movimientos ofensivos (con poder) y ordenar por nombre
             const movesWithDetails = moveDetails
                 .filter(move => move !== null && move.power !== null && move.power > 0)
-                .sort((a, b) => b.power - a.power) // Ordenar por poder descendente
-                .slice(0, 20) // Tomar los mejores 20 movimientos
+                .sort((a, b) => {
+                    // Buscar nombres en español para ordenar
+                    const nameA = a.names.find(n => n.language.name === 'es')?.name || a.name;
+                    const nameB = b.names.find(n => n.language.name === 'es')?.name || b.name;
+                    return nameA.localeCompare(nameB);
+                })
                 .map(move => {
                     // Buscar el nombre en español
                     const spanishName = move.names.find(n => n.language.name === 'es');
@@ -1345,11 +1567,47 @@ export class PokemonBattleSimulator extends LitElement {
 
             if (player === 1) {
                 this.player1Moves = movesWithDetails;
+                this.filteredMoves1 = movesWithDetails;
             } else {
                 this.player2Moves = movesWithDetails;
+                this.filteredMoves2 = movesWithDetails;
             }
         } catch (error) {
             console.error('Error loading move details:', error);
+        }
+    }
+
+    searchMoves(query, player) {
+        const moves = player === 1 ? this.player1Moves : this.player2Moves;
+        const normalizedQuery = query.toLowerCase().trim();
+
+        if (!normalizedQuery) {
+            // Si no hay búsqueda, mostrar todos los movimientos
+            if (player === 1) {
+                this.filteredMoves1 = moves;
+            } else {
+                this.filteredMoves2 = moves;
+            }
+            return;
+        }
+
+        // Filtrar movimientos que coincidan con la búsqueda
+        const filtered = moves.filter(move => {
+            const displayName = move.displayName.toLowerCase();
+            const moveName = move.name.toLowerCase();
+            const type = move.type.toLowerCase();
+            
+            return displayName.includes(normalizedQuery) || 
+                   moveName.includes(normalizedQuery) ||
+                   type.includes(normalizedQuery);
+        });
+
+        if (player === 1) {
+            this.filteredMoves1 = filtered;
+            this.moveSearchQuery1 = query;
+        } else {
+            this.filteredMoves2 = filtered;
+            this.moveSearchQuery2 = query;
         }
     }
 
@@ -1374,6 +1632,34 @@ export class PokemonBattleSimulator extends LitElement {
                 }
             }
         }
+        this.requestUpdate();
+    }
+
+    selectRandomMoves(player) {
+        const moves = player === 1 ? this.player1Moves : this.player2Moves;
+        
+        if (moves.length === 0) return;
+        
+        // Crear una copia del array de movimientos
+        const availableMoves = [...moves];
+        const randomMoves = [];
+        
+        // Seleccionar hasta 4 movimientos aleatorios
+        const moveCount = Math.min(4, availableMoves.length);
+        
+        for (let i = 0; i < moveCount; i++) {
+            const randomIndex = Math.floor(Math.random() * availableMoves.length);
+            randomMoves.push(availableMoves[randomIndex]);
+            // Eliminar el movimiento seleccionado para evitar duplicados
+            availableMoves.splice(randomIndex, 1);
+        }
+        
+        if (player === 1) {
+            this.player1SelectedMoves = randomMoves;
+        } else {
+            this.player2SelectedMoves = randomMoves;
+        }
+        
         this.requestUpdate();
     }
 
@@ -1866,12 +2152,22 @@ export class PokemonBattleSimulator extends LitElement {
                 </div>
 
                 <div class="pokemon-selector">
-                    <input 
-                        type="text"
-                        class="search-box"
-                        placeholder="Buscar Pokémon..."
-                        @input="${(e) => this.searchPokemon(e.target.value, player)}"
-                    />
+                    <div class="search-container">
+                        <input 
+                            type="text"
+                            class="search-box"
+                            placeholder="Buscar Pokémon..."
+                            @input="${(e) => this.searchPokemon(e.target.value, player)}"
+                        />
+                        <button 
+                            class="random-btn"
+                            @click="${() => this.selectRandomPokemon(player)}"
+                            ?disabled="${player === 1 ? this.loadingPlayer1 : this.loadingPlayer2}"
+                            title="Seleccionar Pokémon aleatorio"
+                        >
+                            ${player === 1 ? (this.loadingPlayer1 ? '⏳' : '🎲') : (this.loadingPlayer2 ? '⏳' : '🎲')}
+                        </button>
+                    </div>
                     <div class="pokemon-results ${showResults ? 'show' : ''}">
                         ${searchResults.map(p => html`
                             <div 
@@ -1941,11 +2237,32 @@ export class PokemonBattleSimulator extends LitElement {
 
                         ${moves.length > 0 ? html`
                             <div class="moves-selector">
-                                <div class="moves-title">
-                                    Selecciona 4 movimientos (${selectedMoves.length}/4):
+                                <div class="moves-header">
+                                    <div class="moves-title">
+                                        Selecciona 4 movimientos (${selectedMoves.length}/4):
+                                    </div>
+                                    <button 
+                                        class="random-moves-btn"
+                                        @click="${() => this.selectRandomMoves(player)}"
+                                        title="Seleccionar 4 movimientos aleatorios"
+                                    >
+                                        🎲 Aleatorio
+                                    </button>
+                                </div>
+                                <div class="move-search-container">
+                                    <input 
+                                        type="text"
+                                        class="move-search-box"
+                                        placeholder="Buscar movimiento..."
+                                        .value="${player === 1 ? this.moveSearchQuery1 : this.moveSearchQuery2}"
+                                        @input="${(e) => this.searchMoves(e.target.value, player)}"
+                                    />
+                                    <span class="move-count">
+                                        ${(player === 1 ? this.filteredMoves1 : this.filteredMoves2).length} de ${moves.length}
+                                    </span>
                                 </div>
                                 <div class="available-moves">
-                                    ${moves.map(move => {
+                                    ${(player === 1 ? this.filteredMoves1 : this.filteredMoves2).map(move => {
                                         const isSelected = selectedMoves.some(m => m.name === move.name);
                                         return html`
                                             <div 
@@ -1954,7 +2271,9 @@ export class PokemonBattleSimulator extends LitElement {
                                             >
                                                 <div class="move-name">${move.displayName}</div>
                                                 <div class="move-details">
-                                                    Poder: ${move.power} | Precisión: ${move.accuracy}%
+                                                    <span class="move-type type-${move.type}">${this.capitalizeFirstLetter(move.type)}</span>
+                                                    <span>Poder: ${move.power}</span>
+                                                    <span>Precisión: ${move.accuracy}%</span>
                                                 </div>
                                             </div>
                                         `;
