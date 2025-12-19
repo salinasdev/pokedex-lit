@@ -226,6 +226,35 @@ export class PokemonBattleSimulator extends LitElement {
             font-size: 0.85em;
         }
 
+        .level-selector {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .level-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .level-input {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .level-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
         .stats-display {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -1015,6 +1044,20 @@ export class PokemonBattleSimulator extends LitElement {
                 color: #ecf0f1;
             }
 
+            .level-label {
+                color: #bdc3c7;
+            }
+
+            .level-input {
+                background: #1a252f;
+                color: #ecf0f1;
+                border: 2px solid #34495e;
+            }
+
+            .level-input:focus {
+                border-color: #5dade2;
+            }
+
             .move-selector-panel {
                 background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             }
@@ -1061,6 +1104,8 @@ export class PokemonBattleSimulator extends LitElement {
         allPokemon: { type: Array },
         player1Pokemon: { type: Object },
         player2Pokemon: { type: Object },
+        player1Level: { type: Number },
+        player2Level: { type: Number },
         player1Moves: { type: Array },
         player2Moves: { type: Array },
         player1SelectedMoves: { type: Array },
@@ -1091,6 +1136,8 @@ export class PokemonBattleSimulator extends LitElement {
         this.allPokemon = [];
         this.player1Pokemon = null;
         this.player2Pokemon = null;
+        this.player1Level = 50;
+        this.player2Level = 50;
         this.player1Moves = [];
         this.player2Moves = [];
         this.player1SelectedMoves = [];
@@ -1153,6 +1200,57 @@ export class PokemonBattleSimulator extends LitElement {
         }
     }
 
+    calculateRealStats(baseStats, level) {
+        // Fórmula de Pokémon para calcular stats reales
+        // HP: floor(((2 * Base + IV + floor(EV/4)) * Level) / 100) + Level + 10
+        // Other stats: floor((floor(((2 * Base + IV + floor(EV/4)) * Level) / 100) + 5) * Nature)
+        // Asumimos IV=31 (perfect), EV=0, Nature=1.0 (neutral)
+        
+        const IV = 31;
+        const EV = 0;
+        
+        return {
+            hp: Math.floor(((2 * baseStats.hp + IV + Math.floor(EV / 4)) * level) / 100) + level + 10,
+            attack: Math.floor(((2 * baseStats.attack + IV + Math.floor(EV / 4)) * level) / 100) + 5,
+            defense: Math.floor(((2 * baseStats.defense + IV + Math.floor(EV / 4)) * level) / 100) + 5,
+            spAttack: Math.floor(((2 * baseStats.spAttack + IV + Math.floor(EV / 4)) * level) / 100) + 5,
+            spDefense: Math.floor(((2 * baseStats.spDefense + IV + Math.floor(EV / 4)) * level) / 100) + 5,
+            speed: Math.floor(((2 * baseStats.speed + IV + Math.floor(EV / 4)) * level) / 100) + 5
+        };
+    }
+
+    updatePokemonStats(player) {
+        const pokemon = player === 1 ? this.player1Pokemon : this.player2Pokemon;
+        const level = player === 1 ? this.player1Level : this.player2Level;
+        
+        if (!pokemon || !pokemon.baseStats) return;
+        
+        const realStats = this.calculateRealStats(pokemon.baseStats, level);
+        pokemon.stats = realStats;
+        
+        if (player === 1) {
+            this.player1MaxHP = realStats.hp;
+            this.player1HP = realStats.hp;
+        } else {
+            this.player2MaxHP = realStats.hp;
+            this.player2HP = realStats.hp;
+        }
+        
+        this.requestUpdate();
+    }
+
+    changeLevel(player, level) {
+        const newLevel = Math.max(1, Math.min(100, parseInt(level) || 50));
+        
+        if (player === 1) {
+            this.player1Level = newLevel;
+        } else {
+            this.player2Level = newLevel;
+        }
+        
+        this.updatePokemonStats(player);
+    }
+
     async selectPokemon(pokemon, player) {
         try {
             const pokemonId = parseInt(pokemon.url.match(/\/(\d+)\//)[1]);
@@ -1176,7 +1274,7 @@ export class PokemonBattleSimulator extends LitElement {
                 name: data.name,
                 sprite: data.sprites.front_default,
                 types: data.types,
-                stats: {
+                baseStats: {
                     hp: data.stats[0].base_stat,
                     attack: data.stats[1].base_stat,
                     defense: data.stats[2].base_stat,
@@ -1184,8 +1282,12 @@ export class PokemonBattleSimulator extends LitElement {
                     spDefense: data.stats[4].base_stat,
                     speed: data.stats[5].base_stat
                 },
+                stats: {}, // Se calculará con el nivel
                 moves: learnableMoves
             };
+
+            const level = player === 1 ? this.player1Level : this.player2Level;
+            pokemonData.stats = this.calculateRealStats(pokemonData.baseStats, level);
 
             if (player === 1) {
                 this.player1Pokemon = pokemonData;
@@ -1408,6 +1510,7 @@ export class PokemonBattleSimulator extends LitElement {
         const isPlayer1 = attacker === 1;
         const attackerPokemon = isPlayer1 ? this.player1Pokemon : this.player2Pokemon;
         const defenderPokemon = isPlayer1 ? this.player2Pokemon : this.player1Pokemon;
+        const attackerLevel = isPlayer1 ? this.player1Level : this.player2Level;
 
         // Detectar movimientos de autodestrucción
         const isSelfDestructMove = this.isSelfDestructMove(selectedMove.name);
@@ -1416,7 +1519,8 @@ export class PokemonBattleSimulator extends LitElement {
         const damage = this.calculateDamage(
             attackerPokemon,
             defenderPokemon,
-            selectedMove
+            selectedMove,
+            attackerLevel
         );
 
         // Aplicar daño al defensor
@@ -1471,9 +1575,8 @@ export class PokemonBattleSimulator extends LitElement {
         this.requestUpdate();
     }
 
-    calculateDamage(attacker, defender, move) {
+    calculateDamage(attacker, defender, move, level = 50) {
         // Fórmula simplificada de daño de Pokémon
-        const level = 50;
         const attack = move.damageClass === 'physical' ? 
             attacker.stats.attack : attacker.stats.spAttack;
         const defense = move.damageClass === 'physical' ?
@@ -1794,6 +1897,17 @@ export class PokemonBattleSimulator extends LitElement {
                                             ${this.capitalizeFirstLetter(t.type.name)}
                                         </span>
                                     `)}
+                                </div>
+                                <div class="level-selector">
+                                    <span class="level-label">Nivel:</span>
+                                    <input 
+                                        type="number" 
+                                        class="level-input" 
+                                        min="1" 
+                                        max="100" 
+                                        .value="${String(player === 1 ? this.player1Level : this.player2Level)}"
+                                        @input="${(e) => this.changeLevel(player, e.target.value)}"
+                                    >
                                 </div>
                             </div>
                         </div>
