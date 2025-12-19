@@ -373,13 +373,13 @@ export class PokemonEvents extends LitElement {
             // Intentar cargar eventos desde RSS
             const eventsData = await this.fetchEventsData();
             this.events = eventsData;
-            console.log('✓ Eventos cargados desde Serebii.net RSS');
+            console.log('✓ Eventos cargados desde Pokémon Blog RSS');
         } catch (err) {
             console.error('⚠️ Error cargando eventos desde RSS:', err.message);
             
             // Si falla, dejar el array vacío y mostrar mensaje de error
             this.events = [];
-            this.error = 'No se pudieron cargar los eventos desde Serebii.net. Por favor, intenta más tarde.';
+            this.error = 'No se pudieron cargar los eventos desde Pokémon Blog. Por favor, intenta más tarde.';
         } finally {
             this.loading = false;
         }
@@ -387,12 +387,12 @@ export class PokemonEvents extends LitElement {
 
     async fetchEventsData() {
         try {
-            // Usamos RSS2JSON para convertir el RSS de Serebii a JSON
-            const RSS_URL = 'https://www.serebii.net/news.rss';
+            // Usamos RSS2JSON para convertir el RSS de Pokémon Blog a JSON
+            const RSS_URL = 'https://pokemonblog.com/feed/';
             const API_KEY = 'seo9oy0y6wvmdkrr4tvvkerwp35ikirjm5pmm9im';
             const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}&api_key=${API_KEY}&count=50`;
             
-            console.log('Fetching events from Serebii.net RSS...');
+            console.log('Fetching events from Pokémon Blog RSS...');
             console.log('API URL:', API_URL);
             
             const response = await fetch(API_URL);
@@ -425,15 +425,30 @@ export class PokemonEvents extends LitElement {
                 // Detectar categoría basándose en el título y descripción
                 const category = this.detectCategoryFromContent(item.title, item.description);
                 
-                // Extraer imagen si existe en la descripción HTML
-                const imageUrl = this.extractImageFromHtml(item.description) || 
-                                'https://images.unsplash.com/photo-1542779283-429940ce8336?w=500';
+                // Usar imagen del campo enclosure si existe, sino extraer del HTML
+                let imageUrl = 'https://images.unsplash.com/photo-1542779283-429940ce8336?w=500';
+                
+                if (item.enclosure && item.enclosure.link) {
+                    imageUrl = item.enclosure.link;
+                    console.log('Using enclosure image:', imageUrl);
+                } else if (item.thumbnail) {
+                    // RSS2JSON a veces pone la imagen en thumbnail
+                    imageUrl = item.thumbnail;
+                    console.log('Using thumbnail image:', imageUrl);
+                } else {
+                    // Fallback: extraer del HTML
+                    const extractedImage = this.extractImageFromHtml(item.description);
+                    if (extractedImage) {
+                        imageUrl = extractedImage;
+                        console.log('Using extracted image from HTML:', imageUrl);
+                    }
+                }
                 
                 // Limpiar descripción de HTML
                 const cleanDescription = this.stripHtml(item.description).substring(0, 200) + '...';
                 
                 return {
-                    id: `serebii-${index}-${pubDate.getTime()}`,
+                    id: `pokeblog-${index}-${pubDate.getTime()}`,
                     title: item.title,
                     description: cleanDescription,
                     category: category,

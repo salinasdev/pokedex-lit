@@ -1,10 +1,10 @@
 # Componente de Eventos Pokémon
 
-Este componente muestra eventos actuales del mundo Pokémon obtenidos dinámicamente desde **Serebii.net RSS Feed** con sistema de filtrado por categorías.
+Este componente muestra eventos actuales del mundo Pokémon obtenidos dinámicamente desde **Pokémon Blog RSS Feed** con sistema de filtrado por categorías.
 
 ## Características
 
-- ✅ **Carga dinámica desde Serebii.net** - Noticias reales en tiempo real
+- ✅ **Carga dinámica desde Pokémon Blog** - Noticias reales en tiempo real
 - ✅ Sistema de categorías automático (Videojuegos, TCG, Pokémon GO, Anime, General)
 - ✅ Filtrado dinámico de eventos
 - ✅ Extracción automática de imágenes del RSS
@@ -18,8 +18,8 @@ Este componente muestra eventos actuales del mundo Pokémon obtenidos dinámicam
 
 ## Fuente de Datos
 
-**API Utilizada**: RSS2JSON + Serebii.net
-- **URL RSS**: `https://www.serebii.net/news.rss`
+**API Utilizada**: RSS2JSON + Pokémon Blog
+- **URL RSS**: `https://pokemonblog.com/feed/`
 - **Convertidor**: `https://api.rss2json.com/v1/api.json`
 - **Límite**: 50 noticias más recientes
 - **Actualización**: En tiempo real al abrir el panel
