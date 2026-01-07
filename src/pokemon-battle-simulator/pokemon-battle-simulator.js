@@ -602,6 +602,66 @@ export class PokemonBattleSimulator extends LitElement {
             background: linear-gradient(90deg, #e74c3c, #c0392b);
         }
 
+        .status-indicator {
+            margin-top: 5px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .status-paralysis {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-burn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-sleep {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .status-poison {
+            background: #8e44ad;
+            color: white;
+        }
+
+        .status-freeze {
+            background: #3498db;
+            color: white;
+        }
+
+        .stat-changes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 5px;
+            justify-content: center;
+        }
+
+        .stat-badge {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .stat-up {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .stat-down {
+            background: #e74c3c;
+            color: white;
+        }
+
         .battle-log {
             background: rgba(0,0,0,0.3);
             border-radius: 15px;
@@ -651,6 +711,30 @@ export class PokemonBattleSimulator extends LitElement {
             background: rgba(231, 76, 60, 0.3);
             border-left: 3px solid #e74c3c;
             font-weight: bold;
+        }
+
+        .log-entry.recoil {
+            background: rgba(230, 126, 34, 0.3);
+            border-left: 3px solid #e67e22;
+            font-weight: bold;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        .log-entry.status {
+            background: rgba(155, 89, 182, 0.3);
+            border-left: 3px solid #9b59b6;
+            font-weight: bold;
+        }
+
+        .log-entry.stat-change {
+            background: rgba(52, 152, 219, 0.3);
+            border-left: 3px solid #3498db;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
         .log-entry.draw {
@@ -1280,6 +1364,10 @@ export class PokemonBattleSimulator extends LitElement {
         player2HP: { type: Number },
         player1MaxHP: { type: Number },
         player2MaxHP: { type: Number },
+        player1Status: { type: String },      // Estado alterado (parálisis, quemadura, etc.)
+        player2Status: { type: String },
+        player1StatChanges: { type: Object }, // Cambios de estadísticas
+        player2StatChanges: { type: Object },
         battleLog: { type: Array },
         battleActive: { type: Boolean },
         battleFinished: { type: Boolean },
@@ -1318,6 +1406,26 @@ export class PokemonBattleSimulator extends LitElement {
         this.player2HP = 100;
         this.player1MaxHP = 100;
         this.player2MaxHP = 100;
+        this.player1Status = null;          // null, 'burn', 'paralysis', 'sleep', 'poison', 'freeze'
+        this.player2Status = null;
+        this.player1StatChanges = {         // Cada stat va de -6 a +6
+            attack: 0,
+            defense: 0,
+            spAttack: 0,
+            spDefense: 0,
+            speed: 0,
+            accuracy: 0,
+            evasion: 0
+        };
+        this.player2StatChanges = {
+            attack: 0,
+            defense: 0,
+            spAttack: 0,
+            spDefense: 0,
+            speed: 0,
+            accuracy: 0,
+            evasion: 0
+        };
         this.battleLog = [];
         this.battleActive = false;
         this.battleFinished = false;
@@ -1486,6 +1594,12 @@ export class PokemonBattleSimulator extends LitElement {
                 name: m.move.name,
                 url: m.move.url
             }));
+            
+            // Debug log para Metapod
+            if (data.name === 'metapod') {
+                console.log('🐛 Metapod moves loaded:', learnableMoves.length);
+                console.log('Has Harden?', learnableMoves.some(m => m.name === 'harden'));
+            }
 
             const pokemonData = {
                 id: data.id,
@@ -1542,9 +1656,21 @@ export class PokemonBattleSimulator extends LitElement {
             );
             const moveDetails = await Promise.all(movePromises);
 
-            // Filtrar solo movimientos ofensivos (con poder) y ordenar por nombre
+            // Filtrar movimientos ofensivos O de estado/stat
             const movesWithDetails = moveDetails
-                .filter(move => move !== null && move.power !== null && move.power > 0)
+                .filter(move => {
+                    if (move === null) return false;
+                    
+                    // Incluir movimientos ofensivos
+                    if (move.power !== null && move.power > 0) return true;
+                    
+                    // Incluir movimientos de estado que tenemos implementados
+                    const moveName = move.name.toLowerCase();
+                    if (this.getStatusMoveEffect(moveName)) return true;
+                    if (this.getStatChangeEffect(moveName)) return true;
+                    
+                    return false;
+                })
                 .sort((a, b) => {
                     // Buscar nombres en español para ordenar
                     const nameA = a.names.find(n => n.language.name === 'es')?.name || a.name;
@@ -1557,7 +1683,7 @@ export class PokemonBattleSimulator extends LitElement {
                     return {
                         name: move.name, // Nombre interno para identificación
                         displayName: spanishName ? spanishName.name : this.capitalizeFirstLetter(move.name),
-                        power: move.power,
+                        power: move.power || 0, // 0 para movimientos de estado
                         accuracy: move.accuracy || 100, // Si no tiene accuracy, asumir 100%
                         type: move.type.name,
                         damageClass: move.damage_class.name,
@@ -1697,6 +1823,29 @@ export class PokemonBattleSimulator extends LitElement {
         this.currentTurn = 1;
         this.waitingForPlayerMove = false;
         this.currentAttacker = 0;
+        
+        // Resetear estados y cambios de estadísticas
+        this.player1Status = null;
+        this.player2Status = null;
+        this.player1StatChanges = {
+            attack: 0,
+            defense: 0,
+            spAttack: 0,
+            spDefense: 0,
+            speed: 0,
+            accuracy: 0,
+            evasion: 0
+        };
+        this.player2StatChanges = {
+            attack: 0,
+            defense: 0,
+            spAttack: 0,
+            spDefense: 0,
+            speed: 0,
+            accuracy: 0,
+            evasion: 0
+        };
+        
         this.battleStats = {
             player1: { damage: 0, turns: 0, crits: 0 },
             player2: { damage: 0, turns: 0, crits: 0 }
@@ -1800,6 +1949,9 @@ export class PokemonBattleSimulator extends LitElement {
 
         // Detectar movimientos de autodestrucción
         const isSelfDestructMove = this.isSelfDestructMove(selectedMove.name);
+        
+        // Detectar movimientos con daño de retroceso
+        const recoilPercent = this.isRecoilMove(selectedMove.name);
 
         // Calcular daño
         const damage = this.calculateDamage(
@@ -1845,6 +1997,87 @@ export class PokemonBattleSimulator extends LitElement {
 
         this.addLog(logMessage, logClass);
 
+        // Verificar si el movimiento tiene efectos de estado
+        const statusEffect = this.getStatusMoveEffect(selectedMove.name);
+        if (statusEffect && Math.random() * 100 < statusEffect.chance) {
+            await this.sleep(300);
+            const targetPlayer = statusEffect.target === 'opponent' ? (isPlayer1 ? 2 : 1) : attacker;
+            const targetPokemon = targetPlayer === 1 ? this.player1Pokemon : this.player2Pokemon;
+            
+            if (this.applyStatus(targetPlayer, statusEffect.status)) {
+                this.addLog(`¡${this.capitalizeFirstLetter(targetPokemon.name)} sufre ${this.getStatusNameSpanish(statusEffect.status)}!`, 'status');
+                this.requestUpdate();
+                await this.sleep(500);
+            } else {
+                this.addLog(`¡Pero falló!`, 'not-effective');
+            }
+        }
+
+        // Verificar si el movimiento tiene efectos de cambio de estadísticas
+        const statEffect = this.getStatChangeEffect(selectedMove.name);
+        if (statEffect) {
+            await this.sleep(300);
+            
+            if (statEffect.target === 'swap') {
+                // Intercambiar cambios de estadísticas
+                const temp1 = { ...this.player1StatChanges };
+                const temp2 = { ...this.player2StatChanges };
+                
+                Object.keys(statEffect.stats).forEach(stat => {
+                    if (statEffect.stats[stat] === 'swap') {
+                        const tempValue = temp1[stat];
+                        this.player1StatChanges[stat] = temp2[stat];
+                        this.player2StatChanges[stat] = tempValue;
+                    }
+                });
+                
+                this.addLog(`¡${this.capitalizeFirstLetter(attackerPokemon.name)} intercambió los cambios de estadísticas!`, 'stat-change');
+                this.requestUpdate();
+                await this.sleep(500);
+            } else {
+                const targetPlayer = statEffect.target === 'self' ? attacker : (isPlayer1 ? 2 : 1);
+                const targetPokemon = targetPlayer === 1 ? this.player1Pokemon : this.player2Pokemon;
+                let anyChange = false;
+                const changes = [];
+                
+                Object.keys(statEffect.stats).forEach(stat => {
+                    const stages = statEffect.stats[stat];
+                    if (this.applyStatChange(targetPlayer, stat, stages)) {
+                        anyChange = true;
+                        const direction = stages > 0 ? 'subió' : 'bajó';
+                        const amount = Math.abs(stages) === 1 ? '' : Math.abs(stages) === 2 ? ' mucho' : ' muchísimo';
+                        changes.push(`${this.getStatNameSpanish(stat)} ${direction}${amount}`);
+                    }
+                });
+                
+                if (anyChange) {
+                    const changeText = changes.join(', ');
+                    this.addLog(`¡${changeText} de ${this.capitalizeFirstLetter(targetPokemon.name)}!`, 'stat-change');
+                    this.requestUpdate();
+                    await this.sleep(500);
+                } else {
+                    this.addLog(`¡Las estadísticas no pueden cambiar más!`, 'not-effective');
+                }
+            }
+        }
+
+        // Si el movimiento tiene daño de retroceso, aplicarlo al atacante
+        if (recoilPercent && !isSelfDestructMove) {
+            await this.sleep(500); // Pausa antes del retroceso
+            const recoilDamage = Math.max(1, Math.floor(damage.amount * recoilPercent));
+            
+            if (isPlayer1) {
+                this.player1HP = Math.max(0, this.player1HP - recoilDamage);
+            } else {
+                this.player2HP = Math.max(0, this.player2HP - recoilDamage);
+            }
+            
+            this.addLog(`¡${this.capitalizeFirstLetter(attackerPokemon.name)} sufre ${recoilDamage} de daño de retroceso!`, 'recoil');
+            this.animateHit(attacker); // Animación de que el atacante recibe daño
+            this.requestUpdate();
+            await this.sleep(800); // Pausa para que se vea el mensaje
+        }
+
         // Si es un movimiento de autodestrucción, debilitar al atacante
         if (isSelfDestructMove) {
             await this.sleep(500); // Pausa antes de la autodestrucción
@@ -1862,11 +2095,36 @@ export class PokemonBattleSimulator extends LitElement {
     }
 
     calculateDamage(attacker, defender, move, level = 50) {
+        // Determinar qué jugador es el atacante y defensor
+        const attackerPlayer = attacker === this.player1Pokemon ? 1 : 2;
+        const defenderPlayer = attackerPlayer === 1 ? 2 : 1;
+        
+        // Obtener cambios de estadísticas
+        const attackerStatChanges = attackerPlayer === 1 ? this.player1StatChanges : this.player2StatChanges;
+        const defenderStatChanges = defenderPlayer === 1 ? this.player1StatChanges : this.player2StatChanges;
+        
+        // Obtener estados
+        const attackerStatus = attackerPlayer === 1 ? this.player1Status : this.player2Status;
+        
         // Fórmula simplificada de daño de Pokémon
-        const attack = move.damageClass === 'physical' ? 
+        let attack = move.damageClass === 'physical' ? 
             attacker.stats.attack : attacker.stats.spAttack;
-        const defense = move.damageClass === 'physical' ?
+        let defense = move.damageClass === 'physical' ?
             defender.stats.defense : defender.stats.spDefense;
+
+        // Aplicar multiplicadores de estadísticas al ataque
+        if (move.damageClass === 'physical') {
+            attack *= this.getStatMultiplier(attackerStatChanges.attack);
+            defense *= this.getStatMultiplier(defenderStatChanges.defense);
+        } else {
+            attack *= this.getStatMultiplier(attackerStatChanges.spAttack);
+            defense *= this.getStatMultiplier(defenderStatChanges.spDefense);
+        }
+
+        // Aplicar efecto de quemadura (reduce ataque físico a la mitad)
+        if (attackerStatus === 'burn' && move.damageClass === 'physical') {
+            attack *= 0.5;
+        }
 
         // Calcular efectividad de tipo
         const effectiveness = this.getTypeEffectiveness(
@@ -1933,6 +2191,328 @@ export class PokemonBattleSimulator extends LitElement {
             'final-gambit', 'finalgambit'
         ];
         return selfDestructMoves.includes(moveName.toLowerCase().replace(/\s/g, '-'));
+    }
+
+    // Función para detectar movimientos con daño de retroceso
+    isRecoilMove(moveName) {
+        // Movimientos con daño de retroceso (movimientos que hacen daño al usuario)
+        const recoilMoves = {
+            // Movimientos con 1/4 del daño infligido
+            'take-down': 0.25,
+            'takedown': 0.25,
+            'placaje': 0.25,
+            'double-edge': 0.25,
+            'doubleedge': 0.25,
+            'doble-filo': 0.25,
+            'doblefilo': 0.25,
+            'submission': 0.25,
+            'sumisión': 0.25,
+            'sumision': 0.25,
+            'brave-bird': 0.33,
+            'bravebird': 0.33,
+            'pájaro-osado': 0.33,
+            'pajaroosado': 0.33,
+            'flare-blitz': 0.33,
+            'flareblitz': 0.33,
+            'envite-ígneo': 0.33,
+            'enviteigneo': 0.33,
+            'wood-hammer': 0.33,
+            'woodhammer': 0.33,
+            'martillo-madera': 0.33,
+            'wild-charge': 0.25,
+            'wildcharge': 0.25,
+            'voltio-cruel': 0.25,
+            'voltiocruel': 0.25,
+            'head-smash': 0.5,
+            'headsmash': 0.5,
+            'testarazo': 0.5,
+            'head-charge': 0.25,
+            'headcharge': 0.25,
+            'ariete': 0.25,
+            'volt-tackle': 0.33,
+            'volttackle': 0.33,
+            'placaje-eléctrico': 0.33,
+            'placajeelectrico': 0.33,
+            // Nuevos movimientos de retroceso
+            'struggle': 0.25,
+            'forcejeo': 0.25,
+            'shadow-rush': 0.5,
+            'shadowrush': 0.5,
+            'shadow-end': 0.5,
+            'shadowend': 0.5
+        };
+        
+        const normalizedName = moveName.toLowerCase().replace(/\s/g, '-');
+        return recoilMoves[normalizedName] || null;
+    }
+
+    // Función para obtener efectos de movimientos de estado
+    getStatusMoveEffect(moveName) {
+        const statusMoves = {
+            // Parálisis
+            'thunder-wave': { status: 'paralysis', target: 'opponent', chance: 100 },
+            'thunderwave': { status: 'paralysis', target: 'opponent', chance: 100 },
+            'onda-trueno': { status: 'paralysis', target: 'opponent', chance: 100 },
+            'ondatrueno': { status: 'paralysis', target: 'opponent', chance: 100 },
+            'stun-spore': { status: 'paralysis', target: 'opponent', chance: 75 },
+            'stunspore': { status: 'paralysis', target: 'opponent', chance: 75 },
+            'paralizador': { status: 'paralysis', target: 'opponent', chance: 75 },
+            'glare': { status: 'paralysis', target: 'opponent', chance: 100 },
+            'deslumbrar': { status: 'paralysis', target: 'opponent', chance: 100 },
+            
+            // Quemadura
+            'will-o-wisp': { status: 'burn', target: 'opponent', chance: 85 },
+            'willowisp': { status: 'burn', target: 'opponent', chance: 85 },
+            'fuego-fatuo': { status: 'burn', target: 'opponent', chance: 85 },
+            'fuegofatuo': { status: 'burn', target: 'opponent', chance: 85 },
+            
+            // Sueño
+            'spore': { status: 'sleep', target: 'opponent', chance: 100 },
+            'espora': { status: 'sleep', target: 'opponent', chance: 100 },
+            'sleep-powder': { status: 'sleep', target: 'opponent', chance: 75 },
+            'sleeppowder': { status: 'sleep', target: 'opponent', chance: 75 },
+            'somnífero': { status: 'sleep', target: 'opponent', chance: 75 },
+            'somnifero': { status: 'sleep', target: 'opponent', chance: 75 },
+            'hypnosis': { status: 'sleep', target: 'opponent', chance: 60 },
+            'hipnosis': { status: 'sleep', target: 'opponent', chance: 60 },
+            'lovely-kiss': { status: 'sleep', target: 'opponent', chance: 75 },
+            'lovelykiss': { status: 'sleep', target: 'opponent', chance: 75 },
+            'beso-amoroso': { status: 'sleep', target: 'opponent', chance: 75 },
+            
+            // Veneno
+            'toxic': { status: 'poison', target: 'opponent', chance: 90 },
+            'tóxico': { status: 'poison', target: 'opponent', chance: 90 },
+            'toxico': { status: 'poison', target: 'opponent', chance: 90 },
+            'poison-powder': { status: 'poison', target: 'opponent', chance: 75 },
+            'poisonpowder': { status: 'poison', target: 'opponent', chance: 75 },
+            'polvo-veneno': { status: 'poison', target: 'opponent', chance: 75 }
+        };
+        
+        const normalizedName = moveName.toLowerCase().replace(/\s/g, '-');
+        return statusMoves[normalizedName] || null;
+    }
+
+    // Función para obtener cambios de estadísticas de movimientos
+    getStatChangeEffect(moveName) {
+        const statChangeMoves = {
+            // Movimientos que suben stats del usuario
+            'swords-dance': { target: 'self', stats: { attack: 2 } },
+            'swordsdance': { target: 'self', stats: { attack: 2 } },
+            'danza-espada': { target: 'self', stats: { attack: 2 } },
+            'danzaespada': { target: 'self', stats: { attack: 2 } },
+            
+            'dragon-dance': { target: 'self', stats: { attack: 1, speed: 1 } },
+            'dragondance': { target: 'self', stats: { attack: 1, speed: 1 } },
+            'danza-dragón': { target: 'self', stats: { attack: 1, speed: 1 } },
+            'danzadragon': { target: 'self', stats: { attack: 1, speed: 1 } },
+            
+            'nasty-plot': { target: 'self', stats: { spAttack: 2 } },
+            'nastyplot': { target: 'self', stats: { spAttack: 2 } },
+            'maquinación': { target: 'self', stats: { spAttack: 2 } },
+            'maquinacion': { target: 'self', stats: { spAttack: 2 } },
+            
+            'calm-mind': { target: 'self', stats: { spAttack: 1, spDefense: 1 } },
+            'calmmind': { target: 'self', stats: { spAttack: 1, spDefense: 1 } },
+            'paz-mental': { target: 'self', stats: { spAttack: 1, spDefense: 1 } },
+            
+            'iron-defense': { target: 'self', stats: { defense: 2 } },
+            'irondefense': { target: 'self', stats: { defense: 2 } },
+            'defensa-férrea': { target: 'self', stats: { defense: 2 } },
+            'defensaferrea': { target: 'self', stats: { defense: 2 } },
+            
+            'defense-curl': { target: 'self', stats: { defense: 1 } },
+            'defensecurl': { target: 'self', stats: { defense: 1 } },
+            'rizo-defensa': { target: 'self', stats: { defense: 1 } },
+            'rizodefensa': { target: 'self', stats: { defense: 1 } },
+            
+            'harden': { target: 'self', stats: { defense: 1 } },
+            'fortaleza': { target: 'self', stats: { defense: 1 } },
+            
+            'withdraw': { target: 'self', stats: { defense: 1 } },
+            'retroceso': { target: 'self', stats: { defense: 1 } },
+            'refugio': { target: 'self', stats: { defense: 1 } },
+            
+            'barrier': { target: 'self', stats: { defense: 2 } },
+            'barrera': { target: 'self', stats: { defense: 2 } },
+            
+            'acid-armor': { target: 'self', stats: { defense: 2 } },
+            'acidarmor': { target: 'self', stats: { defense: 2 } },
+            'armadura-ácida': { target: 'self', stats: { defense: 2 } },
+            'armaduraacida': { target: 'self', stats: { defense: 2 } },
+            
+            'cosmic-power': { target: 'self', stats: { defense: 1, spDefense: 1 } },
+            'cosmicpower': { target: 'self', stats: { defense: 1, spDefense: 1 } },
+            'masa-cósmica': { target: 'self', stats: { defense: 1, spDefense: 1 } },
+            'masacosmica': { target: 'self', stats: { defense: 1, spDefense: 1 } },
+            
+            'bulk-up': { target: 'self', stats: { attack: 1, defense: 1 } },
+            'bulkup': { target: 'self', stats: { attack: 1, defense: 1 } },
+            'corpulencia': { target: 'self', stats: { attack: 1, defense: 1 } },
+            
+            'coil': { target: 'self', stats: { attack: 1, defense: 1, accuracy: 1 } },
+            'enrosque': { target: 'self', stats: { attack: 1, defense: 1, accuracy: 1 } },
+            
+            'meditate': { target: 'self', stats: { attack: 1 } },
+            'meditación': { target: 'self', stats: { attack: 1 } },
+            'meditacion': { target: 'self', stats: { attack: 1 } },
+            
+            'sharpen': { target: 'self', stats: { attack: 1 } },
+            'afilar': { target: 'self', stats: { attack: 1 } },
+            
+            'quiver-dance': { target: 'self', stats: { spAttack: 1, spDefense: 1, speed: 1 } },
+            'quiverdance': { target: 'self', stats: { spAttack: 1, spDefense: 1, speed: 1 } },
+            'danza-aleteo': { target: 'self', stats: { spAttack: 1, spDefense: 1, speed: 1 } },
+            'danzaaleteo': { target: 'self', stats: { spAttack: 1, spDefense: 1, speed: 1 } },
+            
+            'agility': { target: 'self', stats: { speed: 2 } },
+            'agilidad': { target: 'self', stats: { speed: 2 } },
+            
+            'rock-polish': { target: 'self', stats: { speed: 2 } },
+            'rockpolish': { target: 'self', stats: { speed: 2 } },
+            'pulimento': { target: 'self', stats: { speed: 2 } },
+            
+            'amnesia': { target: 'self', stats: { spDefense: 2 } },
+            
+            // Movimientos que bajan stats del oponente
+            'growl': { target: 'opponent', stats: { attack: -1 } },
+            'gruñido': { target: 'opponent', stats: { attack: -1 } },
+            'grunido': { target: 'opponent', stats: { attack: -1 } },
+            
+            'tail-whip': { target: 'opponent', stats: { defense: -1 } },
+            'tailwhip': { target: 'opponent', stats: { defense: -1 } },
+            'látigo': { target: 'opponent', stats: { defense: -1 } },
+            'latigo': { target: 'opponent', stats: { defense: -1 } },
+            
+            'leer': { target: 'opponent', stats: { defense: -1 } },
+            'malicioso': { target: 'opponent', stats: { defense: -1 } },
+            
+            'scary-face': { target: 'opponent', stats: { speed: -2 } },
+            'scaryface': { target: 'opponent', stats: { speed: -2 } },
+            'cara-susto': { target: 'opponent', stats: { speed: -2 } },
+            'carasusto': { target: 'opponent', stats: { speed: -2 } },
+            
+            'screech': { target: 'opponent', stats: { defense: -2 } },
+            'chirrido': { target: 'opponent', stats: { defense: -2 } },
+            
+            'sand-attack': { target: 'opponent', stats: { accuracy: -1 } },
+            'sandattack': { target: 'opponent', stats: { accuracy: -1 } },
+            'ataque-arena': { target: 'opponent', stats: { accuracy: -1 } },
+            'ataquearena': { target: 'opponent', stats: { accuracy: -1 } },
+            
+            'smokescreen': { target: 'opponent', stats: { accuracy: -1 } },
+            'pantalla-humo': { target: 'opponent', stats: { accuracy: -1 } },
+            'pantallahumo': { target: 'opponent', stats: { accuracy: -1 } },
+            
+            'flash': { target: 'opponent', stats: { accuracy: -1 } },
+            'destello': { target: 'opponent', stats: { accuracy: -1 } },
+            
+            'kinesis': { target: 'opponent', stats: { accuracy: -1 } },
+            
+            'string-shot': { target: 'opponent', stats: { speed: -2 } },
+            'stringshot': { target: 'opponent', stats: { speed: -2 } },
+            'disparo-demora': { target: 'opponent', stats: { speed: -2 } },
+            'disparodemora': { target: 'opponent', stats: { speed: -2 } },
+            
+            'bubble': { target: 'opponent', stats: { speed: -1 } },
+            'burbuja': { target: 'opponent', stats: { speed: -1 } },
+            
+            'constrict': { target: 'opponent', stats: { speed: -1 } },
+            'constricción': { target: 'opponent', stats: { speed: -1 } },
+            'constriccion': { target: 'opponent', stats: { speed: -1 } },
+            
+            // Movimientos que aumentan evasión
+            'double-team': { target: 'self', stats: { evasion: 1 } },
+            'doubleteam': { target: 'self', stats: { evasion: 1 } },
+            'doble-equipo': { target: 'self', stats: { evasion: 1 } },
+            'dobleequipo': { target: 'self', stats: { evasion: 1 } },
+            
+            'minimize': { target: 'self', stats: { evasion: 2 } },
+            'reducción': { target: 'self', stats: { evasion: 2 } },
+            'reduccion': { target: 'self', stats: { evasion: 2 } },
+            
+            // Movimientos con efectos mixtos
+            'power-swap': { target: 'swap', stats: { attack: 'swap', spAttack: 'swap' } },
+            'powerswap': { target: 'swap', stats: { attack: 'swap', spAttack: 'swap' } },
+            'poder-pasado': { target: 'swap', stats: { attack: 'swap', spAttack: 'swap' } },
+            'poderpasado': { target: 'swap', stats: { attack: 'swap', spAttack: 'swap' } },
+            
+            'guard-swap': { target: 'swap', stats: { defense: 'swap', spDefense: 'swap' } },
+            'guardswap': { target: 'swap', stats: { defense: 'swap', spDefense: 'swap' } },
+            'cambio-defensa': { target: 'swap', stats: { defense: 'swap', spDefense: 'swap' } },
+            'cambiodefensa': { target: 'swap', stats: { defense: 'swap', spDefense: 'swap' } }
+        };
+        
+        const normalizedName = moveName.toLowerCase().replace(/\s/g, '-');
+        return statChangeMoves[normalizedName] || null;
+    }
+
+    // Aplicar cambio de estadística
+    applyStatChange(player, stat, stages) {
+        const statChanges = player === 1 ? this.player1StatChanges : this.player2StatChanges;
+        const oldValue = statChanges[stat];
+        const newValue = Math.max(-6, Math.min(6, oldValue + stages));
+        
+        if (player === 1) {
+            this.player1StatChanges = { ...this.player1StatChanges, [stat]: newValue };
+        } else {
+            this.player2StatChanges = { ...this.player2StatChanges, [stat]: newValue };
+        }
+        
+        return newValue !== oldValue; // Retorna true si hubo cambio
+    }
+
+    // Aplicar estado alterado
+    applyStatus(player, status) {
+        const currentStatus = player === 1 ? this.player1Status : this.player2Status;
+        
+        // Si ya tiene un estado, no se puede aplicar otro
+        if (currentStatus) {
+            return false;
+        }
+        
+        if (player === 1) {
+            this.player1Status = status;
+        } else {
+            this.player2Status = status;
+        }
+        
+        return true;
+    }
+
+    // Obtener multiplicador de estadística según los stages
+    getStatMultiplier(stages) {
+        const multipliers = {
+            '-6': 2/8, '-5': 2/7, '-4': 2/6, '-3': 2/5, '-2': 2/4, '-1': 2/3,
+            '0': 1,
+            '1': 3/2, '2': 4/2, '3': 5/2, '4': 6/2, '5': 7/2, '6': 8/2
+        };
+        return multipliers[stages.toString()] || 1;
+    }
+
+    // Obtener nombre en español del estado
+    getStatusNameSpanish(status) {
+        const names = {
+            'paralysis': 'Parálisis',
+            'burn': 'Quemadura',
+            'sleep': 'Sueño',
+            'poison': 'Envenenamiento',
+            'freeze': 'Congelación'
+        };
+        return names[status] || status;
+    }
+
+    // Obtener nombre en español de la estadística
+    getStatNameSpanish(stat) {
+        const names = {
+            'attack': 'Ataque',
+            'defense': 'Defensa',
+            'spAttack': 'At. Especial',
+            'spDefense': 'Def. Especial',
+            'speed': 'Velocidad',
+            'accuracy': 'Precisión',
+            'evasion': 'Evasión'
+        };
+        return names[stat] || stat;
     }
 
     checkBattleEnd() {
@@ -2316,6 +2896,18 @@ export class PokemonBattleSimulator extends LitElement {
                                         ${this.player1HP}/${this.player1MaxHP}
                                     </div>
                                 </div>
+                                ${this.player1Status ? html`
+                                    <div class="status-indicator status-${this.player1Status}">
+                                        ${this.getStatusNameSpanish(this.player1Status)}
+                                    </div>
+                                ` : ''}
+                                <div class="stat-changes">
+                                    ${Object.keys(this.player1StatChanges).filter(stat => this.player1StatChanges[stat] !== 0).map(stat => html`
+                                        <span class="stat-badge ${this.player1StatChanges[stat] > 0 ? 'stat-up' : 'stat-down'}">
+                                            ${this.getStatNameSpanish(stat).substring(0, 3)} ${this.player1StatChanges[stat] > 0 ? '↑' : '↓'}${Math.abs(this.player1StatChanges[stat])}
+                                        </span>
+                                    `)}
+                                </div>
                             </div>
                         </div>
 
@@ -2334,6 +2926,18 @@ export class PokemonBattleSimulator extends LitElement {
                                     >
                                         ${this.player2HP}/${this.player2MaxHP}
                                     </div>
+                                </div>
+                                ${this.player2Status ? html`
+                                    <div class="status-indicator status-${this.player2Status}">
+                                        ${this.getStatusNameSpanish(this.player2Status)}
+                                    </div>
+                                ` : ''}
+                                <div class="stat-changes">
+                                    ${Object.keys(this.player2StatChanges).filter(stat => this.player2StatChanges[stat] !== 0).map(stat => html`
+                                        <span class="stat-badge ${this.player2StatChanges[stat] > 0 ? 'stat-up' : 'stat-down'}">
+                                            ${this.getStatNameSpanish(stat).substring(0, 3)} ${this.player2StatChanges[stat] > 0 ? '↑' : '↓'}${Math.abs(this.player2StatChanges[stat])}
+                                        </span>
+                                    `)}
                                 </div>
                             </div>
                         </div>
