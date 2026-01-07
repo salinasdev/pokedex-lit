@@ -1,83 +1,309 @@
-<p align="center">
-  <img width="200" src="https://open-wc.org/hero.png"></img>
-</p>
+<div align="center">
+  <img src="./img/logo.png" alt="Pokédex Logo" width="200"/>
+  
+  # 🔴 Pokédex LitElement
+  
+  ### Una Pokédex completa y moderna construida con Web Components
+  
+  [![Built with LitElement](https://img.shields.io/badge/Built%20with-LitElement-324FFF?style=flat-square&logo=lit)](https://lit.dev)
+  [![Powered by PokéAPI](https://img.shields.io/badge/Powered%20by-PokéAPI-EF5350?style=flat-square)](https://pokeapi.co)
+  [![Open-WC](https://img.shields.io/badge/built%20with-open--wc-blue.svg?style=flat-square)](https://github.com/open-wc)
+  [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
+  
+  [🌐 Demo en Vivo](https://podekex-lit.onrender.com/) | [📖 Documentación](#características) | [🚀 Inicio Rápido](#instalación)
+  
+</div>
 
-## Open-wc Starter App
+---
 
-[![Built with open-wc recommendations](https://img.shields.io/badge/built%20with-open--wc-blue.svg)](https://github.com/open-wc)
+## 📋 Tabla de Contenidos
 
-## Quickstart
+- [Características](#-características-principales)
+- [Capturas de Pantalla](#-capturas-de-pantalla)
+- [Tecnologías](#️-tecnologías-utilizadas)
+- [Instalación](#-instalación)
+- [Scripts Disponibles](#-scripts-disponibles)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Contribuir](#-contribuir)
 
-To get started:
+---
 
-```bash
-npm init @open-wc
-# requires node 10 & npm 6 or higher
-```
+## ✨ Características Principales
 
-## Scripts
+### 🎮 Simulador de Batallas Pokémon
+Simulador de combate completo con mecánicas competitivas:
+- ⚔️ **Sistema de Combate por Turnos**: Batallas 1v1 con selección de nivel
+- 💥 **Cálculo de Daño Realista**: Implementa la fórmula oficial de Pokémon
+- 🎯 **Efectividad de Tipos**: Sistema completo de ventajas/desventajas
+- 🩹 **Daño de Retroceso**: Movimientos como Voltio Cruel, Doble Filo, Ariete
+- 🔥 **Condiciones de Estado**: Parálisis, Quemadura, Sueño, Veneno
+- 📈 **Cambios de Estadísticas**: +6/-6 etapas (Ataque, Defensa, Velocidad, etc.)
+- 🎲 **Golpes Críticos**: Sistema de críticos con probabilidad realista
+- 📊 **Registro de Batalla**: Historial detallado de todos los movimientos
+- 🔄 **Reset Automático**: Sistema de reinicio para nuevas batallas
 
-- `start` runs your app for development, reloading on file changes
-- `start:build` runs your app after it has been built using the build command
-- `build` builds your app and outputs it in your `dist` directory
-- `test` runs your test suite with Web Test Runner
-- `lint` runs the linter for your project
-- `format` fixes linting and formatting errors
-
-## Tooling configs
-
-For most of the tools, the configuration is in the `package.json` to reduce the amount of files in your project.
-
-If you customize the configuration a lot, you can consider moving them to individual files.
-
-## 🎮 Características de la Pokédex
+**Movimientos Especiales Implementados:**
+- Status: Thunder Wave, Will-O-Wisp, Spore, Toxic, Sleep Powder
+- Stat Boost: Swords Dance, Dragon Dance, Nasty Plot, Calm Mind, Agility
+- Stat Drop: Growl, Leer, Scary Face, Screech, Sand Attack
+- Recoil: Wild Charge, Brave Bird, Head Smash, Flare Blitz
+- Swap: Power Swap, Guard Swap
 
 ### 👥 Constructor de Equipos
-- **Crea tu equipo perfecto** con hasta 6 Pokémon
-- **Análisis de debilidades**: Identifica los tipos que más daño pueden hacer a tu equipo
-- **Cobertura de tipos**: Visualiza todos los tipos presentes en tu equipo
-- **Inmunidades**: Descubre las inmunidades totales de tu equipo
-- **Búsqueda rápida**: Encuentra Pokémon por nombre o número
-- **Persistencia**: Tu equipo se guarda automáticamente en el navegador
-- **Exportación**: Comparte tu equipo copiándolo al portapapeles
+Herramienta avanzada para crear equipos competitivos:
+- **Hasta 6 Pokémon** en tu equipo
+- **Análisis de Debilidades**: Identifica amenazas con multiplicadores de daño
+- **Cobertura de Tipos**: Visualiza todos los tipos en tu equipo
+- **Inmunidades Totales**: Detecta tipos contra los que eres inmune
+- **Exportación de Equipos**: Copia tu equipo al portapapeles
+- **Persistencia Local**: Tu equipo se guarda automáticamente
 
-### 📊 Estadísticas y Rankings
-- Rankings de Pokémon más fuertes por tipo
-- Comparador de estadísticas entre 2 Pokémon
-- Visualización con gráficos radar
+### 📊 Estadísticas y Análisis
+- **Rankings por Tipo**: Top Pokémon más fuertes de cada tipo
+- **Comparador de Stats**: Compara hasta 2 Pokémon lado a lado
+- **Gráficos Radar**: Visualización interactiva de estadísticas base
+- **Filtros Avanzados**: Por tipo, generación, y stats mínimos
 
 ### 🎯 Desafío Diario
-- Adivina el Pokémon del día con pistas progresivas
-- Sistema de puntuación y estadísticas
-- ¡Un nuevo desafío cada día!
+- Adivina el Pokémon misterioso del día
+- **Sistema de Pistas Progresivas**
+- **Puntuación y Estadísticas**
+- **Nuevo desafío cada 24 horas**
 
-### 🎉 Eventos Pokémon
-- Panel lateral con noticias y eventos actuales
-- Feed en tiempo real desde Pokémon Blog
-- Filtrado por categorías (Pokémon GO, TCG, Anime, etc.)
+### 🎉 Eventos y Noticias Pokémon
+- **Feed en Tiempo Real** desde Pokémon Blog
+- Filtrado por categorías (Pokémon GO, TCG, Anime, Videojuegos)
 - Imágenes de alta calidad
-
-### 🔍 Búsqueda Avanzada
-- Filtra por tipo, generación y estadísticas mínimas
-- Ordena por diferentes criterios
-
-### 📱 Modo Oscuro
-- Interfaz adaptable con tema claro y oscuro
-- Diseño responsive para móviles y tablets
+- Actualizaciones automáticas
 
 ### 🗺️ Localizaciones y Encuentros
-- Mapa interactivo de dónde encontrar cada Pokémon
-- Detalles de encuentros por versión y método
+- **Mapa Interactivo** de ubicaciones por juego
+- Detalles de encuentros (método, nivel, probabilidad)
 - Imágenes de las áreas del juego
+- Filtrado por versión
 
-## Demo:
+### 🔍 Búsqueda Avanzada
+- **Búsqueda Inteligente** por nombre o número
+- Filtros múltiples (tipo, generación, stats)
+- Ordenamiento personalizable
+- Resultados instantáneos
 
-https://podekex-lit.onrender.com/
+### 🎨 Interfaz y Diseño
+- 🌓 **Modo Oscuro/Claro** con transiciones suaves
+- 📱 **Diseño Responsive** para móviles y tablets
+- 🎭 **Animaciones Fluidas** con CSS/JavaScript
+- 🖼️ **Galería de Sprites** (normal, shiny, forms)
+- 🎨 **Colores por Tipo** en toda la interfaz
 
-## Imágenes:
-<table border="0" cellpadding="0" cellspacing="0" width="100">
-<tr>
-<td><img src="https://github.com/salinasdev/pokedex-lit/blob/master/images/1.png" width="220" height="356"></td>
-  <td><img src="https://github.com/salinasdev/pokedex-lit/blob/master/images/2.png"  width="220" height="356"></td>
-</tr>
+### 📖 Información Detallada
+- **Fichas Completas** de cada Pokémon
+- Estadísticas base y calculadas
+- Cadena evolutiva interactiva
+- Movimientos aprendibles (por nivel, MT, tutor)
+- Habilidades y características
+- Descripción de Pokédex multilingüe
+
+---
+
+## 📸 Capturas de Pantalla
+
+<div align="center">
+
+### 🏠 Página Principal y Listado
+<img src="./screenshots/home-light.png" alt="Página Principal" width="800"/>
+
+### 🎮 Simulador de Batallas
+<img src="./screenshots/battle-simulator.png" alt="Simulador de Batallas" width="800"/>
+
+*Sistema completo de combate con efectos de estado, cambios de stats y daño de retroceso*
+
+### 📊 Constructor de Equipos
+<img src="./screenshots/team-builder.png" alt="Constructor de Equipos" width="800"/>
+
+*Análisis de debilidades y cobertura de tipos en tiempo real*
+
+### 🌙 Modo Oscuro
+<img src="./screenshots/dark-mode.png" alt="Modo Oscuro" width="800"/>
+
+### 📱 Vista Móvil
+<table>
+  <tr>
+    <td><img src="./screenshots/mobile-1.png" alt="Móvil 1" width="250"/></td>
+    <td><img src="./screenshots/mobile-2.png" alt="Móvil 2" width="250"/></td>
+    <td><img src="./screenshots/mobile-3.png" alt="Móvil 3" width="250"/></td>
+  </tr>
 </table>
+
+</div>
+
+> **Nota:** Para añadir las capturas de pantalla, simplemente coloca las imágenes en la carpeta `screenshots/` con los nombres correspondientes.
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+<div align="center">
+
+| Tecnología | Descripción |
+|------------|-------------|
+| ![LitElement](https://img.shields.io/badge/LitElement-324FFF?style=for-the-badge&logo=lit&logoColor=white) | Web Components reactivos y ligeros |
+| ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black) | ES6+ con módulos nativos |
+| ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white) | CSS moderno con variables y grid |
+| ![PokéAPI](https://img.shields.io/badge/PokéAPI-EF5350?style=for-the-badge) | API REST completa de Pokémon |
+| ![Open-WC](https://img.shields.io/badge/Open--WC-2196F3?style=for-the-badge) | Herramientas de desarrollo |
+| ![Web Components](https://img.shields.io/badge/Web_Components-29ABE2?style=for-the-badge&logo=webcomponents.org&logoColor=white) | Estándar nativo del navegador |
+
+</div>
+
+### Características Técnicas
+
+- ⚡ **Sin Frameworks Pesados**: Solo Web Components nativos con LitElement
+- 🚀 **Rendimiento Optimizado**: Lazy loading y caching inteligente
+- 🔒 **Type Safety**: JSDoc para documentación y autocompletado
+- 📦 **Modular**: Componentes reutilizables e independientes
+- 🎯 **SEO Friendly**: Server-side rendering compatible
+- ♿ **Accesible**: Cumple con estándares WCAG
+
+---
+
+## 🚀 Instalación
+
+### Requisitos Previos
+
+- Node.js >= 14.x
+- npm >= 6.x
+
+### Pasos de Instalación
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/salinasdev/pokedex-lit.git
+cd pokedex-lit
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm start
+```
+
+La aplicación estará disponible en `http://localhost:8000`
+
+---
+
+## 📜 Scripts Disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm start` | 🔥 Inicia servidor de desarrollo con hot-reload |
+| `npm run build` | 📦 Compila la aplicación para producción |
+| `npm run start:build` | 🚀 Ejecuta la versión compilada |
+| `npm test` | 🧪 Ejecuta los tests con Web Test Runner |
+| `npm run lint` | 🔍 Analiza el código con ESLint |
+| `npm run format` | ✨ Formatea el código con Prettier |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+pokedex-lit/
+├── 📂 src/                          # Código fuente
+│   ├── 📂 pokedex-app/              # Componente principal
+│   ├── 📂 pokedex-header/           # Cabecera con navegación
+│   ├── 📂 pokedex-footer/           # Pie de página
+│   ├── 📂 pokedex-main/             # Vista principal (listado)
+│   ├── 📂 pokedex-generation-card/  # Tarjetas de generaciones
+│   ├── 📂 pokemon-data/             # Ficha detallada de Pokémon
+│   ├── 📂 pokemon-ficha-listado/    # Tarjeta en listado
+│   ├── 📂 pokemon-ficha-detalle/    # Vista detallada
+│   ├── 📂 pokemon-sidebar/          # Panel lateral de eventos
+│   └── 📂 pokemon-battle-simulator/ # ⚔️ Simulador de batallas
+│
+├── 📂 css/                          # Estilos globales
+│   └── estilo.css
+│
+├── 📂 img/                          # Imágenes y recursos
+│   ├── logo.png
+│   ├── generation-*.png
+│   ├── 📂 types/                    # Iconos de tipos
+│   ├── 📂 areas/                    # Imágenes de localizaciones
+│   └── 📂 versions/                 # Iconos de versiones
+│
+├── 📂 screenshots/                  # Capturas para README
+│
+├── 📄 index.html                    # Punto de entrada
+├── 📄 package.json                  # Dependencias
+├── 📄 web-dev-server.config.mjs     # Configuración del servidor
+└── 📄 README.md                     # Este archivo
+```
+
+---
+
+## 🎓 Componentes Principales
+
+### `<pokedex-app>`
+Componente raíz que gestiona el enrutamiento y estado global.
+
+### `<pokemon-battle-simulator>`
+Simulador completo de batallas con:
+- Sistema de turnos
+- Cálculo de daño con fórmula oficial
+- Efectos de estado (burn, paralysis, sleep, poison)
+- Cambios de estadísticas (-6 a +6 etapas)
+- Movimientos de retroceso
+- Registro de batalla
+
+### `<pokemon-data>`
+Ficha detallada con tabs:
+- About (descripción, características)
+- Stats (estadísticas con gráficos)
+- Evolution (cadena evolutiva)
+- Moves (movimientos aprendibles)
+- Locations (encuentros en juegos)
+
+---
+
+## 🤝 Contribuir
+
+¡Las contribuciones son bienvenidas! Si quieres mejorar este proyecto:
+
+1. 🍴 Fork el repositorio
+2. 🌿 Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 Push a la rama (`git push origin feature/AmazingFeature`)
+5. 🔀 Abre un Pull Request
+
+---
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 🙏 Agradecimientos
+
+- [PokéAPI](https://pokeapi.co/) - Por proporcionar la API completa de Pokémon
+- [LitElement](https://lit.dev/) - Por hacer los Web Components tan simples
+- [Open-WC](https://open-wc.org/) - Por las herramientas de desarrollo
+- The Pokémon Company - Por crear este universo increíble
+
+---
+
+## 📞 Contacto
+
+¿Preguntas o sugerencias? ¡No dudes en contactar!
+
+- 🌐 Demo: [https://podekex-lit.onrender.com/](https://podekex-lit.onrender.com/)
+- 💼 GitHub: [@salinasdev](https://github.com/salinasdev)
+
+---
+
+<div align="center">
+  
+  **⭐ Si te gusta este proyecto, no olvides darle una estrella ⭐**
+  
+  Hecho con ❤️ y ☕ por [salinasdev](https://github.com/salinasdev)
+  
+</div>
