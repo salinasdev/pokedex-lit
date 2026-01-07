@@ -108,40 +108,34 @@ class PokemonData extends LitElement {
 
     }
 
-    getPokemons(url){
+    async getPokemons(url){
         console.log("getPokemons");
         console.log(url);
         this.pokemons = [];
 
-        let xhr = new XMLHttpRequest();
-
-        //Propiedad de XHR que se lanza cuando obtiene un resultado de la petición
-        xhr.onload = () => {
-            if (xhr.status === 200){
-                console.log("Petición completada correctamente");
-                
-                //Parseamos el JSON que nos llega para visualizarlo en la consola
-                console.log(JSON.parse(xhr.responseText));
-
-                //Metemos en APIResponde el JSON
-                let APIResponse = JSON.parse(xhr.responseText);
-
-                //Asignamos a movies el array que viene en results
-                this.pokemons = APIResponse.pokemon_species;
-
-                //Guardamos la URL de siguiente y atras:
-                //this.next = APIResponse.next;
-                //this.back = APIResponse.previous;
+        try {
+            console.log("⏳ Cargando lista de Pokémon de la generación...");
+            
+            // Usar fetch en lugar de XMLHttpRequest para mejor rendimiento
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
+            const APIResponse = await response.json();
+            console.log("Petición completada correctamente");
+            console.log(APIResponse);
+
+            // Asignar directamente la lista de Pokémon
+            this.pokemons = APIResponse.pokemon_species;
+            
+            console.log(`✅ ${this.pokemons.length} Pokémon cargados de la generación`);
+            
+        } catch (error) {
+            console.error("Error al cargar los Pokémon:", error);
+            this.pokemons = [];
         }
-
-        //Creamos la petición
-        xhr.open("GET",url);
-        //Enviamos la petición
-        xhr.send();
-
-        //console.log(this.pokemons);
-
 
         console.log("FIN getPokemons");
     }

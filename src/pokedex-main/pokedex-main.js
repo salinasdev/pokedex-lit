@@ -56,7 +56,8 @@ class PokedexMain extends LitElement {
             selectedGenerationName: {type: String},
             showPokemonDetail: {type: Boolean},
             showShinyTracker: {type: Boolean},
-            showBattleSimulator: {type: Boolean}
+            showBattleSimulator: {type: Boolean},
+            isLoadingGeneration: {type: Boolean}
         };
 
     }
@@ -107,6 +108,7 @@ class PokedexMain extends LitElement {
         this.selectedEncounterVersion = 'all';
         this.selectedLocation = null;
         this.showEncounterMap = false;
+        this.isLoadingGeneration = false;
         
         // Cargar capturas guardadas desde localStorage
         this.loadCapturedPokemon();
@@ -245,7 +247,13 @@ class PokedexMain extends LitElement {
                 </div>
                 <div class="pokemon-list-page">
                     <h2 class="pokemon-list-title">${this.selectedGenerationName}</h2>
-                    ${this.pokemons.length === 0 ? html`
+                    ${this.isLoadingGeneration ? html`
+                        <div class="loading-message">
+                            <div class="spinner"></div>
+                            <p>⏳ Cargando Pokémon de ${this.selectedGenerationName}...</p>
+                            <p class="loading-hint">Esto puede tardar unos segundos</p>
+                        </div>
+                    ` : this.pokemons.length === 0 ? html`
                         <div class="loading-message">
                             <div class="spinner"></div>
                             <p>Cargando Pokémon...</p>
@@ -551,6 +559,25 @@ class PokedexMain extends LitElement {
                                 </div>
                             </div>
                         ` : ''}
+
+                        <!-- Galería de Sprites -->
+                        ${(() => {
+                            const hasId = this.fichaPokemon && (this.fichaPokemon.idp || this.fichaPokemon.id);
+                            
+                            if (hasId) {
+                                return html`
+                                    <div class="sprite-gallery-section collapsible-section">
+                                        <div class="section-header" @click="${() => this.toggleSpriteGallery()}">
+                                            <h3 class="sprite-gallery-title">✨ Galería de Sprites</h3>
+                                            <span class="toggle-icon">${this.showSpriteGallery ? '▼' : '▶'}</span>
+                                        </div>
+                                        <div class="section-content ${this.showSpriteGallery ? 'show' : ''}">
+                                            ${this.renderSpriteGallery()}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        })()}
                     </div>
                 </div>
             </div>
@@ -1024,17 +1051,24 @@ class PokedexMain extends LitElement {
                             </div>
                         ` : ''}
 
-                        ${this.fichaPokemon.idp ? html`
-                            <div class="sprite-gallery-section collapsible-section">
-                                <div class="section-header" @click="${() => this.toggleSpriteGallery()}">
-                                    <h3 class="sprite-gallery-title">✨ Galería de Sprites</h3>
-                                    <span class="toggle-icon">${this.showSpriteGallery ? '▼' : '▶'}</span>
-                                </div>
-                                <div class="section-content ${this.showSpriteGallery ? 'show' : ''}">
-                                    ${this.renderSpriteGallery()}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <!-- Galería de Sprites -->
+                        ${(() => {
+                            const hasId = this.fichaPokemon && (this.fichaPokemon.idp || this.fichaPokemon.id);
+                            
+                            if (hasId) {
+                                return html`
+                                    <div class="sprite-gallery-section collapsible-section">
+                                        <div class="section-header" @click="${() => this.toggleSpriteGallery()}">
+                                            <h3 class="sprite-gallery-title">✨ Galería de Sprites</h3>
+                                            <span class="toggle-icon">${this.showSpriteGallery ? '▼' : '▶'}</span>
+                                        </div>
+                                        <div class="section-content ${this.showSpriteGallery ? 'show' : ''}">
+                                            ${this.renderSpriteGallery()}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        })()}
                     </div>
                 </div>
             </div>
@@ -1333,6 +1367,13 @@ class PokedexMain extends LitElement {
             font-size: 1.2rem;
             color: var(--text-secondary, #718096);
             margin-top: 1rem;
+        }
+
+        .loading-hint {
+            font-size: 0.9rem !important;
+            color: var(--text-tertiary, #a0aec0) !important;
+            font-style: italic;
+            margin-top: 0.5rem !important;
         }
 
         .spinner {
@@ -2072,7 +2113,7 @@ class PokedexMain extends LitElement {
             background: var(--bg-card, white);
             border-radius: 20px;
             box-shadow: 0 10px 40px var(--shadow-color, rgba(0, 0, 0, 0.15));
-            overflow: hidden;
+            overflow: visible; /* CAMBIADO DE hidden A visible PARA QUE SE VEA TODO EL CONTENIDO */
         }
 
         .detail-header {
@@ -4351,6 +4392,9 @@ class PokedexMain extends LitElement {
         console.log("Pokémon ordenados:", this.pokemons.length);
         console.log("this.pokemons actualizado:", this.pokemons);
         
+        // Ocultar indicador de carga
+        this.isLoadingGeneration = false;
+        
         // Forzar actualización de la vista
         this.requestUpdate();
         console.log("=== pokemonsDataUpdated FIN ===");
@@ -5327,11 +5371,14 @@ class PokedexMain extends LitElement {
     }
 
     renderSpriteGallery() {
-        if (!this.fichaPokemon.idp) {
-            return html``;
+        // Usar idp o id, el que esté disponible
+        const pokemonId = this.fichaPokemon?.idp || this.fichaPokemon?.id;
+        
+        if (!pokemonId) {
+            console.warn("⚠️ renderSpriteGallery: No se puede renderizar, no hay ID");
+            return html`<p style="text-align: center; color: #999; padding: 2rem;">No se puede cargar la galería</p>`;
         }
 
-        const pokemonId = this.fichaPokemon.idp;
         const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 
         // Definir categorías de sprites
@@ -7321,6 +7368,9 @@ class PokedexMain extends LitElement {
         console.log("pokedex-main getGeneration - URL:", e.detail.url);
         console.log("pokedex-main getGeneration - Name:", e.detail.name);
         
+        // Mostrar indicador de carga
+        this.isLoadingGeneration = true;
+        
         // Guardar el nombre de la generación para mostrar en el título
         this.selectedGenerationName = this.capitalizeFirstLetter(e.detail.name);
         
@@ -7353,10 +7403,28 @@ class PokedexMain extends LitElement {
 
     consultaPokemon(e){
         console.log("consultaPokemon en pokedex-main " + e.detail.idp);
+        
+        // Limpiar solo los datos específicos, no el objeto completo
+        this.types = [];
+        this.encounters = [];
+        this.speciesInfo = null;
+        this.evolutionChain = null;
+        this.moves = [];
+        this.varieties = [];
+        this.pokedexEntries = [];
+        this.stats = [];
+        
+        // Resetear estados de secciones colapsables para nueva consulta
+        this.showSpriteGallery = false; // Se expandirá automáticamente en mipokemonDataUpdate
+        
         // Hide pokemon list and show detail page
         this.showPokemonListView = false;
         this.showPokemonDetail = true;
         this.muestra = "pokemonDetail";
+        
+        // Forzar actualización del DOM
+        this.requestUpdate();
+        
         // Load pokemon data
         this.shadowRoot.getElementById("pokeData").idPokemon = e.detail.idp;
     }
@@ -7364,6 +7432,8 @@ class PokedexMain extends LitElement {
     mipokemonDataUpdate(e){
         console.log("mipokemonDataUpdate");
         console.log(e.detail);
+        console.log("ID del Pokémon recibido:", e.detail.idp);
+        
         this.fichaPokemon = e.detail;
         this.types = this.fichaPokemon.types;
         this.encounters = this.fichaPokemon.encounters;
@@ -7373,6 +7443,10 @@ class PokedexMain extends LitElement {
         this.varieties = this.speciesInfo?.varieties || [];
         this.pokedexEntries = this.speciesInfo?.flavor_text_entries || [];
         this.stats = this.fichaPokemon.stats || [];
+        
+        // La galería de sprites aparece colapsada por defecto
+        // this.showSpriteGallery = false; // Ya está en false por defecto
+        
         console.log("Species Info:", this.speciesInfo);
         console.log("Evolution Chain:", this.evolutionChain);
         console.log("Moves:", this.moves);
@@ -7380,6 +7454,10 @@ class PokedexMain extends LitElement {
         console.log("Pokedex Entries:", this.pokedexEntries);
         console.log("Stats:", this.stats);
         console.log("Encounters completos:", this.encounters);
+        console.log("fichaPokemon.idp:", this.fichaPokemon.idp);
+        
+        // Forzar actualización del componente
+        this.requestUpdate();
         console.log("AQUIII");
     }
     mascaraNum(n){
