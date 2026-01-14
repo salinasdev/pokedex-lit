@@ -9,6 +9,7 @@ import '../pokemon-events/pokemon-events.js';
 import '../pokemon-team-builder/pokemon-team-builder.js';
 import '../pokemon-shiny-tracker/pokemon-shiny-tracker.js';
 import '../pokemon-battle-simulator/pokemon-battle-simulator.js';
+import '../pokemon-tournament/pokemon-tournament.js';
 
 class PokedexMain extends LitElement {
 
@@ -57,6 +58,7 @@ class PokedexMain extends LitElement {
             showPokemonDetail: {type: Boolean},
             showShinyTracker: {type: Boolean},
             showBattleSimulator: {type: Boolean},
+            showTournament: {type: Boolean},
             isLoadingGeneration: {type: Boolean}
         };
 
@@ -105,6 +107,7 @@ class PokedexMain extends LitElement {
         this.showPokemonDetail = false;
         this.showShinyTracker = false;
         this.showBattleSimulator = false;
+        this.showTournament = false;
         this.selectedEncounterVersion = 'all';
         this.selectedLocation = null;
         this.showEncounterMap = false;
@@ -117,61 +120,96 @@ class PokedexMain extends LitElement {
     render(){
         return html`
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge || this.showTeamBuilder || this.showGenerationsView || this.showPokemonListView || this.showPokemonDetail || this.showShinyTracker || this.showBattleSimulator ? 'd-none' : ''}">
-                <div class="features-section">
-                    <h2 class="features-title">🎮 ¿Qué quieres hacer hoy?</h2>
-                    <div class="features-grid">
-                        <div class="feature-card generations-card" @click="${this.showGenerations}">
-                            <div class="feature-icon">🎯</div>
-                            <h3 class="feature-title">Explorar Generaciones</h3>
-                            <p class="feature-description">Descubre todas las generaciones de Pokémon</p>
-                            <div class="feature-badge">¡Empieza aquí!</div>
-                        </div>
+            <div id="listGens" class="${this.showStatsRankings || this.showDailyChallenge || this.showTeamBuilder || this.showGenerationsView || this.showPokemonListView || this.showPokemonDetail || this.showShinyTracker || this.showBattleSimulator || this.showTournament ? 'd-none' : ''}">
+                                <div class="main-menu-container">
+                    <div class="menu-header">
+                        <h1 class="menu-title">✨ Bienvenido a la Pokédex</h1>
+                        <p class="menu-subtitle">¿Qué aventura te espera hoy?</p>
+                    </div>
 
-                        <div class="feature-card stats-card" @click="${this.showStats}">
-                            <div class="feature-icon">📊</div>
-                            <h3 class="feature-title">Estadísticas</h3>
-                            <p class="feature-description">Rankings, comparador y gráficos de Pokémon</p>
-                            <div class="feature-badge">Popular</div>
+                    <div class="menu-category">
+                        <div class="category-header">
+                            <div class="category-icon">🎯</div>
+                            <h2 class="category-title">Exploración</h2>
+                            <p class="category-description">Descubre el mundo Pokémon</p>
                         </div>
-                        
-                        <div class="feature-card challenge-card" @click="${this.showDailyChallengeView}">
-                            <div class="feature-icon">�</div>
-                            <h3 class="feature-title">Desafío Diario</h3>
-                            <p class="feature-description">Adivina el Pokémon con pistas progresivas</p>
+                        <div class="category-cards">
+                            <div class="menu-card featured-card" @click="${this.showGenerations}">
+                                <div class="card-icon">📚</div>
+                                <h3 class="card-title">Explorar Generaciones</h3>
+                                <p class="card-description">Descubre todas las generaciones de Pokémon</p>
+                                <div class="card-badge primary">¡Empieza aquí!</div>
+                            </div>
+
+                            <div class="menu-card" @click="${this.showStats}">
+                                <div class="card-icon">📊</div>
+                                <h3 class="card-title">Estadísticas</h3>
+                                <p class="card-description">Rankings y comparador de stats</p>
+                                <div class="card-badge">Popular</div>
+                            </div>
+
+                            <div class="menu-card" @click="${this.goToRandomPokemon}">
+                                <div class="card-icon">🔀</div>
+                                <h3 class="card-title">Pokémon Aleatorio</h3>
+                                <p class="card-description">Descubre un Pokémon al azar</p>
+                            </div>
                         </div>
-                        
-                        <div class="feature-card events-card" @click="${this.showEventsView}">
-                            <div class="feature-icon">🎉</div>
-                            <h3 class="feature-title">Eventos</h3>
-                            <p class="feature-description">Noticias y eventos de Pokémon en tiempo real</p>
+                    </div>
+
+                    <div class="menu-category">
+                        <div class="category-header">
+                            <div class="category-icon">⚔️</div>
+                            <h2 class="category-title">Competición</h2>
+                            <p class="category-description">Pon a prueba tus estrategias</p>
                         </div>
-                        
-                        <div class="feature-card team-card" @click="${this.showTeamBuilderView}">
-                            <div class="feature-icon">👥</div>
-                            <h3 class="feature-title">Constructor de Equipos</h3>
-                            <p class="feature-description">Crea tu equipo y analiza debilidades</p>
-                            <div class="feature-badge">Hot</div>
+                        <div class="category-cards">
+                            <div class="menu-card" @click="${this.showBattleSimulatorView}">
+                                <div class="card-icon">⚔️</div>
+                                <h3 class="card-title">Simulador de Combate</h3>
+                                <p class="card-description">Simula batallas con IA avanzada</p>
+                                <div class="card-badge hot">Hot</div>
+                            </div>
+
+                            <div class="menu-card featured-card" @click="${this.showTournamentView}">
+                                <div class="card-icon">🏆</div>
+                                <h3 class="card-title">Modo Torneo</h3>
+                                <p class="card-description">Compite y alcanza el ranking</p>
+                                <div class="card-badge new">¡Nuevo!</div>
+                            </div>
+
+                            <div class="menu-card" @click="${this.showTeamBuilderView}">
+                                <div class="card-icon">👥</div>
+                                <h3 class="card-title">Constructor de Equipos</h3>
+                                <p class="card-description">Crea tu equipo perfecto</p>
+                            </div>
                         </div>
-                        
-                        <div class="feature-card shiny-tracker-card" @click="${this.showShinyTrackerView}">
-                            <div class="feature-icon">✨</div>
-                            <h3 class="feature-title">Shiny Tracker</h3>
-                            <p class="feature-description">Rastrea tus cazas de Pokémon shiny</p>
-                            <div class="feature-badge">¡Nuevo!</div>
+                    </div>
+
+                    <div class="menu-category">
+                        <div class="category-header">
+                            <div class="category-icon">🎮</div>
+                            <h2 class="category-title">Diversión</h2>
+                            <p class="category-description">Minijuegos y extras</p>
                         </div>
-                        
-                        <div class="feature-card battle-simulator-card" @click="${this.showBattleSimulatorView}">
-                            <div class="feature-icon">⚔️</div>
-                            <h3 class="feature-title">Simulador de Combate</h3>
-                            <p class="feature-description">Simula batallas con IA y estadísticas</p>
-                            <div class="feature-badge">Hot</div>
-                        </div>
-                        
-                        <div class="feature-card random-card" @click="${this.goToRandomPokemon}">
-                            <div class="feature-icon">🔀</div>
-                            <h3 class="feature-title">Pokémon Aleatorio</h3>
-                            <p class="feature-description">Descubre un Pokémon al azar</p>
+                        <div class="category-cards">
+                            <div class="menu-card" @click="${this.showDailyChallengeView}">
+                                <div class="card-icon">🎯</div>
+                                <h3 class="card-title">Desafío Diario</h3>
+                                <p class="card-description">Adivina el Pokémon del día</p>
+                            </div>
+
+                            <div class="menu-card" @click="${this.showShinyTrackerView}">
+                                <div class="card-icon">✨</div>
+                                <h3 class="card-title">Shiny Tracker</h3>
+                                <p class="card-description">Rastrea tus cazas shiny</p>
+                                <div class="card-badge new">¡Nuevo!</div>
+                            </div>
+
+                            <div class="menu-card" @click="${this.showEventsView}">
+                                <div class="card-icon">🎉</div>
+                                <h3 class="card-title">Eventos</h3>
+                                <p class="card-description">Noticias y eventos actuales</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -236,6 +274,15 @@ class PokedexMain extends LitElement {
                     </button>
                 </div>
                 <pokemon-battle-simulator></pokemon-battle-simulator>
+            </div>
+
+            <div id="tournamentView" class="${this.showTournament ? '' : 'd-none'}">
+                <div class="back-button-container">
+                    <button @click="${this.hideTournament}" class="back-button">
+                        ← Volver al Menú Principal
+                    </button>
+                </div>
+                <pokemon-tournament></pokemon-tournament>
             </div>
 
             <pokemon-events id="eventsPanel"></pokemon-events>
@@ -1128,206 +1175,243 @@ class PokedexMain extends LitElement {
             background-color: var(--bg-primary);
         }
 
-        /* Sección de Funciones Elegante */
-        .features-section {
+        
+        /* ========================================
+           NUEVO DISEÑO DEL MENÚ PRINCIPAL
+           ======================================== */
+
+        /* Contenedor Principal */
+        .main-menu-container {
             max-width: 1400px;
             margin: 2rem auto;
             padding: 2rem;
         }
 
-        .features-title {
-            font-size: 2.5rem;
-            font-weight: 800;
+        /* Header del Menú */
+        .menu-header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .menu-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
+        .menu-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary, #718096);
+            margin: 0;
         }
 
-        .feature-card {
+        /* Categoría */
+        .menu-category {
+            margin-bottom: 3rem;
+            padding: 2rem;
             background: var(--bg-card, white);
             border-radius: 20px;
-            padding: 2rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .feature-card::before {
+        /* Header de Categoría */
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .category-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary, #2d3748);
+            margin: 0;
+        }
+
+        .category-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary, #718096);
+            margin: 0;
+            margin-left: auto;
+        }
+
+        /* Grid de Cards */
+        .category-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card Individual */
+        .menu-card {
+            background: var(--bg-card, white);
+            border-radius: 15px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .menu-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
 
-        .feature-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        .menu-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
         }
 
-        .feature-card:hover::before {
+        .menu-card:hover::before {
             opacity: 1;
         }
 
-        .stats-card {
-            border-color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        /* Card Destacada */
+        .featured-card {
+            background: var(--bg-card, white);
+            position: relative;
         }
 
-        .stats-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        .featured-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.04) 0%, rgba(118, 75, 162, 0.04) 100%);
+            pointer-events: none;
+            border-radius: 15px;
         }
 
-        .challenge-card {
-            border-color: #f5576c;
-            background: linear-gradient(135deg, rgba(245, 87, 108, 0.05) 0%, rgba(240, 147, 251, 0.05) 100%);
+        .featured-card:hover {
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
         }
 
-        .challenge-card:hover {
-            border-color: #f5576c;
-            box-shadow: 0 20px 40px rgba(245, 87, 108, 0.3);
-        }
-
-        .events-card {
-            border-color: #fa709a;
-            background: linear-gradient(135deg, rgba(250, 112, 154, 0.05) 0%, rgba(254, 225, 64, 0.05) 100%);
-        }
-
-        .events-card:hover {
-            border-color: #fa709a;
-            box-shadow: 0 20px 40px rgba(250, 112, 154, 0.3);
-        }
-
-        .team-card {
-            border-color: #764ba2;
-            background: linear-gradient(135deg, rgba(118, 75, 162, 0.05) 0%, rgba(102, 126, 234, 0.05) 100%);
-        }
-
-        .team-card:hover {
-            border-color: #764ba2;
-            box-shadow: 0 20px 40px rgba(118, 75, 162, 0.3);
-        }
-
-        .random-card {
-            border-color: #43e97b;
-            background: linear-gradient(135deg, rgba(67, 233, 123, 0.05) 0%, rgba(56, 249, 215, 0.05) 100%);
-        }
-
-        .random-card:hover {
-            border-color: #43e97b;
-            box-shadow: 0 20px 40px rgba(67, 233, 123, 0.3);
-        }
-
-        .feature-icon {
-            font-size: 4rem;
+        /* Icono de la Card */
+        .card-icon {
+            font-size: 3rem;
             margin-bottom: 1rem;
             text-align: center;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
 
-        .feature-card:hover .feature-icon {
-            transform: scale(1.2) rotate(5deg);
+        .menu-card:hover .card-icon {
+            transform: scale(1.15) rotate(5deg);
         }
 
-        .feature-title {
-            font-size: 1.5rem;
+        /* Título de la Card */
+        .card-title {
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-primary, #2d3748);
             margin: 0 0 0.5rem 0;
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
 
-        .feature-description {
-            font-size: 0.95rem;
+        /* Descripción de la Card */
+        .card-description {
+            font-size: 0.85rem;
             color: var(--text-secondary, #718096);
             text-align: center;
             margin: 0;
-            line-height: 1.5;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
         }
 
-        .feature-badge {
+        /* Badges */
+        .card-badge {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            top: 0.8rem;
+            right: 0.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(245, 87, 108, 0.3);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+            z-index: 2;
         }
 
-        .stats-card .feature-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .team-card .feature-badge {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .shiny-tracker-card {
-            border-color: #ffd700;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 223, 0, 0.1) 100%);
-        }
-
-        .shiny-tracker-card:hover {
-            border-color: #ffd700;
-            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.4);
-        }
-
-        .shiny-tracker-card .feature-badge {
+        .card-badge.primary {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 3px 8px rgba(245, 87, 108, 0.4);
         }
 
-        .battle-simulator-card {
-            border-color: #e74c3c;
-            background: linear-gradient(135deg, rgba(231, 76, 60, 0.05) 0%, rgba(192, 57, 43, 0.1) 100%);
-        }
-
-        .battle-simulator-card:hover {
-            border-color: #e74c3c;
-            box-shadow: 0 20px 40px rgba(231, 76, 60, 0.4);
-        }
-
-        .battle-simulator-card .feature-badge {
+        .card-badge.hot {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            box-shadow: 0 3px 8px rgba(250, 112, 154, 0.4);
         }
 
-        .generations-card {
-            border-color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        .card-badge.new {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            box-shadow: 0 3px 8px rgba(67, 233, 123, 0.4);
         }
 
-        .generations-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
-        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 2rem;
+            }
 
-        .generations-card .feature-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            .menu-subtitle {
+                font-size: 1rem;
+            }
+
+            .category-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .category-description {
+                margin-left: 0;
+            }
+
+            .category-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .main-menu-container {
+                padding: 1rem;
+            }
+
+            .menu-category {
+                padding: 1.5rem;
+            }
         }
 
         /* Página de Lista de Pokémon */
@@ -4275,32 +4359,6 @@ class PokedexMain extends LitElement {
                 height: 20px;
             }
 
-            .features-section {
-                padding: 1rem;
-            }
-
-            .features-title {
-                font-size: 1.8rem;
-                margin-bottom: 2rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .feature-card {
-                padding: 1.5rem;
-            }
-
-            .feature-icon {
-                font-size: 3rem;
-            }
-
-            .feature-title {
-                font-size: 1.3rem;
-            }
-
             .generations-page {
                 padding: 1rem;
             }
@@ -4637,6 +4695,20 @@ class PokedexMain extends LitElement {
     hideBattleSimulator() {
         console.log("hideBattleSimulator - Ocultando Simulador de Combate");
         this.showBattleSimulator = false;
+        this.muestra = "listGens";
+        window.scrollTo(0, 0);
+    }
+
+    showTournamentView() {
+        console.log("showTournamentView - Mostrando Modo Torneo");
+        this.muestra = "tournament";
+        this.showTournament = true;
+        window.scrollTo(0, 0);
+    }
+
+    hideTournament() {
+        console.log("hideTournament - Ocultando Modo Torneo");
+        this.showTournament = false;
         this.muestra = "listGens";
         window.scrollTo(0, 0);
     }

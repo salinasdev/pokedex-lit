@@ -44,7 +44,7 @@ Simulador de combate completo con mecánicas competitivas:
 
 **Movimientos Especiales Implementados:**
 - Status: Thunder Wave, Will-O-Wisp, Spore, Toxic, Sleep Powder
-- Stat Boost: Swords Dance, Dragon Dance, Nasty Plot, Calm Mind, Agility, **Harden**
+- Stat Boost: Swords Dance, Dragon Dance, Nasty Plot, Calm Mind, Agility
 - Stat Drop: Growl, Leer, Scary Face, Screech, Sand Attack
 - Recoil: Wild Charge, Brave Bird, Head Smash, Flare Blitz
 - Swap: Power Swap, Guard Swap
@@ -109,34 +109,27 @@ Herramienta avanzada para crear equipos competitivos:
 
 <div align="center">
 
-### 🏠 Página Principal y Listado
-<img src="./screenshots/home-light.png" alt="Página Principal" width="800"/>
+### 🏠 Página Principal - Modo Claro
+<img src="./images/1.png" alt="Página Principal" width="400"/>
 
-### 🎮 Simulador de Batallas
-<img src="./screenshots/battle-simulator.png" alt="Simulador de Batallas" width="800"/>
-
-*Sistema completo de combate con efectos de estado, cambios de stats y daño de retroceso*
-
-### 📊 Constructor de Equipos
-<img src="./screenshots/team-builder.png" alt="Constructor de Equipos" width="800"/>
-
-*Análisis de debilidades y cobertura de tipos en tiempo real*
-
-### 🌙 Modo Oscuro
-<img src="./screenshots/dark-mode.png" alt="Modo Oscuro" width="800"/>
-
-### 📱 Vista Móvil
-<table>
-  <tr>
-    <td><img src="./screenshots/mobile-1.png" alt="Móvil 1" width="250"/></td>
-    <td><img src="./screenshots/mobile-2.png" alt="Móvil 2" width="250"/></td>
-    <td><img src="./screenshots/mobile-3.png" alt="Móvil 3" width="250"/></td>
-  </tr>
-</table>
+### � Página Principal - Modo Oscuro
+<img src="./images/2.png" alt="Modo Oscuro" width="400"/>
 
 </div>
 
-> **Nota:** Para añadir las capturas de pantalla, simplemente coloca las imágenes en la carpeta `screenshots/` con los nombres correspondientes.
+### 🎮 Más Capturas (Próximamente)
+
+> **📝 Nota:** Para añadir más capturas de pantalla del simulador de batallas y otras características:
+> 
+> 1. Toma capturas de pantalla con `Win + Shift + S`
+> 2. Guárdalas en la carpeta `screenshots/` o `images/`
+> 3. Actualiza las rutas en este README
+> 
+> **Capturas sugeridas:**
+> - `battle-simulator.png` - Simulador de batallas con efectos de estado
+> - `team-builder.png` - Constructor de equipos con análisis de debilidades
+> - `pokemon-detail.png` - Ficha detallada de un Pokémon
+> - `mobile-view.png` - Vista responsive en dispositivos móviles
 
 ---
 

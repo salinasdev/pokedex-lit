@@ -288,6 +288,105 @@ export class PokemonBattleSimulator extends LitElement {
             border-color: #667eea;
         }
 
+        .ability-item-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .selector-group {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .selector-label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .selector-label::before {
+            margin-right: 5px;
+        }
+
+        .selector-group.ability .selector-label::before {
+            content: "⚡";
+        }
+
+        .selector-group.item .selector-label::before {
+            content: "🎒";
+        }
+
+        .random-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .random-btn:hover {
+            background: #667eea;
+            border-color: #667eea;
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        .random-btn:active {
+            transform: scale(0.95) rotate(360deg);
+        }
+
+        .custom-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .custom-select:hover {
+            border-color: #667eea;
+        }
+
+        .custom-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .custom-select option {
+            padding: 8px;
+        }
+
+        .custom-select option:disabled {
+            color: #999;
+            font-style: italic;
+        }
+
         .stats-display {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -732,6 +831,43 @@ export class PokemonBattleSimulator extends LitElement {
             font-weight: bold;
         }
 
+        .log-entry.status-damage {
+            background: rgba(142, 68, 173, 0.4);
+            border-left: 3px solid #8e44ad;
+            font-weight: bold;
+            animation: statusPulse 0.6s ease-in-out;
+        }
+
+        .log-entry.ability {
+            background: rgba(41, 128, 185, 0.3);
+            border-left: 3px solid #2980b9;
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .log-entry.item {
+            background: rgba(243, 156, 18, 0.3);
+            border-left: 3px solid #f39c12;
+            font-weight: bold;
+        }
+
+        .log-entry.item-heal {
+            background: rgba(46, 204, 113, 0.4);
+            border-left: 3px solid #27ae60;
+            font-weight: bold;
+            animation: healPulse 0.6s ease-in-out;
+        }
+
+        @keyframes healPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.02); opacity: 0.95; background: rgba(46, 204, 113, 0.5); }
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.9; }
+        }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.02); }
@@ -863,6 +999,21 @@ export class PokemonBattleSimulator extends LitElement {
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            margin: 20px auto;
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         .battle-summary {
@@ -1368,12 +1519,17 @@ export class PokemonBattleSimulator extends LitElement {
         player2Status: { type: String },
         player1StatChanges: { type: Object }, // Cambios de estadísticas
         player2StatChanges: { type: Object },
+        player1Ability: { type: String },     // Habilidad del Pokémon
+        player2Ability: { type: String },
+        player1Item: { type: String },        // Objeto equipado
+        player2Item: { type: String },
         battleLog: { type: Array },
         battleActive: { type: Boolean },
         battleFinished: { type: Boolean },
         winner: { type: String },
         player1AI: { type: Boolean },
         player2AI: { type: Boolean },
+        fromTournament: { type: Boolean },    // Indica si viene del torneo
         searchResults1: { type: Array },
         searchResults2: { type: Array },
         showResults1: { type: Boolean },
@@ -1426,12 +1582,17 @@ export class PokemonBattleSimulator extends LitElement {
             accuracy: 0,
             evasion: 0
         };
+        this.player1Ability = null;         // Habilidad Pokémon
+        this.player2Ability = null;
+        this.player1Item = null;            // Objeto equipado
+        this.player2Item = null;
         this.battleLog = [];
         this.battleActive = false;
         this.battleFinished = false;
         this.winner = null;
         this.player1AI = false;
         this.player2AI = true;
+        this.fromTournament = false;
         this.searchResults1 = [];
         this.searchResults2 = [];
         this.showResults1 = false;
@@ -1451,6 +1612,46 @@ export class PokemonBattleSimulator extends LitElement {
         this.waitingForPlayerMove = false;
         this.currentAttacker = 0;
         this.loadPokemonList();
+    }
+
+    // Detectar cuando se pasan Pokemon pre-configurados desde el torneo
+    updated(changedProperties) {
+        super.updated(changedProperties);
+        
+        // Si se pasaron ambos Pokemon, calcular HP máximo
+        if (changedProperties.has('player1Pokemon') && this.player1Pokemon) {
+            if (this.player1Pokemon.stats) {
+                // Los Pokemon del torneo ya tienen stats calculadas
+                const realStats = this.calculateRealStats(this.player1Pokemon.stats, this.player1Level);
+                this.player1MaxHP = realStats.hp;
+                this.player1HP = realStats.hp;
+                // Guardar las stats reales en el Pokemon
+                this.player1Pokemon.realStats = realStats;
+            }
+        }
+        
+        if (changedProperties.has('player2Pokemon') && this.player2Pokemon) {
+            if (this.player2Pokemon.stats) {
+                // Los Pokemon del torneo ya tienen stats calculadas
+                const realStats = this.calculateRealStats(this.player2Pokemon.stats, this.player2Level);
+                this.player2MaxHP = realStats.hp;
+                this.player2HP = realStats.hp;
+                // Guardar las stats reales en el Pokemon
+                this.player2Pokemon.realStats = realStats;
+            }
+        }
+        
+        console.log('Pokemon Tournament - Estado actualizado:', {
+            player1Pokemon: this.player1Pokemon?.name,
+            player2Pokemon: this.player2Pokemon?.name,
+            player1HP: this.player1HP,
+            player1MaxHP: this.player1MaxHP,
+            player2HP: this.player2HP,
+            player2MaxHP: this.player2MaxHP,
+            player1Moves: this.player1SelectedMoves,
+            player2Moves: this.player2SelectedMoves,
+            canStart: this.canStartBattle()
+        });
     }
 
     async loadPokemonList() {
@@ -1537,6 +1738,67 @@ export class PokemonBattleSimulator extends LitElement {
         this.updatePokemonStats(player);
     }
 
+    changeAbility(player, ability) {
+        if (player === 1) {
+            this.player1Ability = ability;
+        } else {
+            this.player2Ability = ability;
+        }
+        this.requestUpdate();
+    }
+
+    changeItem(player, item) {
+        if (player === 1) {
+            this.player1Item = item === 'none' ? null : item;
+        } else {
+            this.player2Item = item === 'none' ? null : item;
+        }
+        this.requestUpdate();
+    }
+
+    randomAbility(player) {
+        const pokemon = player === 1 ? this.player1Pokemon : this.player2Pokemon;
+        if (!pokemon || !pokemon.abilities || pokemon.abilities.length === 0) return;
+        
+        // Seleccionar una habilidad aleatoria
+        const randomIndex = Math.floor(Math.random() * pokemon.abilities.length);
+        const randomAbility = pokemon.abilities[randomIndex];
+        
+        this.changeAbility(player, randomAbility.name);
+    }
+
+    randomItem(player) {
+        const items = this.getAvailableItems();
+        // Excluir la opción "Sin Objeto" para hacer más interesante
+        const itemsWithoutNone = items.filter(item => item.value !== 'none');
+        
+        // Seleccionar un objeto aleatorio
+        const randomIndex = Math.floor(Math.random() * itemsWithoutNone.length);
+        const randomItem = itemsWithoutNone[randomIndex];
+        
+        this.changeItem(player, randomItem.value);
+    }
+
+    getAvailableItems() {
+        return [
+            { value: 'none', label: '--- Sin Objeto ---', category: 'none' },
+            { value: 'leftovers', label: 'Restos', category: 'recovery' },
+            { value: 'choice-band', label: 'Cinta Elegida', category: 'choice' },
+            { value: 'choice-specs', label: 'Gafas Elegidas', category: 'choice' },
+            { value: 'choice-scarf', label: 'Pañuelo Elegido', category: 'choice' },
+            { value: 'life-orb', label: 'Orbe Vida', category: 'damage' },
+            { value: 'expert-belt', label: 'Cinta Experto', category: 'damage' },
+            { value: 'focus-sash', label: 'Banda Focus', category: 'survival' },
+            { value: 'focus-band', label: 'Cinta Focus', category: 'survival' },
+            { value: 'charcoal', label: 'Carbón (🔥)', category: 'type' },
+            { value: 'mystic-water', label: 'Agua Mística (💧)', category: 'type' },
+            { value: 'miracle-seed', label: 'Semilla Milagro (🌿)', category: 'type' },
+            { value: 'magnet', label: 'Imán (⚡)', category: 'type' },
+            { value: 'sitrus-berry', label: 'Baya Sitrus', category: 'berry' },
+            { value: 'lum-berry', label: 'Baya Lum', category: 'berry' }
+        ];
+    }
+
     async selectRandomPokemon(player) {
         // Prevenir múltiples clics simultáneos
         const isLoading = player === 1 ? this.loadingPlayer1 : this.loadingPlayer2;
@@ -1615,7 +1877,11 @@ export class PokemonBattleSimulator extends LitElement {
                     speed: data.stats[5].base_stat
                 },
                 stats: {}, // Se calculará con el nivel
-                moves: learnableMoves
+                moves: learnableMoves,
+                abilities: data.abilities.map(a => ({
+                    name: a.ability.name,
+                    isHidden: a.is_hidden
+                }))
             };
 
             const level = player === 1 ? this.player1Level : this.player2Level;
@@ -1625,6 +1891,11 @@ export class PokemonBattleSimulator extends LitElement {
                 this.player1Pokemon = pokemonData;
                 this.player1HP = pokemonData.stats.hp;
                 this.player1MaxHP = pokemonData.stats.hp;
+                // Asignar habilidad por defecto (la primera no oculta)
+                const defaultAbility = pokemonData.abilities.find(a => !a.isHidden) || pokemonData.abilities[0];
+                this.player1Ability = defaultAbility ? defaultAbility.name : null;
+                // Asignar objeto por defecto (ninguno)
+                this.player1Item = null;
                 this.showResults1 = false;
                 this.player1Moves = [];
                 this.player1SelectedMoves = [];
@@ -1633,6 +1904,11 @@ export class PokemonBattleSimulator extends LitElement {
                 this.player2Pokemon = pokemonData;
                 this.player2HP = pokemonData.stats.hp;
                 this.player2MaxHP = pokemonData.stats.hp;
+                // Asignar habilidad por defecto (la primera no oculta)
+                const defaultAbility = pokemonData.abilities.find(a => !a.isHidden) || pokemonData.abilities[0];
+                this.player2Ability = defaultAbility ? defaultAbility.name : null;
+                // Asignar objeto por defecto (ninguno)
+                this.player2Item = null;
                 this.showResults2 = false;
                 this.player2Moves = [];
                 this.player2SelectedMoves = [];
@@ -1802,19 +2078,33 @@ export class PokemonBattleSimulator extends LitElement {
     }
 
     capitalizeFirstLetter(string) {
+        if (!string) return '';
         return string.charAt(0).toUpperCase() + string.slice(1).replace(/-/g, ' ');
     }
 
     canStartBattle() {
         return this.player1Pokemon && 
                this.player2Pokemon && 
-               this.player1SelectedMoves.length === 4 &&
-               this.player2SelectedMoves.length === 4;
+               this.player1SelectedMoves.length > 0 &&
+               this.player2SelectedMoves.length > 0;
     }
 
     async startBattle() {
-        if (!this.canStartBattle()) return;
+        console.log('🎯 Intentando iniciar batalla...');
+        console.log('canStartBattle():', this.canStartBattle());
+        console.log('player1Pokemon:', this.player1Pokemon);
+        console.log('player2Pokemon:', this.player2Pokemon);
+        console.log('player1SelectedMoves:', this.player1SelectedMoves);
+        console.log('player2SelectedMoves:', this.player2SelectedMoves);
+        console.log('player1MaxHP:', this.player1MaxHP);
+        console.log('player2MaxHP:', this.player2MaxHP);
+        
+        if (!this.canStartBattle()) {
+            console.log('❌ No se puede iniciar la batalla');
+            return;
+        }
 
+        console.log('✅ Iniciando batalla...');
         this.battleActive = true;
         this.battleFinished = false;
         this.battleLog = [];
@@ -1853,7 +2143,26 @@ export class PokemonBattleSimulator extends LitElement {
 
         this.addLog(`¡Comienza la batalla entre ${this.capitalizeFirstLetter(this.player1Pokemon.name)} y ${this.capitalizeFirstLetter(this.player2Pokemon.name)}!`);
 
+        // Mostrar habilidades y objetos
+        if (this.player1Ability) {
+            this.addLog(`${this.capitalizeFirstLetter(this.player1Pokemon.name)} tiene la habilidad ${this.getAbilityNameSpanish(this.player1Ability)}`, 'ability');
+        }
+        if (this.player1Item) {
+            this.addLog(`${this.capitalizeFirstLetter(this.player1Pokemon.name)} lleva ${this.getItemNameSpanish(this.player1Item)}`, 'item');
+        }
+        if (this.player2Ability) {
+            this.addLog(`${this.capitalizeFirstLetter(this.player2Pokemon.name)} tiene la habilidad ${this.getAbilityNameSpanish(this.player2Ability)}`, 'ability');
+        }
+        if (this.player2Item) {
+            this.addLog(`${this.capitalizeFirstLetter(this.player2Pokemon.name)} lleva ${this.getItemNameSpanish(this.player2Item)}`, 'item');
+        }
+
         await this.sleep(1000);
+        
+        // Aplicar efectos de habilidades al entrar
+        await this.applyAbilityOnEntry(1);
+        await this.applyAbilityOnEntry(2);
+
         await this.battleLoop();
     }
 
@@ -1884,6 +2193,17 @@ export class PokemonBattleSimulator extends LitElement {
                 return;
             }
 
+            // Aplicar daño de estado al final del turno
+            await this.applyEndOfTurnStatusDamage();
+            if (this.checkBattleEnd()) {
+                this.finishBattle();
+                return;
+            }
+
+            // Aplicar efectos de objetos al final del turno (Leftovers, etc.)
+            await this.applyItemEndTurn(1);
+            await this.applyItemEndTurn(2);
+
             this.currentTurn++;
             await this.sleep(1500);
         }
@@ -1899,20 +2219,32 @@ export class PokemonBattleSimulator extends LitElement {
         const isAI = isPlayer1 ? this.player1AI : this.player2AI;
         const selectedMoves = isPlayer1 ? this.player1SelectedMoves : this.player2SelectedMoves;
 
+        console.log('🎯 executeTurnAttack() - attacker:', attacker);
+        console.log('🎯 isPlayer1:', isPlayer1);
+        console.log('🎯 player1AI:', this.player1AI);
+        console.log('🎯 player2AI:', this.player2AI);
+        console.log('🎯 isAI:', isAI);
+        console.log('🎯 selectedMoves length:', selectedMoves?.length);
+
         let selectedMove;
 
         if (isAI) {
+            console.log('🤖 IA elige el movimiento');
             // IA elige el movimiento
             selectedMove = this.selectAIMove(selectedMoves);
             await this.sleep(500);
         } else {
+            console.log('👤 Esperando movimiento del jugador...');
+            console.log('👤 Estableciendo waitingForPlayerMove = true');
             // Jugador debe elegir
             this.currentAttacker = attacker;
             this.waitingForPlayerMove = true;
             this.requestUpdate();
 
+            console.log('👤 Esperando selección...');
             // Esperar a que el jugador elija un movimiento
             selectedMove = await this.waitForPlayerMoveSelection();
+            console.log('👤 Movimiento seleccionado:', selectedMove?.displayName);
             this.waitingForPlayerMove = false;
         }
 
@@ -1943,6 +2275,7 @@ export class PokemonBattleSimulator extends LitElement {
 
     async executeAttack(attacker, selectedMove) {
         const isPlayer1 = attacker === 1;
+        const defenderPlayer = isPlayer1 ? 2 : 1;
         const attackerPokemon = isPlayer1 ? this.player1Pokemon : this.player2Pokemon;
         const defenderPokemon = isPlayer1 ? this.player2Pokemon : this.player1Pokemon;
         const attackerLevel = isPlayer1 ? this.player1Level : this.player2Level;
@@ -1953,6 +2286,29 @@ export class PokemonBattleSimulator extends LitElement {
         // Detectar movimientos con daño de retroceso
         const recoilPercent = this.isRecoilMove(selectedMove.name);
 
+        // Verificar absorción por habilidad (Water Absorb, Volt Absorb, etc.)
+        const absorbPercent = this.checkAbilityAbsorb(defenderPlayer, selectedMove.type);
+        if (absorbPercent !== false) {
+            const defenderMaxHP = defenderPlayer === 1 ? this.player1MaxHP : this.player2MaxHP;
+            const defenderCurrentHP = defenderPlayer === 1 ? this.player1HP : this.player2HP;
+            const healAmount = Math.floor(defenderMaxHP * absorbPercent);
+            
+            if (defenderPlayer === 1) {
+                this.player1HP = Math.min(defenderMaxHP, defenderCurrentHP + healAmount);
+            } else {
+                this.player2HP = Math.min(defenderMaxHP, defenderCurrentHP + healAmount);
+            }
+            
+            const defenderAbility = defenderPlayer === 1 ? this.player1Ability : this.player2Ability;
+            this.addLog(`¡${this.getAbilityNameSpanish(defenderAbility)} de ${this.capitalizeFirstLetter(defenderPokemon.name)} absorbe el ataque!`, 'ability');
+            if (healAmount > 0) {
+                this.addLog(`¡${this.capitalizeFirstLetter(defenderPokemon.name)} recupera ${healAmount} PS!`, 'item-heal');
+            }
+            this.requestUpdate();
+            await this.sleep(1000);
+            return;
+        }
+
         // Calcular daño
         const damage = this.calculateDamage(
             attackerPokemon,
@@ -1960,6 +2316,15 @@ export class PokemonBattleSimulator extends LitElement {
             selectedMove,
             attackerLevel
         );
+
+        // Verificar inmunidad
+        if (damage.immune) {
+            const defenderAbility = defenderPlayer === 1 ? this.player1Ability : this.player2Ability;
+            this.addLog(`¡${this.capitalizeFirstLetter(attackerPokemon.name)} usa ${selectedMove.displayName}!`, '');
+            this.addLog(`¡${this.getAbilityNameSpanish(defenderAbility)} hace que ${this.capitalizeFirstLetter(defenderPokemon.name)} sea inmune!`, 'ability');
+            await this.sleep(1000);
+            return;
+        }
 
         // Aplicar daño al defensor
         if (isPlayer1) {
@@ -1972,6 +2337,19 @@ export class PokemonBattleSimulator extends LitElement {
             this.battleStats.player2.damage += damage.amount;
             this.battleStats.player2.turns++;
             if (damage.critical) this.battleStats.player2.crits++;
+        }
+
+        // Verificar si Focus Sash/Focus Band evita el KO
+        if ((isPlayer1 && this.player2HP <= 0) || (!isPlayer1 && this.player1HP <= 0)) {
+            if (this.checkItemSurvive(defenderPlayer)) {
+                if (defenderPlayer === 1) {
+                    this.player1HP = 1;
+                } else {
+                    this.player2HP = 1;
+                }
+                const item = defenderPlayer === 1 ? this.player1Item : this.player2Item;
+                this.addLog(`¡${this.getItemNameSpanish(item)} evita que ${this.capitalizeFirstLetter(defenderPokemon.name)} se debilite!`, 'item-heal');
+            }
         }
 
         // Animaciones
@@ -1990,12 +2368,32 @@ export class PokemonBattleSimulator extends LitElement {
         if (damage.effectiveness > 1) {
             logMessage += ' ¡Es súper efectivo!';
             logClass = 'super-effective';
-        } else if (damage.effectiveness < 1) {
+        } else if (damage.effectiveness < 1 && damage.effectiveness > 0) {
             logMessage += ' No es muy efectivo...';
             logClass = 'not-effective';
         }
 
         this.addLog(logMessage, logClass);
+
+        // Aplicar daño de Life Orb
+        const attackerItem = isPlayer1 ? this.player1Item : this.player2Item;
+        const itemEffect = this.getItemEffect(attackerItem);
+        if (itemEffect?.type === 'damage-boost' && itemEffect.recoil && damage.amount > 0) {
+            await this.sleep(500);
+            const attackerMaxHP = isPlayer1 ? this.player1MaxHP : this.player2MaxHP;
+            const lifeOrbDamage = Math.max(1, Math.floor(attackerMaxHP * itemEffect.recoil));
+            
+            if (isPlayer1) {
+                this.player1HP = Math.max(0, this.player1HP - lifeOrbDamage);
+            } else {
+                this.player2HP = Math.max(0, this.player2HP - lifeOrbDamage);
+            }
+            
+            this.addLog(`¡${this.capitalizeFirstLetter(attackerPokemon.name)} pierde ${lifeOrbDamage} PS por ${this.getItemNameSpanish(attackerItem)}!`, 'recoil');
+            this.animateHit(attacker);
+            this.requestUpdate();
+            await this.sleep(800);
+        }
 
         // Verificar si el movimiento tiene efectos de estado
         const statusEffect = this.getStatusMoveEffect(selectedMove.name);
@@ -2095,6 +2493,11 @@ export class PokemonBattleSimulator extends LitElement {
     }
 
     calculateDamage(attacker, defender, move, level = 50) {
+        // Normalizar el movimiento para manejar ambos formatos (damageClass o category)
+        if (!move.damageClass && move.category) {
+            move.damageClass = move.category;
+        }
+        
         // Determinar qué jugador es el atacante y defensor
         const attackerPlayer = attacker === this.player1Pokemon ? 1 : 2;
         const defenderPlayer = attackerPlayer === 1 ? 2 : 1;
@@ -2105,6 +2508,10 @@ export class PokemonBattleSimulator extends LitElement {
         
         // Obtener estados
         const attackerStatus = attackerPlayer === 1 ? this.player1Status : this.player2Status;
+        
+        // Obtener HP para habilidades que dependen de HP
+        const attackerHP = attackerPlayer === 1 ? this.player1HP : this.player2HP;
+        const attackerMaxHP = attackerPlayer === 1 ? this.player1MaxHP : this.player2MaxHP;
         
         // Fórmula simplificada de daño de Pokémon
         let attack = move.damageClass === 'physical' ? 
@@ -2121,16 +2528,39 @@ export class PokemonBattleSimulator extends LitElement {
             defense *= this.getStatMultiplier(defenderStatChanges.spDefense);
         }
 
+        // Aplicar multiplicadores de objetos equipados (Choice Band/Specs)
+        const attackerItem = attackerPlayer === 1 ? this.player1Item : this.player2Item;
+        const attackerItemEffect = this.getItemEffect(attackerItem);
+        if (attackerItemEffect?.type === 'stat-boost') {
+            if (move.damageClass === 'physical' && attackerItemEffect.stat === 'attack') {
+                attack *= attackerItemEffect.multiplier;
+            } else if (move.damageClass === 'special' && attackerItemEffect.stat === 'spAttack') {
+                attack *= attackerItemEffect.multiplier;
+            }
+        }
+
         // Aplicar efecto de quemadura (reduce ataque físico a la mitad)
         if (attackerStatus === 'burn' && move.damageClass === 'physical') {
             attack *= 0.5;
         }
 
         // Calcular efectividad de tipo
-        const effectiveness = this.getTypeEffectiveness(
-            move.type,
-            defender.types.map(t => t.type.name)
-        );
+        // Manejar ambos formatos: array de strings ['water'] o array de objetos [{type: {name: 'water'}}]
+        const defenderTypes = Array.isArray(defender.types) 
+            ? defender.types.map(t => typeof t === 'string' ? t : t.type?.name || t.name)
+            : [];
+            
+        let effectiveness = this.getTypeEffectiveness(move.type, defenderTypes);
+
+        // Verificar inmunidad por habilidad (Levitate vs Ground)
+        if (this.checkAbilityImmunity(defenderPlayer, move.type)) {
+            return {
+                amount: 0,
+                critical: false,
+                effectiveness: 0,
+                immune: true
+            };
+        }
 
         // Golpe crítico (6.25% de probabilidad)
         const critical = Math.random() < 0.0625;
@@ -2139,14 +2569,22 @@ export class PokemonBattleSimulator extends LitElement {
         // Variación aleatoria (85-100%)
         const random = 0.85 + Math.random() * 0.15;
 
-        // Calcular daño
+        // Calcular daño base
         const baseDamage = ((2 * level / 5 + 2) * move.power * (attack / defense)) / 50 + 2;
-        const finalDamage = Math.floor(baseDamage * effectiveness * criticalMultiplier * random);
+        
+        // Aplicar multiplicadores de habilidades
+        const abilityMultiplier = this.getAbilityDamageMultiplier(attackerPlayer, defenderPlayer, move, attackerHP, attackerMaxHP);
+        
+        // Aplicar multiplicadores de objetos
+        const itemMultiplier = this.getItemDamageMultiplier(attackerPlayer, move, effectiveness);
+        
+        const finalDamage = Math.max(1, Math.floor(baseDamage * effectiveness * criticalMultiplier * random * abilityMultiplier * itemMultiplier));
 
         return {
             amount: finalDamage,
             critical: critical,
-            effectiveness: effectiveness
+            effectiveness: effectiveness,
+            immune: false
         };
     }
 
@@ -2515,6 +2953,546 @@ export class PokemonBattleSimulator extends LitElement {
         return names[stat] || stat;
     }
 
+    // Aplicar daño de estados al final del turno
+    async applyEndOfTurnStatusDamage() {
+        // Aplicar daño a Player 1 si tiene estado
+        if (this.player1Status && this.player1HP > 0) {
+            const damage = this.getStatusDamage(1, this.player1Status);
+            if (damage > 0) {
+                this.player1HP = Math.max(0, this.player1HP - damage);
+                const statusName = this.getStatusNameSpanish(this.player1Status);
+                this.addLog(`¡${this.capitalizeFirstLetter(this.player1Pokemon.name)} pierde ${damage} PS por ${statusName}!`, 'status-damage');
+                this.animateHit(1);
+                this.requestUpdate();
+                await this.sleep(800);
+            }
+        }
+
+        // Aplicar daño a Player 2 si tiene estado
+        if (this.player2Status && this.player2HP > 0) {
+            const damage = this.getStatusDamage(2, this.player2Status);
+            if (damage > 0) {
+                this.player2HP = Math.max(0, this.player2HP - damage);
+                const statusName = this.getStatusNameSpanish(this.player2Status);
+                this.addLog(`¡${this.capitalizeFirstLetter(this.player2Pokemon.name)} pierde ${damage} PS por ${statusName}!`, 'status-damage');
+                this.animateHit(2);
+                this.requestUpdate();
+                await this.sleep(800);
+            }
+        }
+    }
+
+    // Calcular daño de estado por turno
+    getStatusDamage(player, status) {
+        const maxHP = player === 1 ? this.player1MaxHP : this.player2MaxHP;
+        
+        switch (status) {
+            case 'burn':
+            case 'poison':
+                // Quemadura y Veneno causan 1/16 del HP máximo por turno
+                return Math.max(1, Math.floor(maxHP / 16));
+            
+            case 'freeze':
+            case 'sleep':
+            case 'paralysis':
+                // Estos estados no causan daño directo por turno
+                return 0;
+            
+            default:
+                return 0;
+        }
+    }
+
+    // ==================== SISTEMA DE HABILIDADES ====================
+    
+    // Obtener efecto de habilidad
+    getAbilityEffect(abilityName) {
+        const abilities = {
+            // Habilidades ofensivas
+            'overgrow': { type: 'boost', trigger: 'low-hp', stat: 'grass', multiplier: 1.5, threshold: 0.33 },
+            'blaze': { type: 'boost', trigger: 'low-hp', stat: 'fire', multiplier: 1.5, threshold: 0.33 },
+            'torrent': { type: 'boost', trigger: 'low-hp', stat: 'water', multiplier: 1.5, threshold: 0.33 },
+            'swarm': { type: 'boost', trigger: 'low-hp', stat: 'bug', multiplier: 1.5, threshold: 0.33 },
+            
+            // Habilidades al entrar en batalla
+            'intimidate': { type: 'entry', effect: 'lower-attack', target: 'opponent', stages: -1 },
+            'download': { type: 'entry', effect: 'raise-best', target: 'self', stages: 1 },
+            
+            // Habilidades defensivas
+            'levitate': { type: 'immunity', immuneTo: ['ground'] },
+            'water-absorb': { type: 'absorb', absorbType: 'water', healPercent: 0.25 },
+            'volt-absorb': { type: 'absorb', absorbType: 'electric', healPercent: 0.25 },
+            'flash-fire': { type: 'absorb', absorbType: 'fire', healPercent: 0 },
+            
+            // Habilidades de contacto
+            'static': { type: 'contact', effect: 'paralysis', chance: 0.30 },
+            'flame-body': { type: 'contact', effect: 'burn', chance: 0.30 },
+            'poison-point': { type: 'contact', effect: 'poison', chance: 0.30 },
+            
+            // Habilidades especiales
+            'sturdy': { type: 'survive', condition: 'full-hp' },
+            'speed-boost': { type: 'end-turn', effect: 'raise-speed', stages: 1 },
+            'regenerator': { type: 'switch-out', effect: 'heal', percent: 0.33 },
+            
+            // Habilidades de potencia
+            'huge-power': { type: 'stat-modifier', stat: 'attack', multiplier: 2 },
+            'pure-power': { type: 'stat-modifier', stat: 'attack', multiplier: 2 },
+            'thick-fat': { type: 'resistance', resistTypes: ['fire', 'ice'], multiplier: 0.5 },
+            
+            // Habilidades de objetos
+            'technician': { type: 'move-boost', condition: 'low-power', threshold: 60, multiplier: 1.5 },
+            'iron-fist': { type: 'move-boost', moveType: 'punch', multiplier: 1.2 },
+            'sheer-force': { type: 'move-boost', condition: 'has-effect', multiplier: 1.3 }
+        };
+        
+        const normalizedName = abilityName?.toLowerCase().replace(/\s/g, '-');
+        return abilities[normalizedName] || null;
+    }
+
+    // Aplicar efectos de habilidad al iniciar batalla
+    async applyAbilityOnEntry(player) {
+        const ability = player === 1 ? this.player1Ability : this.player2Ability;
+        const pokemon = player === 1 ? this.player1Pokemon : this.player2Pokemon;
+        const abilityEffect = this.getAbilityEffect(ability);
+        
+        if (!abilityEffect || abilityEffect.type !== 'entry') return;
+        
+        if (abilityEffect.effect === 'lower-attack') {
+            const targetPlayer = player === 1 ? 2 : 1;
+            if (this.applyStatChange(targetPlayer, 'attack', abilityEffect.stages)) {
+                this.addLog(`¡${this.getAbilityNameSpanish(ability)} de ${this.capitalizeFirstLetter(pokemon.name)} reduce el Ataque rival!`, 'ability');
+                await this.sleep(800);
+            }
+        }
+    }
+
+    // Verificar si una habilidad bloquea un ataque
+    checkAbilityImmunity(defenderPlayer, moveType) {
+        const ability = defenderPlayer === 1 ? this.player1Ability : this.player2Ability;
+        const abilityEffect = this.getAbilityEffect(ability);
+        
+        if (abilityEffect?.type === 'immunity') {
+            return abilityEffect.immuneTo.includes(moveType);
+        }
+        
+        return false;
+    }
+
+    // Verificar si una habilidad absorbe un ataque
+    checkAbilityAbsorb(defenderPlayer, moveType) {
+        const ability = defenderPlayer === 1 ? this.player1Ability : this.player2Ability;
+        const abilityEffect = this.getAbilityEffect(ability);
+        
+        if (abilityEffect?.type === 'absorb' && abilityEffect.absorbType === moveType) {
+            return abilityEffect.healPercent;
+        }
+        
+        return false;
+    }
+
+    // Obtener multiplicador de habilidad para daño
+    getAbilityDamageMultiplier(attackerPlayer, defenderPlayer, move, currentHP, maxHP) {
+        const attackerAbility = attackerPlayer === 1 ? this.player1Ability : this.player2Ability;
+        const defenderAbility = defenderPlayer === 1 ? this.player1Ability : this.player2Ability;
+        let multiplier = 1;
+        
+        // Habilidades del atacante
+        const attackerEffect = this.getAbilityEffect(attackerAbility);
+        if (attackerEffect) {
+            // Overgrow, Blaze, Torrent, Swarm
+            if (attackerEffect.type === 'boost' && attackerEffect.trigger === 'low-hp') {
+                const hpPercent = currentHP / maxHP;
+                if (hpPercent <= attackerEffect.threshold && move.type === attackerEffect.stat) {
+                    multiplier *= attackerEffect.multiplier;
+                }
+            }
+            
+            // Technician
+            if (attackerEffect.type === 'move-boost' && attackerEffect.condition === 'low-power') {
+                if (move.power <= attackerEffect.threshold) {
+                    multiplier *= attackerEffect.multiplier;
+                }
+            }
+        }
+        
+        // Habilidades del defensor
+        const defenderEffect = this.getAbilityEffect(defenderAbility);
+        if (defenderEffect?.type === 'resistance') {
+            if (defenderEffect.resistTypes.includes(move.type)) {
+                multiplier *= defenderEffect.multiplier;
+            }
+        }
+        
+        return multiplier;
+    }
+
+    // Obtener nombre en español de habilidad
+    getAbilityNameSpanish(ability) {
+        const names = {
+            // Habilidades iniciales
+            'overgrow': 'Espesura',
+            'blaze': 'Mar Llamas',
+            'torrent': 'Torrente',
+            'swarm': 'Enjambre',
+            
+            // Habilidades de entrada
+            'intimidate': 'Intimidación',
+            'download': 'Descarga',
+            
+            // Habilidades de inmunidad/absorción
+            'levitate': 'Levitación',
+            'static': 'Elec. Estática',
+            'flame-body': 'Cuerpo Llama',
+            'poison-point': 'Punto Tóxico',
+            'water-absorb': 'Absorbe Agua',
+            'volt-absorb': 'Absorbe Elec',
+            'flash-fire': 'Absorbe Fuego',
+            
+            // Habilidades especiales
+            'sturdy': 'Robustez',
+            'speed-boost': 'Impulso',
+            'regenerator': 'Regeneración',
+            
+            // Habilidades de potencia
+            'huge-power': 'Potencia',
+            'pure-power': 'Energía Pura',
+            'thick-fat': 'Sebo',
+            'technician': 'Experto',
+            'iron-fist': 'Puño Férreo',
+            'sheer-force': 'Potencia Bruta',
+            
+            // Habilidades comunes adicionales
+            'adaptability': 'Adaptación',
+            'aerilate': 'Aura Feérica',
+            'aftermath': 'Detonación',
+            'air-lock': 'Zona Airosa',
+            'analytic': 'Cálculo Final',
+            'anger-point': 'Irascible',
+            'anticipation': 'Anticipación',
+            'arena-trap': 'Trampa Arena',
+            'armor-tail': 'Cola Armadura',
+            'aroma-veil': 'Velo Aroma',
+            'battle-armor': 'Armadura Batalla',
+            'beast-boost': 'Ultraimpulso',
+            'berserk': 'Furor',
+            'big-pecks': 'Sacapecho',
+            'chlorophyll': 'Clorofila',
+            'clear-body': 'Cuerpo Puro',
+            'cloud-nine': 'Aclimatación',
+            'color-change': 'Cambio Color',
+            'competitive': 'Competitivo',
+            'compound-eyes': 'Ojo Compuesto',
+            'contrary': 'Respondón',
+            'corrosion': 'Corrosión',
+            'cursed-body': 'Cuerpo Maldito',
+            'cute-charm': 'Gran Encanto',
+            'damp': 'Humedad',
+            'dancer': 'Pareja Baile',
+            'dark-aura': 'Aura Oscura',
+            'dauntless-shield': 'Escudo Recio',
+            'dazzling': 'Cuerpo Vívido',
+            'defeatist': 'Flaqueza',
+            'defiant': 'Competitivo',
+            'delta-stream': 'Ráfaga Delta',
+            'desolate-land': 'Tierra del Ocaso',
+            'disguise': 'Disfraz',
+            'drizzle': 'Llovizna',
+            'drought': 'Sequía',
+            'dry-skin': 'Piel Seca',
+            'early-bird': 'Madrugar',
+            'effect-spore': 'Efecto Espora',
+            'electric-surge': 'Electrogénesis',
+            'emergency-exit': 'Huida',
+            'fairy-aura': 'Aura Feérica',
+            'filter': 'Filtro',
+            'gale-wings': 'Alas Vendaval',
+            'galvanize': 'Piel Eléctrica',
+            'guts': 'Agallas',
+            'harvest': 'Cosecha',
+            'healer': 'Alma Cura',
+            'heatproof': 'Ignífugo',
+            'heavy-metal': 'Metal Pesado',
+            'honey-gather': 'Recogemiel',
+            'hustle': 'Entusiasmo',
+            'hydration': 'Hidratación',
+            'hyper-cutter': 'Hipercorte',
+            'ice-body': 'Gélido',
+            'illusion': 'Ilusión',
+            'immunity': 'Inmunidad',
+            'imposter': 'Impostor',
+            'infiltrator': 'Allanamiento',
+            'inner-focus': 'Foco Interno',
+            'insomnia': 'Insomnio',
+            'intrepid-sword': 'Espada Indómita',
+            'iron-barbs': 'Piel Tosca',
+            'justified': 'Justiciero',
+            'keen-eye': 'Vista Lince',
+            'klutz': 'Zoquete',
+            'leaf-guard': 'Defensa Hoja',
+            'light-metal': 'Metal Liviano',
+            'lightning-rod': 'Pararrayos',
+            'limber': 'Flexibilidad',
+            'liquid-voice': 'Voz Fluida',
+            'magic-bounce': 'Espejo Mágico',
+            'magic-guard': 'Muro Mágico',
+            'magician': 'Prestidigitador',
+            'magma-armor': 'Escudo Magma',
+            'magnet-pull': 'Imán',
+            'marvel-scale': 'Escama Especial',
+            'mega-launcher': 'Megadisparador',
+            'merciless': 'Ensañamiento',
+            'minus': 'Menos',
+            'mirror-armor': 'Coraza Reflejo',
+            'mold-breaker': 'Rompemoldes',
+            'moody': 'Veleta',
+            'motor-drive': 'Electromotor',
+            'moxie': 'Autoestima',
+            'multiscale': 'Multiescamas',
+            'multitype': 'Multitipo',
+            'mummy': 'Momia',
+            'natural-cure': 'Cura Natural',
+            'no-guard': 'Indefenso',
+            'normalize': 'Normalidad',
+            'oblivious': 'Despiste',
+            'overcoat': 'Funda',
+            'own-tempo': 'Ritmo Propio',
+            'parental-bond': 'Amor Filial',
+            'pickpocket': 'Hurto',
+            'pickup': 'Recogida',
+            'pixilate': 'Piel Feérica',
+            'plus': 'Más',
+            'poison-heal': 'Antídoto',
+            'poison-touch': 'Toque Tóxico',
+            'power-construct': 'Agrupamiento',
+            'prankster': 'Bromista',
+            'pressure': 'Presión',
+            'primordial-sea': 'Mar del Albor',
+            'prism-armor': 'Armadura Prisma',
+            'protean': 'Mutatipo',
+            'psychic-surge': 'Psicogénesis',
+            'queenly-majesty': 'Regia Postura',
+            'quick-feet': 'Pies Veloces',
+            'rain-dish': 'Cura Lluvia',
+            'rattled': 'Cobardía',
+            'receiver': 'Receptor',
+            'reckless': 'Audaz',
+            'refrigerate': 'Piel Helada',
+            'rivalry': 'Rivalidad',
+            'rock-head': 'Cabeza Roca',
+            'rough-skin': 'Piel Tosca',
+            'run-away': 'Fuga',
+            'sand-force': 'Poder Arena',
+            'sand-rush': 'Ímpetu Arena',
+            'sand-stream': 'Chorro Arena',
+            'sand-veil': 'Velo Arena',
+            'sap-sipper': 'Herbívoro',
+            'scrappy': 'Intrépido',
+            'serene-grace': 'Dicha',
+            'shadow-shield': 'Escudo Espectro',
+            'shadow-tag': 'Sombratrampa',
+            'shed-skin': 'Mudar',
+            'shell-armor': 'Caparazón',
+            'shield-dust': 'Polvo Escudo',
+            'shields-down': 'Escudo Limitado',
+            'simple': 'Simple',
+            'skill-link': 'Encadenado',
+            'slow-start': 'Inicio Lento',
+            'slush-rush': 'Quitanieves',
+            'sniper': 'Francotirador',
+            'snow-cloak': 'Manto Níveo',
+            'snow-warning': 'Nevada',
+            'solar-power': 'Poder Solar',
+            'solid-rock': 'Roca Sólida',
+            'soul-heart': 'Coránima',
+            'soundproof': 'Insonorizar',
+            'stakeout': 'Vigilante',
+            'stall': 'Rezagado',
+            'stamina': 'Firmeza',
+            'stance-change': 'Cambio Táctico',
+            'steadfast': 'Impasible',
+            'steam-engine': 'Combustible',
+            'steelworker': 'Acero Templado',
+            'stench': 'Hedor',
+            'sticky-hold': 'Viscosidad',
+            'storm-drain': 'Colector',
+            'strong-jaw': 'Mandíbula Fuerte',
+            'super-luck': 'Afortunado',
+            'surge-surfer': 'Cola Surf',
+            'swarm': 'Enjambre',
+            'sweet-veil': 'Velo Dulce',
+            'swift-swim': 'Nado Rápido',
+            'symbiosis': 'Simbiosis',
+            'synchronize': 'Sincronía',
+            'tangled-feet': 'Tumbos',
+            'telepathy': 'Telepatía',
+            'teravolt': 'Terravoltaje',
+            'tinted-lens': 'Cromolente',
+            'trace': 'Calco',
+            'triage': 'Primer Auxilio',
+            'truant': 'Ausente',
+            'turboblaze': 'Turbollama',
+            'unaware': 'Ignorante',
+            'unburden': 'Liviano',
+            'unnerve': 'Nerviosismo',
+            'victory-star': 'Tinovictoria',
+            'vital-spirit': 'Espíritu Vital',
+            'wandering-spirit': 'Alma Errante',
+            'water-bubble': 'Burbuja',
+            'water-compaction': 'Hidrorrefuerzo',
+            'weak-armor': 'Armadura Frágil',
+            'white-smoke': 'Humo Blanco',
+            'wimp-out': 'Huida',
+            'wonder-guard': 'Superguarda',
+            'wonder-skin': 'Piel Milagro',
+            'zen-mode': 'Modo Daruma'
+        };
+        return names[ability?.toLowerCase().replace(/\s/g, '-')] || ability;
+    }
+
+    // ==================== SISTEMA DE OBJETOS ====================
+    
+    // Obtener efecto de objeto equipado
+    getItemEffect(itemName) {
+        const items = {
+            // Objetos de recuperación
+            'leftovers': { type: 'end-turn', effect: 'heal', percent: 1/16 },
+            'black-sludge': { type: 'end-turn', effect: 'heal-poison', percent: 1/16 },
+            
+            // Objetos de potencia
+            'choice-band': { type: 'stat-boost', stat: 'attack', multiplier: 1.5, locked: true },
+            'choice-specs': { type: 'stat-boost', stat: 'spAttack', multiplier: 1.5, locked: true },
+            'choice-scarf': { type: 'stat-boost', stat: 'speed', multiplier: 1.5, locked: true },
+            
+            // Objetos de daño
+            'life-orb': { type: 'damage-boost', multiplier: 1.3, recoil: 0.1 },
+            'expert-belt': { type: 'damage-boost', condition: 'super-effective', multiplier: 1.2 },
+            
+            // Objetos de supervivencia
+            'focus-sash': { type: 'survive', condition: 'full-hp', used: false },
+            'focus-band': { type: 'survive-chance', chance: 0.1 },
+            
+            // Objetos de tipo
+            'charcoal': { type: 'type-boost', boostType: 'fire', multiplier: 1.2 },
+            'mystic-water': { type: 'type-boost', boostType: 'water', multiplier: 1.2 },
+            'miracle-seed': { type: 'type-boost', boostType: 'grass', multiplier: 1.2 },
+            'magnet': { type: 'type-boost', boostType: 'electric', multiplier: 1.2 },
+            
+            // Berries
+            'sitrus-berry': { type: 'auto-heal', trigger: 'hp-50', heal: 0.25, used: false },
+            'oran-berry': { type: 'auto-heal', trigger: 'any', heal: 10, used: false },
+            'lum-berry': { type: 'cure-status', trigger: 'any-status', used: false }
+        };
+        
+        const normalizedName = itemName?.toLowerCase().replace(/\s/g, '-');
+        return items[normalizedName] || null;
+    }
+
+    // Aplicar efecto de objeto al final del turno
+    async applyItemEndTurn(player) {
+        const item = player === 1 ? this.player1Item : this.player2Item;
+        const pokemon = player === 1 ? this.player1Pokemon : this.player2Pokemon;
+        const currentHP = player === 1 ? this.player1HP : this.player2HP;
+        const maxHP = player === 1 ? this.player1MaxHP : this.player2MaxHP;
+        const itemEffect = this.getItemEffect(item);
+        
+        if (!itemEffect || itemEffect.type !== 'end-turn') return;
+        
+        if (itemEffect.effect === 'heal' && currentHP > 0 && currentHP < maxHP) {
+            const healAmount = Math.max(1, Math.floor(maxHP * itemEffect.percent));
+            if (player === 1) {
+                this.player1HP = Math.min(maxHP, currentHP + healAmount);
+            } else {
+                this.player2HP = Math.min(maxHP, currentHP + healAmount);
+            }
+            this.addLog(`¡${this.capitalizeFirstLetter(pokemon.name)} recupera ${healAmount} PS con ${this.getItemNameSpanish(item)}!`, 'item-heal');
+            this.requestUpdate();
+            await this.sleep(800);
+        }
+    }
+
+    // Obtener multiplicador de objeto para daño
+    getItemDamageMultiplier(attackerPlayer, move, effectiveness) {
+        const item = attackerPlayer === 1 ? this.player1Item : this.player2Item;
+        const itemEffect = this.getItemEffect(item);
+        let multiplier = 1;
+        
+        if (!itemEffect) return multiplier;
+        
+        // Choice items
+        if (itemEffect.type === 'stat-boost') {
+            // El boost de stats se aplica en calculateDamage
+            return multiplier;
+        }
+        
+        // Life Orb
+        if (itemEffect.type === 'damage-boost') {
+            if (!itemEffect.condition || 
+                (itemEffect.condition === 'super-effective' && effectiveness > 1)) {
+                multiplier *= itemEffect.multiplier;
+            }
+        }
+        
+        // Type boost items
+        if (itemEffect.type === 'type-boost' && itemEffect.boostType === move.type) {
+            multiplier *= itemEffect.multiplier;
+        }
+        
+        return multiplier;
+    }
+
+    // Verificar si un objeto evita el KO
+    checkItemSurvive(defenderPlayer) {
+        const item = defenderPlayer === 1 ? this.player1Item : this.player2Item;
+        const currentHP = defenderPlayer === 1 ? this.player1HP : this.player2HP;
+        const maxHP = defenderPlayer === 1 ? this.player1MaxHP : this.player2MaxHP;
+        const itemEffect = this.getItemEffect(item);
+        
+        if (!itemEffect) return false;
+        
+        // Focus Sash
+        if (itemEffect.type === 'survive' && itemEffect.condition === 'full-hp') {
+            if (currentHP === maxHP && !itemEffect.used) {
+                // Marcar como usado
+                if (defenderPlayer === 1) {
+                    this.player1Item = null; // El item se consume
+                } else {
+                    this.player2Item = null;
+                }
+                return true;
+            }
+        }
+        
+        // Focus Band
+        if (itemEffect.type === 'survive-chance') {
+            if (Math.random() < itemEffect.chance) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    // Obtener nombre en español de objeto
+    getItemNameSpanish(item) {
+        const names = {
+            'leftovers': 'Restos',
+            'choice-band': 'Cinta Elegida',
+            'choice-specs': 'Gafas Elegidas',
+            'choice-scarf': 'Pañuelo Elegido',
+            'life-orb': 'Orbe Vida',
+            'focus-sash': 'Banda Focus',
+            'focus-band': 'Cinta Focus',
+            'expert-belt': 'Cinta Experto',
+            'sitrus-berry': 'Baya Sitrus',
+            'lum-berry': 'Baya Lum',
+            'charcoal': 'Carbón',
+            'mystic-water': 'Agua Mística',
+            'miracle-seed': 'Semilla Milagro',
+            'magnet': 'Imán'
+        };
+        return names[item?.toLowerCase().replace(/\s/g, '-')] || item;
+    }
+
     checkBattleEnd() {
         return this.player1HP <= 0 || this.player2HP <= 0;
     }
@@ -2541,8 +3519,25 @@ export class PokemonBattleSimulator extends LitElement {
 
         console.log('battleFinished:', this.battleFinished, 'winner:', this.winner);
         
-        // Calcular resultados probabilísticos
-        this.runProbabilitySimulation();
+        // Emitir evento para el torneo
+        const winnerPokemon = this.winner === 'player1' ? this.player1Pokemon : this.player2Pokemon;
+        this.dispatchEvent(new CustomEvent('battle-ended', {
+            detail: {
+                winner: winnerPokemon,
+                winnerPlayer: this.winner,
+                isDraw: this.winner === 'draw'
+            },
+            bubbles: true,
+            composed: true
+        }));
+        
+        // Calcular resultados probabilísticos solo si es posible
+        try {
+            this.runProbabilitySimulation();
+        } catch (error) {
+            console.warn('No se pudo ejecutar la simulación de probabilidades:', error);
+            this.simulationResults = null;
+        }
         
         // Forzar actualización de la UI
         this.requestUpdate();
@@ -2570,8 +3565,22 @@ export class PokemonBattleSimulator extends LitElement {
         let p1HP = this.player1MaxHP;
         let p2HP = this.player2MaxHP;
 
-        const p1Move = this.player1Moves.find(m => m.selected) || this.player1Moves[0];
-        const p2Move = this.player2Moves.find(m => m.selected) || this.player2Moves[0];
+        // Usar los movimientos seleccionados correctamente
+        const p1Moves = this.player1SelectedMoves && this.player1SelectedMoves.length > 0 
+            ? this.player1SelectedMoves 
+            : this.player1Moves;
+        const p2Moves = this.player2SelectedMoves && this.player2SelectedMoves.length > 0 
+            ? this.player2SelectedMoves 
+            : this.player2Moves;
+            
+        const p1Move = p1Moves.find(m => m.selected) || p1Moves[0];
+        const p2Move = p2Moves.find(m => m.selected) || p2Moves[0];
+        
+        // Verificar que los movimientos existen
+        if (!p1Move || !p2Move) {
+            console.warn('No hay movimientos disponibles para simular');
+            return Math.random() > 0.5 ? 'player1' : 'player2';
+        }
 
         while (p1HP > 0 && p2HP > 0) {
             // Ataque jugador 1
@@ -2656,7 +3665,8 @@ export class PokemonBattleSimulator extends LitElement {
     }
 
     render() {
-        console.log('render() - battleFinished:', this.battleFinished, 'battleActive:', this.battleActive, 'winner:', this.winner);
+        console.log('🎨 render() - battleFinished:', this.battleFinished, 'battleActive:', this.battleActive, 'winner:', this.winner);
+        console.log('🎨 render() - player1Pokemon:', this.player1Pokemon?.name, 'player2Pokemon:', this.player2Pokemon?.name);
         
         if (this.battleFinished) {
             console.log('Rendering results...');
@@ -2673,6 +3683,61 @@ export class PokemonBattleSimulator extends LitElement {
     }
 
     renderSetup() {
+        console.log('📋 renderSetup() called');
+        console.log('player1Pokemon:', this.player1Pokemon);
+        console.log('player2Pokemon:', this.player2Pokemon);
+        console.log('player1Ability:', this.player1Ability);
+        console.log('player2Ability:', this.player2Ability);
+        console.log('player1SelectedMoves:', this.player1SelectedMoves);
+        console.log('player2SelectedMoves:', this.player2SelectedMoves);
+        console.log('fromTournament:', this.fromTournament);
+        
+        // Si viene del torneo Y ya hay Pokemon configurados, mostrar pantalla de pre-batalla
+        if (this.fromTournament && 
+            this.player1Pokemon && this.player2Pokemon && 
+            this.player1Ability && this.player2Ability &&
+            this.player1SelectedMoves?.length > 0 && this.player2SelectedMoves?.length > 0) {
+            console.log('✅ Renderizando pantalla de pre-batalla del torneo');
+            return html`
+                <div class="simulator-container">
+                    <div class="simulator-header">
+                        <div class="battle-icon">⚔️</div>
+                        <h1 class="simulator-title">Combate del Torneo</h1>
+                        <p class="simulator-subtitle">Pokemon listos para la batalla</p>
+                    </div>
+                    
+                    <div class="battle-preview" style="display: flex; justify-content: space-around; align-items: center; padding: 40px; background: white; border-radius: 20px; margin: 20px 0;">
+                        <div style="text-align: center;">
+                            <img src="${this.player1Pokemon.sprite}" alt="${this.player1Pokemon.name}" style="width: 150px; height: 150px; image-rendering: pixelated;">
+                            <h2 style="margin: 10px 0; color: #667eea;">${this.capitalizeFirstLetter(this.player1Pokemon.name)}</h2>
+                            <p>HP: ${this.player1MaxHP} | Habilidad: ${this.capitalizeFirstLetter(this.player1Ability)}</p>
+                            <p>Movimientos: ${this.player1SelectedMoves.length}</p>
+                        </div>
+                        
+                        <div style="font-size: 3em; color: #667eea; font-weight: bold;">VS</div>
+                        
+                        <div style="text-align: center;">
+                            <img src="${this.player2Pokemon.sprite}" alt="${this.player2Pokemon.name}" style="width: 150px; height: 150px; image-rendering: pixelated;">
+                            <h2 style="margin: 10px 0; color: #e74c3c;">${this.capitalizeFirstLetter(this.player2Pokemon.name)}</h2>
+                            <p>HP: ${this.player2MaxHP} | Habilidad: ${this.capitalizeFirstLetter(this.player2Ability)}</p>
+                            <p>Movimientos: ${this.player2SelectedMoves.length}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="battle-controls">
+                        <button 
+                            class="battle-btn" 
+                            @click="${this.startBattle}"
+                            style="font-size: 1.5em; padding: 20px 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+                        >
+                            ⚔️ ¡INICIAR BATALLA!
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Renderizado normal del simulador
         return html`
             <div class="simulator-container">
                 <div class="simulator-header">
@@ -2768,11 +3833,14 @@ export class PokemonBattleSimulator extends LitElement {
                             <div class="pokemon-info">
                                 <h3 class="pokemon-name">${this.capitalizeFirstLetter(pokemon.name)}</h3>
                                 <div class="pokemon-types">
-                                    ${pokemon.types.map(t => html`
-                                        <span class="type-badge" style="background: ${this.getTypeColor(t.type.name)}">
-                                            ${this.capitalizeFirstLetter(t.type.name)}
-                                        </span>
-                                    `)}
+                                    ${pokemon.types.map(t => {
+                                        const typeName = typeof t === 'string' ? t : (t.type?.name || t.name);
+                                        return html`
+                                            <span class="type-badge" style="background: ${this.getTypeColor(typeName)}">
+                                                ${this.capitalizeFirstLetter(typeName)}
+                                            </span>
+                                        `;
+                                    })}
                                 </div>
                                 <div class="level-selector">
                                     <span class="level-label">Nivel:</span>
@@ -2787,6 +3855,62 @@ export class PokemonBattleSimulator extends LitElement {
                                 </div>
                             </div>
                         </div>
+
+                        ${pokemon.abilities && pokemon.abilities.length > 0 ? html`
+                            <div class="ability-item-selectors">
+                                <div class="selector-group ability">
+                                    <div class="selector-header">
+                                        <label class="selector-label">Habilidad</label>
+                                        <button 
+                                            class="random-btn"
+                                            @click="${() => this.randomAbility(player)}"
+                                            title="Habilidad aleatoria"
+                                        >
+                                            🎲
+                                        </button>
+                                    </div>
+                                    <select 
+                                        class="custom-select"
+                                        .value="${player === 1 ? this.player1Ability : this.player2Ability}"
+                                        @change="${(e) => this.changeAbility(player, e.target.value)}"
+                                    >
+                                        ${pokemon.abilities.map(ability => html`
+                                            <option 
+                                                value="${ability.name}"
+                                                ?selected="${(player === 1 ? this.player1Ability : this.player2Ability) === ability.name}"
+                                            >
+                                                ${this.getAbilityNameSpanish(ability.name)}${ability.isHidden ? ' (Oculta)' : ''}
+                                            </option>
+                                        `)}
+                                    </select>
+                                </div>
+
+                                <div class="selector-group item">
+                                    <div class="selector-header">
+                                        <label class="selector-label">Objeto Equipado</label>
+                                        <button 
+                                            class="random-btn"
+                                            @click="${() => this.randomItem(player)}"
+                                            title="Objeto aleatorio"
+                                        >
+                                            🎲
+                                        </button>
+                                    </div>
+                                    <select 
+                                        class="custom-select"
+                                        .value="${(player === 1 ? this.player1Item : this.player2Item) || 'none'}"
+                                        @change="${(e) => this.changeItem(player, e.target.value)}"
+                                    >
+                                        ${this.getAvailableItems().map(item => {
+                                            if (item.category === 'none') {
+                                                return html`<option value="${item.value}">${item.label}</option>`;
+                                            }
+                                            return html`<option value="${item.value}">${item.label}</option>`;
+                                        })}
+                                    </select>
+                                </div>
+                            </div>
+                        ` : ''}
 
                         <div class="stats-display">
                             <div class="stat-item">
